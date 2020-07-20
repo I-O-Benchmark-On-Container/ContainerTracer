@@ -15,6 +15,33 @@ Container Tracer는 장치의 컨테이너 별 I/O 성능을 측정하기 위해
 
 각 폴더의 하위 항목으로 있는 **test**에는 단위 테스트 파일이 들어가게 됩니다.
 
+## 빌드 방법
+
+공통적으로는 아래를 수행해주셔야 합니다.
+
+```bash
+sudo pip3 install black flake8
+sudo apt install doxygen
+```
+
+### web의 경우
+
+Flask를 사용하기 때문에 반드시 아래를 수행해주셔야 합니다.
+
+```bash
+sudo pip3 install flask flask_restful
+```
+
+### trace-replay나 runner의 경우
+
+소스 코드를 다운 받은 후에 아래를 그대로 수행하면 됩니다.
+
+```bash
+sudo pip3 install scons
+sudo pip3 install clang-format
+sudo apt install cppcheck libaio-dev
+```
+
 ## 사용 라이브러리
 
 1. pthread: trace-replay 동작용 POSIX 라이브러리
