@@ -1,0 +1,94 @@
+import os
+import platform
+import subprocess
+
+Import("env")
+
+CURRENT_PROJECT = "trace-replay"
+
+# 프로그램 존재 여부 확인
+dependency = ["clang-format", "cppcheck"]
+cmd = "where" if platform.system() == "Windows" else "which"
+
+current_check_program = "None"
+try:
+    for program in dependency:
+        current_check_program = program
+        subprocess.call([cmd, program], stdout=subprocess.DEVNULL)
+except:
+    print(f"{current_check_program}이 설치되지 않았습니다.", file=sys.stderr)
+
+# log 기록을 위한 디렉터리의 생성
+os.makedirs(str(Dir(env["LOG_LOCATION"])) + os.sep + CURRENT_PROJECT, exist_ok=True)
+
+# clang-format 수행
+clang_format_ouput_file = open(
+    str(Dir(env["LOG_LOCATION"]))
+    + os.sep
+    + CURRENT_PROJECT
+    + os.sep
+    + dependency[0]
+    + ".log",
+    "w",
+)
+clang_format_error_file = open(
+    str(Dir(env["LOG_LOCATION"]))
+    + os.sep
+    + CURRENT_PROJECT
+    + os.sep
+    + dependency[0]
+    + ".error",
+    "w",
+)
+proc = subprocess.Popen(
+    f'{dependency[0]} -i {os.getcwd() + os.sep + "*.[ch]"}',
+    shell=True,
+    stdout=clang_format_ouput_file,
+    stderr=clang_format_error_file,
+)
+proc.communicate()
+clang_format_ouput_file.close()
+clang_format_error_file.close()
+
+# cppcheck 수행
+cppcheck_ouput_file = open(
+    str(Dir(env["LOG_LOCATION"]))
+    + os.sep
+    + CURRENT_PROJECT
+    + os.sep
+    + dependency[1]
+    + ".log",
+    "w",
+)
+cppcheck_error_file = open(
+    str(Dir(env["LOG_LOCATION"]))
+    + os.sep
+    + CURRENT_PROJECT
+    + os.sep
+    + dependency[1]
+    + ".error",
+    "w",
+)
+subprocess.call(
+    [dependency[1], "--enable=all", "."],
+    stdout=cppcheck_ouput_file,
+    stderr=cppcheck_error_file,
+)
+cppcheck_ouput_file.close()
+cppcheck_error_file.close()
+
+current_env = env.Clone()
+
+current_env.Append(
+    CFLAGS=["-D_LARGEFILE_SOURCE", "-D_FILE_OFFSET_BITS=64", "-D_GNU_SOURCE"]
+)
+current_env.Append(CPPPATH=[env["INCLUDE_LOCATION"]])
+current_env.Append(LDFLAGS=["-lpthread", "-laio", "-lrt"])
+current_env.Append(LIBS=["aio", "rt", "pthread"])
+
+current_env.Program(
+    target=env["PROGRAM_LOCATION"] + "/" + CURRENT_PROJECT, source=Glob("*.c")
+)
+
+if current_env["BUILD_UNIT_TEST"] == True:
+    SConscript("test/SConscript")

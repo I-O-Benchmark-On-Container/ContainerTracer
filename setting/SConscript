@@ -1,0 +1,34 @@
+# 일반적인 빌드 옵션들이 들어가게 됩니다.
+import os
+
+project_version = "0.0.1"
+
+variables = Variables()
+variables.AddVariables(
+    ("PROJECT_VERSION", "프로젝트의 버전을 의미합니다.", project_version),
+    BoolVariable("BUILD_UNIT_TEST", "프로젝트의 단위 테스트 프로그램을 제작합니다.", default=True),
+    BoolVariable("RUNNER", "통합 실행 프로그램을 빌드하도록 합니다.", default=True),
+    BoolVariable("TRACE_REPLAY", "trace replay를 빌드하도록 합니다.", default=True),
+    BoolVariable("WEB", "파이썬 프로젝트를 빌드하도록 합니다.", default=True),
+)
+
+env = Environment(variables=variables,)
+
+env["PROGRAM_LOCATION"] = "#build/release"
+env["TEST_LOCATION"] = "#build/test"
+env["LOG_LOCATION"] = "#build/log"
+env["OBJECT_LOCATION"] = "#build/object"
+env["INCLUDE_LOCATION"] = "#include"
+env["TRACE_REPLAY_LOCATION"] = "#trace-replay"
+env["RUNNER_LOCATION"] = "#runner"
+env["UNITY_LOCATION"] = "#unity"
+
+
+def PrintHelp(env):
+    global variables
+    Help(variables.GenerateHelpText(env))
+
+
+env.AddMethod(PrintHelp)
+
+Export("env")
