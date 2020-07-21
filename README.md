@@ -1,4 +1,7 @@
 # Container Tracer
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/418213c5843a4f4f8533df211c866c5f)](https://app.codacy.com/gh/I-O-Benchmark-On-Container/ContainerTracer?utm_source=github.com&utm_medium=referral&utm_content=I-O-Benchmark-On-Container/ContainerTracer&utm_campaign=Badge_Grade_Settings)
+
 Container Tracer는 각 **장치의 컨테이너 별 I/O 성능**을 측정하는 도구로 기존의 fio나 filebench의 부족한 cgroup 별 I/O 성능 측정 기능을 보완하는 프로그램입니다.
 
 Container Tracer는 장치의 컨테이너 별 I/O 성능을 측정하기 위해서 [trace-replay](https://github.com/yongseokoh/trace-replay)를 사용합니다.
