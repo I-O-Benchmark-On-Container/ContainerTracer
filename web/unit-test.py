@@ -14,13 +14,13 @@ class UnitTest(unittest.TestCase):
     def test_wrong_parameter(self):
         response = self.app.get("/api/multiply", data=self.wrong_parameter)
         data = json.loads(response.get_data())
-        self.assertEqual(18, data["response"])
-        self.assertEqual(1, data["state"])
+        self.assertNotEqual(18, data["response"])
+        self.assertNotEqual(1, data["state"])
 
     def test_wrong_result(self):
         response = self.app.get("/api/multiply", data=self.right_parameter)
         data = json.loads(response.get_data())
-        self.assertEqual(10, data["response"])
+        self.assertNotEqual(10, data["response"])
         self.assertEqual(1, data["state"])
 
     def test_multiply_right(self):
