@@ -84,5 +84,14 @@ current_env.Program(
     target=env["PROGRAM_LOCATION"] + "/" + CURRENT_PROJECT, source=Glob("*.c")
 )
 
+exclude_files = [str(Dir(env["RUNNER_LOCATION"])) + os.sep + "main.c"]
+except_main = [
+    x for x in Glob(env["RUNNER_LOCATION"] + "/*.c") if not str(x) in exclude_files
+]
+
+current_env.SharedLibrary(
+    target=env["PROGRAM_LOCATION"] + "/" + CURRENT_PROJECT + ".so", source=except_main
+)
+
 if current_env["BUILD_UNIT_TEST"] == True:
     SConscript("test/SConscript")

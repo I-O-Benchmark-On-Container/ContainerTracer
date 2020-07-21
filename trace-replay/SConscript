@@ -90,5 +90,12 @@ current_env.Program(
     target=env["PROGRAM_LOCATION"] + "/" + CURRENT_PROJECT, source=Glob("*.c")
 )
 
+shared_env = current_env.Clone()
+shared_env.Append(CFLAGS=["-DUNIT_TEST"])
+
+shared_env.SharedLibrary(
+    target=env["PROGRAM_LOCATION"] + "/" + CURRENT_PROJECT + ".so", source=Glob("*.c")
+)
+
 if current_env["BUILD_UNIT_TEST"] == True:
     SConscript("test/SConscript")

@@ -1,3 +1,21 @@
+##### cscope AND ctags #####
+# Ignore tags created by etags, ctags, gtags (GNU global) and cscope
+TAGS
+.TAGS
+!TAGS/
+tags
+.tags
+!tags/
+gtags.files
+GTAGS
+GRTAGS
+GPATH
+GSYMS
+cscope.files
+cscope.out
+cscope.in.out
+cscope.po.out
+
 ##### Scons #####
 build/*
 
@@ -174,3 +192,6 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
+# Ignore compile_commands
+compile_commands.json
+.compile_commands.json

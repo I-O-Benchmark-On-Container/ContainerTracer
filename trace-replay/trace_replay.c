@@ -1463,6 +1463,7 @@ void *trace_loader(void *data)
 }
 
 #define EXT_ARG_NUM 4
+#ifndef UNIT_TEST
 int main(int argc, char **argv)
 {
         pthread_t trace_loader_thread[MAX_THREADS];
@@ -1813,6 +1814,7 @@ int main(int argc, char **argv)
 
         return 0;
 }
+#endif
 
 #define N 624
 #define M 397

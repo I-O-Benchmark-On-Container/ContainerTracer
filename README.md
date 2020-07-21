@@ -20,7 +20,7 @@ Container Tracer는 장치의 컨테이너 별 I/O 성능을 측정하기 위해
 공통적으로는 아래를 수행해주셔야 합니다.
 
 ```bash
-sudo pip3 install black flake8
+sudo pip3 install black flake8 scons-compiledb
 sudo apt install doxygen
 ```
 
