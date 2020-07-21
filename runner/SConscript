@@ -16,7 +16,7 @@ try:
         current_check_program = program
         subprocess.call([cmd, program], stdout=subprocess.DEVNULL)
 except:
-    print(current_check_program+"이 설치되지 않았습니다.", file=sys.stderr)
+    print(current_check_program + "이 설치되지 않았습니다.", file=sys.stderr)
 
 # log 기록을 위한 디렉터리의 생성
 os.makedirs(str(Dir(env["LOG_LOCATION"])) + os.sep + CURRENT_PROJECT, exist_ok=True)
@@ -41,7 +41,7 @@ clang_format_error_file = open(
     "w",
 )
 proc = subprocess.Popen(
-    str(dependency[0]) +' -i '+str(os.getcwd() + os.sep + "*.[ch]"),
+    str(dependency[0]) + " -i " + str(os.getcwd() + os.sep + "*.[ch]"),
     shell=True,
     stdout=clang_format_ouput_file,
     stderr=clang_format_error_file,
@@ -79,6 +79,26 @@ cppcheck_error_file.close()
 
 current_env = env.Clone()
 current_env.Append(CPPPATH=[env["INCLUDE_LOCATION"]])
+current_env.Append(
+    CCFLAGS=[
+        "-std=c11",
+        "-Wall",
+        "-Werror",
+        "-Wextra",
+        "-Wcast-align",
+        "-Wwrite-strings",
+        "-Wpointer-arith",
+        "-Wswitch-default",
+        "-Wunreachable-code",
+        "-Winit-self",
+        "-Wmissing-field-initializers",
+        "-Wno-unknown-pragmas",
+        "-Wstrict-prototypes",
+        "-Wundef",
+        "-Wold-style-definition",
+        "-Wpedantic",
+    ]
+)
 
 current_env.Program(
     target=env["PROGRAM_LOCATION"] + "/" + CURRENT_PROJECT, source=Glob("*.c")
