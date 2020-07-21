@@ -779,8 +779,20 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                 gettimeofday(&tv_end, NULL);
                 execution_time = time_since(&tv_start, &tv_end);
 
-                avg_bw = (double)total_stat.total_bytes / MB / execution_time;
-                cur_bw = (double)total_stat.cur_bytes / MB / period_time;
+                if (execution_time) {
+                        avg_bw = (double)total_stat.total_bytes / MB /
+                                 execution_time;
+                } else {
+                        avg_bw = 0;
+                }
+
+                if (period_time) {
+                        cur_bw =
+                                (double)total_stat.cur_bytes / MB / period_time;
+                } else {
+                        cur_bw = 0;
+                }
+
                 if (total_stat.latency_count) {
                         latency = (double)total_stat.latency_sum /
                                   total_stat.latency_count;
@@ -788,15 +800,19 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                         latency = 0;
                 }
 
-                avg_time_diff = (double)total_stat.time_diff /
-                                total_stat.time_diff_cnt / 1000;
+                if (total_stat.time_diff_cnt) {
+                        avg_time_diff = (double)total_stat.time_diff /
+                                        total_stat.time_diff_cnt / 1000;
+                } else {
+                        avg_time_diff = 0;
+                }
 
                 if (total_bytes < total_stat.total_bytes)
                         total_bytes = total_stat.total_bytes;
 
                 if (timeout) {
                         fprintf(json_fp,
-                                "\"%.0f\":{\"remaining\":%0.f, \"avgbw\":%0.3f, \"curbw\":%0.3f, \"lat\":%.6f, \"time_diff\":%.6f}",
+                                "{\"%.0f\":{\"remaining\":%0.f, \"avgbw\":%0.3f, \"curbw\":%0.3f, \"lat\":%.6f, \"time_diff\":%.6f}}",
                                 execution_time, timeout - execution_time,
                                 avg_bw, cur_bw, latency, avg_time_diff);
                 } else if (wanted_io_count) {
@@ -805,14 +821,14 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                         double remaining_time = remaining_bytes / MB / avg_bw;
 
                         fprintf(json_fp,
-                                "\"%.0f\":{\"remaining\":%0.f, \"remaining_percentage\":%0.f, \"avgbw\":%0.3f, \"curbw\":%0.3f, \"lat\":%.6f, \"time_diff\":%.6f}",
+                                "{\"%.0f\":{\"remaining\":%0.f, \"remaining_percentage\":%0.f, \"avgbw\":%0.3f, \"curbw\":%0.3f, \"lat\":%.6f, \"time_diff\":%.6f}}",
                                 execution_time, remaining_time,
                                 (double)remaining_bytes /
                                         (wanted_io_count * io_size) * 100,
                                 avg_bw, cur_bw, latency, avg_time_diff);
                 } else {
                         fprintf(json_fp,
-                                "\"%.0f\":{\"remaining\":%0.f, \"remaining_percentage\":%0.f, \"bw\":%0.3f, \"curbw\":%0.3f, \"lat\":%.6f, \"time_diff\":%.6f}",
+                                "{\"%.0f\":{\"remaining\":%0.f, \"remaining_percentage\":%0.f, \"bw\":%0.3f, \"curbw\":%0.3f, \"lat\":%.6f, \"time_diff\":%.6f}}",
                                 execution_time,
                                 execution_time / progress_percent * 100 -
                                         execution_time,
@@ -962,17 +978,18 @@ void main_worker()
                 if (done == nr_thread)
                         break;
 
-                /* remove last character '}' */
-                fseek(json_fp, -1, SEEK_END);
+                /* remove last two character ']}' */
+                fseek(json_fp, -2, SEEK_END);
                 position = ftell(json_fp);
                 ftruncate(fileno(json_fp), position);
 
-                if (position > 1)
+                /* {"log":[ */
+                if (position > 8)
                         fprintf(json_fp, ",");
 
                 print_result(nr_trace, nr_thread, stdout, 0);
 
-                fprintf(json_fp, "}");
+                fprintf(json_fp, "]}");
                 fflush(json_fp);
 
                 usleep(REFRESH_SLEEP);
@@ -1199,12 +1216,10 @@ int main(int argc, char **argv)
                 return -1;
         }
 
-        fprintf(result_fp, " Q depth = %d \n", qdepth);
-        fprintf(result_fp, " Timeout = %.2f seconds \n", timeout);
-        fprintf(result_fp, " No of traces = %d \n", nr_trace);
-        fprintf(result_fp, " No of threads = %d \n", nr_thread);
-        fprintf(result_fp, " per thread = %d \n", per_thread);
-        fprintf(result_fp, " Result file = %s \n", argv[ARG_OUTPUT]);
+        fprintf(result_fp,
+                "{\"qdepth\":%d, \"timeout\":%f, \"nr_trace\":%d, \"nr_thread\":%d, \"per_thread\":%d, \"result_file\":%s",
+                qdepth, timeout, nr_trace, nr_thread, per_thread,
+                argv[ARG_OUTPUT]);
 
         for (i = 0; i < nr_trace; i++) {
                 struct trace_info_t *trace = &traces[i];
@@ -1448,7 +1463,7 @@ int main(int argc, char **argv)
         signal(SIGINT, sig_handler);
 
         /* json file for real time results */
-        fprintf(json_fp, "{}");
+        fprintf(json_fp, "{\"log\":[]}");
         main_worker();
 
         destroy(threads, qdepth);
