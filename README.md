@@ -23,7 +23,7 @@ Container Tracer는 장치의 컨테이너 별 I/O 성능을 측정하기 위해
 공통적으로는 아래를 수행해주셔야 합니다.
 
 ```bash
-sudo pip3 install black flake8 scons-compiledb
+sudo pip3 install black flake8
 sudo apt install doxygen
 ```
 
@@ -40,7 +40,7 @@ sudo pip3 install flask flask_restful
 소스 코드를 다운 받은 후에 아래를 그대로 수행하면 됩니다.
 
 ```bash
-sudo pip3 install scons
+sudo pip3 install scons scons-compiledb
 sudo pip3 install clang-format
 sudo apt install cppcheck libaio-dev
 ```
