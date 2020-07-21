@@ -1,0 +1,20 @@
+matrix:
+	include:
+		- language: python
+		  python: 3.6
+		  before_script:
+		  - sudo apt install -y flask flask_restful
+		  - cd web
+		  script:
+		  - python unit-test.py
+
+		- language: c
+		  compiler: gcc
+		  before_script:
+		  - sudo apt install -y scons-compiledb scons clang-format cppcheck libaio-dev
+		  script:
+		  - scons test
+
+notifications:
+	email:
+	- ss5kijun@gmail.com
