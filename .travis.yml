@@ -1,20 +1,36 @@
 matrix:
-	include:
-		- language: python
-		  python: 3.6
-		  before_script:
-		  - sudo apt install -y flask flask_restful
-		  - cd web
-		  script:
-		  - python unit-test.py
+  include:
+    - language: python
+      python: 3.6
+      addons:
+          apt:
+            update: true
+            packages:
+              - python3-pip
+      before_script:
+      - pip3 install flask
+      - pip3 install flask_restful
+      - cd web
+      script:
+      - python unit-test.py
 
-		- language: c
-		  compiler: gcc
-		  before_script:
-		  - sudo apt install -y scons-compiledb scons clang-format cppcheck libaio-dev
-		  script:
-		  - scons test
+    - language: c
+      compiler: gcc
+      addons:
+          apt:
+            update: true
+            packages:
+              - python3
+              - python3-pip
+              - cppcheck
+              - libaio-dev
+      before_script:
+      - pip3 install scons-compiledb
+      - pip3 install scons
+      - pip3 install clang-format 
+      script:
+      - scons test
 
 notifications:
-	email:
-	- ss5kijun@gmail.com
+  email:
+  - ss5kijun@gmail.com
