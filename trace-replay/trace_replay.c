@@ -626,26 +626,28 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                         double sum_sqr;
                         double mean;
                         double variance;
-                        fprintf(fp, "\n");
 
-                        fprintf(fp, " Per Trace %d I/O statistics \n", i);
-                        fprintf(fp, " Trace name = %s \n", traces[i].tracename);
+                        if (i)
+                                fprintf(fp, ",");
+
+                        fprintf(fp, "{\"%d\":{", i);
+                        fprintf(fp, "\"name\":\"%s\",", traces[i].tracename);
                         io_stat_dst.execution_time =
                                 io_stat_dst.execution_time / per_thread;
-                        fprintf(fp, " Execution time = %f sec\n",
+                        fprintf(fp, "\"exec_time\":%f,",
                                 io_stat_dst.execution_time);
+
+                        fprintf(fp, "\"synthetic\":{");
                         if (traces[i].synthetic) {
-                                fprintf(fp, " Synthetic workload \n");
-                                fprintf(fp,
-                                        " Working Set = %d MB (utilization = %d) \n",
-                                        traces[i].working_set_size,
+                                fprintf(fp, "\"working_set_size\":%d,",
+                                        traces[i].working_set_size);
+                                fprintf(fp, "\"utilization\":%d,",
                                         traces[i].utilization);
-                                fprintf(fp, " Touched Working Set = %d MB\n",
+                                fprintf(fp, "\"touched_working_set_size\":%d,",
                                         traces[i].working_set_size *
                                                 traces[i].utilization / 100);
-                                fprintf(fp, " I/O Size = %d KB\n",
+                                fprintf(fp, "\"io_size\":%d},",
                                         traces[i].io_size / KB);
-                                fprintf(fp, "\n");
                         }
 
                         mean = (double)io_stat_dst.latency_sum /
@@ -654,44 +656,55 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                         variance = (sum_sqr - io_stat_dst.latency_sum * mean) /
                                    (io_stat_dst.latency_count - 1);
 
-                        fprintf(fp, " Avg latency = %f sec, variance = %f\n",
-                                mean, variance);
-                        fprintf(fp, " Latency min = %f, max = %f sec\n",
-                                io_stat_dst.latency_min,
-                                io_stat_dst.latency_max);
-                        fprintf(fp, " IOPS = %f\n",
+                        fprintf(fp, "\"avg_lat\":%f,", mean);
+                        fprintf(fp, "\"avg_lat_var\":%f,", variance);
+                        fprintf(fp, "\"lat_min\":%f,", io_stat_dst.latency_min);
+                        fprintf(fp, "\"lat_max\":%f,", io_stat_dst.latency_max);
+                        fprintf(fp, "\"iops\":%f,",
                                 io_stat_dst.latency_count /
                                         io_stat_dst.execution_time);
-                        fprintf(fp, " Bandwidth (total) = %f MB/s\n",
-                                (double)io_stat_dst.total_bytes / MB /
-                                        io_stat_dst.execution_time);
-                        fprintf(fp, " Bandwidth (read) = %f MB/s\n",
-                                (double)io_stat_dst.total_rbytes / MB /
-                                        io_stat_dst.execution_time);
-                        fprintf(fp, " Bandwidth (write) = %f MB/s\n",
-                                (double)io_stat_dst.total_wbytes / MB /
-                                        io_stat_dst.execution_time);
-                        fprintf(fp, " Total traffic = %f MB\n",
+                        fprintf(fp, "\"total_bw\":%f,",
+                                io_stat_dst.execution_time ?
+                                        (double)io_stat_dst.total_bytes / MB /
+                                                io_stat_dst.execution_time :
+                                        0);
+                        fprintf(fp, "\"read_bw\":%f,",
+                                io_stat_dst.execution_time ?
+                                        (double)io_stat_dst.total_rbytes / MB /
+                                                io_stat_dst.execution_time :
+                                        0);
+                        fprintf(fp, "\"write_bw\":%f,",
+                                io_stat_dst.execution_time ?
+                                        (double)io_stat_dst.total_wbytes / MB /
+                                                io_stat_dst.execution_time :
+                                        0);
+                        fprintf(fp, "\"total_traffic\":%f,",
                                 (double)io_stat_dst.total_bytes / MB);
-                        fprintf(fp, " Read traffic = %f MB\n",
+                        fprintf(fp, "\"read_traffic\":%f,",
                                 (double)io_stat_dst.total_rbytes / MB);
-                        fprintf(fp, " Write traffic = %f MB\n",
+                        fprintf(fp, "\"write_traffic\":%f,",
                                 (double)io_stat_dst.total_wbytes / MB);
-                        fprintf(fp, " Read Ratio = %f \n",
-                                (double)io_stat_dst.total_wbytes /
-                                        (double)io_stat_dst.total_bytes);
-
-                        fprintf(fp, " Avg Request Size Total = %f KB\n",
-                                (double)io_stat_dst.total_bytes /
-                                        io_stat_dst.latency_count / KB);
-                        fprintf(fp, " Avg Request Size Read = %f KB\n",
-                                (double)io_stat_dst.total_rbytes /
-                                        io_stat_dst.latency_count / KB);
-                        fprintf(fp, " Avg Request Size Write = %f KB\n",
-                                (double)io_stat_dst.total_wbytes /
-                                        io_stat_dst.latency_count / KB);
-
-                        fprintf(fp, " Trace reset count = %d\n",
+                        fprintf(fp, "\"read_ratio\":%f,",
+                                (double)io_stat_dst.total_bytes ?
+                                        (double)io_stat_dst.total_wbytes /
+                                                (double)io_stat_dst.total_bytes :
+                                        0);
+                        fprintf(fp, "\"total_avg_req_size\":%f,",
+                                io_stat_dst.latency_count ?
+                                        (double)io_stat_dst.total_bytes /
+                                                io_stat_dst.latency_count / KB :
+                                        0);
+                        fprintf(fp, "\"read_avg_req_size\":%f,",
+                                io_stat_dst.latency_count ?
+                                        (double)io_stat_dst.total_rbytes /
+                                                io_stat_dst.latency_count / KB :
+                                        0);
+                        fprintf(fp, "\"write_avg_req_size\":%f,",
+                                io_stat_dst.latency_count ?
+                                        (double)io_stat_dst.total_wbytes /
+                                                io_stat_dst.latency_count / KB :
+                                        0);
+                        fprintf(fp, "\"trace_reset_count\":%d}}",
                                 trace->trace_repeat_count);
                 }
 
@@ -729,40 +742,62 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                         progress_percent = temp_percent;
         }
 
-        if (detail) {
-                fprintf(fp, "\n Aggregrated Result \n");
-                fprintf(fp, " Agg Execution time: %.6f sec\n", execution_time);
-                fprintf(fp, " Agg latency = %f, min = %f, max = %f sec\n",
-                        (double)total_stat.latency_sum /
-                                total_stat.latency_count,
-                        total_stat.latency_min, total_stat.latency_max);
-                fprintf(fp, " Agg IOPS = %f \n",
-                        (double)total_stat.latency_count / execution_time);
-                fprintf(fp, " Agg Total bandwidth = %f MB/s \n",
-                        (double)total_stat.total_bytes / MB / execution_time);
-                fprintf(fp, " Agg Read bandwidth = %f MB/s \n",
-                        (double)total_stat.total_rbytes / MB / execution_time);
-                fprintf(fp, " Agg Write bandwidth = %f MB/s \n",
-                        (double)total_stat.total_wbytes / MB / execution_time);
-                fprintf(fp, " Agg Total traffic = %f MB\n",
-                        (double)total_stat.total_bytes / MB);
-                fprintf(fp, " Agg Read traffic = %f MB\n",
-                        (double)total_stat.total_rbytes / MB);
-                fprintf(fp, " Agg Write traffic = %f MB\n",
-                        (double)total_stat.total_wbytes / MB);
-                fprintf(fp, " Agg Read Ratio = %f MB\n",
-                        (double)total_stat.total_rbytes /
-                                (double)total_stat.total_wbytes);
+        if (fp == result_fp)
+                fprintf(result_fp, "],");
 
-                fprintf(fp, " Agg Avg Request Size Total = %f KB\n",
-                        (double)total_stat.total_bytes /
-                                total_stat.latency_count / KB);
-                fprintf(fp, " Agg Avg Request Size Read = %f KB\n",
-                        (double)total_stat.total_rbytes /
-                                total_stat.latency_count / KB);
-                fprintf(fp, " Agg Avg Request Size Write = %f KB\n",
-                        (double)total_stat.total_wbytes /
-                                total_stat.latency_count / KB);
+        if (detail) {
+                fprintf(fp, "\"aggr_result\":{");
+                fprintf(fp, "\"aggr_exec_time\":%f,", execution_time);
+                fprintf(fp,
+                        "\"aggr_lat\":%f,\"aggr_lat_min\":%f,\"aggr_lat_max\":%f,",
+                        total_stat.latency_count ?
+                                (double)total_stat.latency_sum /
+                                        total_stat.latency_count :
+                                0,
+                        total_stat.latency_min, total_stat.latency_max);
+                fprintf(fp, "\"aggr_iops\":%f,",
+                        execution_time ? (double)total_stat.latency_count /
+                                                 execution_time :
+                                         0);
+                fprintf(fp, "\"aggr_total_bw\":%f,",
+                        execution_time ? (double)total_stat.total_bytes / MB /
+                                                 execution_time :
+                                         0);
+                fprintf(fp, "\"aggr_read_bw\":%f,",
+                        execution_time ? (double)total_stat.total_rbytes / MB /
+                                                 execution_time :
+                                         0);
+                fprintf(fp, "\"aggr_write_bw\":%f,",
+                        execution_time ? (double)total_stat.total_wbytes / MB /
+                                                 execution_time :
+                                         0);
+                fprintf(fp, "\"aggr_total_traffic\":%f,",
+                        (double)total_stat.total_bytes / MB);
+                fprintf(fp, "\"aggr_read_traffic\":%f,",
+                        (double)total_stat.total_rbytes / MB);
+                fprintf(fp, "\"aggr_write_traffic\":%f,",
+                        (double)total_stat.total_wbytes / MB);
+                fprintf(fp, "\"aggr_read_ratio\":%f,",
+                        (double)total_stat.total_wbytes ?
+                                (double)total_stat.total_rbytes /
+                                        (double)total_stat.total_wbytes :
+                                0);
+
+                fprintf(fp, "\"aggr_total_avg_req_size\":%f,",
+                        total_stat.latency_count ?
+                                (double)total_stat.total_bytes /
+                                        total_stat.latency_count / KB :
+                                0);
+                fprintf(fp, "\"aggr_read_avg_req_size\":%f,",
+                        total_stat.latency_count ?
+                                (double)total_stat.total_rbytes /
+                                        total_stat.latency_count / KB :
+                                0);
+                fprintf(fp, "\"aggr_write_avg_req_size\":%f}}",
+                        total_stat.latency_count ?
+                                (double)total_stat.total_wbytes /
+                                        total_stat.latency_count / KB :
+                                0);
 
                 fflush(fp);
         } else {
@@ -812,7 +847,7 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
 
                 if (timeout) {
                         fprintf(json_fp,
-                                "{\"%.0f\":{\"remaining\":%0.f, \"avgbw\":%0.3f, \"curbw\":%0.3f, \"lat\":%.6f, \"time_diff\":%.6f}}",
+                                "{\"%f\":{\"remaining\":%f,\"avgbw\":%f,\"curbw\":%f,\"lat\":%f,\"time_diff\":%f}}",
                                 execution_time, timeout - execution_time,
                                 avg_bw, cur_bw, latency, avg_time_diff);
                 } else if (wanted_io_count) {
@@ -821,14 +856,14 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                         double remaining_time = remaining_bytes / MB / avg_bw;
 
                         fprintf(json_fp,
-                                "{\"%.0f\":{\"remaining\":%0.f, \"remaining_percentage\":%0.f, \"avgbw\":%0.3f, \"curbw\":%0.3f, \"lat\":%.6f, \"time_diff\":%.6f}}",
+                                "{\"%f\":{\"remaining\":%f,\"remaining_percentage\":%f,\"avgbw\":%f,\"curbw\":%f,\"lat\":%f,\"time_diff\":%f}}",
                                 execution_time, remaining_time,
                                 (double)remaining_bytes /
                                         (wanted_io_count * io_size) * 100,
                                 avg_bw, cur_bw, latency, avg_time_diff);
                 } else {
                         fprintf(json_fp,
-                                "{\"%.0f\":{\"remaining\":%0.f, \"remaining_percentage\":%0.f, \"bw\":%0.3f, \"curbw\":%0.3f, \"lat\":%.6f, \"time_diff\":%.6f}}",
+                                "{\"%f\":{\"remaining\":%f,\"remaining_percentage\":%f,\"bw\":%f,\"curbw\":%f,\"lat\":%f,\"time_diff\":%f}}",
                                 execution_time,
                                 execution_time / progress_percent * 100 -
                                         execution_time,
@@ -873,13 +908,30 @@ void usage_help()
         printf(" #./trace_replay 32 2 result.txt 60 1 /dev/sdb1 rand_write 128 10 4\n\n");
 }
 
+int remove_lastchars(FILE *fp, int len)
+{
+        int position;
+
+        fseek(fp, -len, SEEK_END);
+        position = ftell(fp);
+        ftruncate(fileno(fp), position);
+
+        return position;
+}
+
 void finalize()
 {
         gettimeofday(&tv_end, NULL);
         timeval_subtract(&tv_result, &tv_end, &tv_start);
         execution_time = time_since(&tv_start, &tv_end);
 
+        /* remove last a character '}' */
+        remove_lastchars(result_fp, 1);
+
+        fprintf(result_fp, ",\"results\":{\"per_trace\":[");
         print_result(nr_trace, nr_thread, result_fp, 1);
+        fprintf(result_fp, "}");
+
         fclose(result_fp);
         fclose(log_fp);
         fclose(json_fp);
@@ -978,10 +1030,8 @@ void main_worker()
                 if (done == nr_thread)
                         break;
 
-                /* remove last two character ']}' */
-                fseek(json_fp, -2, SEEK_END);
-                position = ftell(json_fp);
-                ftruncate(fileno(json_fp), position);
+                /* remove last two characters ']}' */
+                position = remove_lastchars(json_fp, 2);
 
                 /* {"log":[ */
                 if (position > 8)
@@ -1217,7 +1267,7 @@ int main(int argc, char **argv)
         }
 
         fprintf(result_fp,
-                "{\"qdepth\":%d, \"timeout\":%f, \"nr_trace\":%d, \"nr_thread\":%d, \"per_thread\":%d, \"result_file\":%s",
+                "{\"config\":{\"qdepth\":%d,\"timeout\":%f,\"nr_trace\":%d,\"nr_thread\":%d,\"per_thread\":%d,\"result_file\":\"%s\",\"traces\":[",
                 qdepth, timeout, nr_trace, nr_thread, per_thread,
                 argv[ARG_OUTPUT]);
 
@@ -1401,13 +1451,17 @@ int main(int argc, char **argv)
                 }
 
                 fprintf(result_fp,
-                        " %d thread start part = %fGB size = %fGB (%llu, %llu pages)\n",
+                        "{\"%d\":{\"start_partition\":%f, \"total_size\":%f, \"start_page\":%llu, \"total_pages\":%llu}}",
                         (int)i,
                         (double)trace->start_partition / 1024 / 1024 / 1024,
                         (double)trace->total_capacity / 1024 / 1024 / 1024,
                         trace->start_page,
                         trace->start_page + trace->total_pages);
+
+                if (i != nr_trace - 1)
+                        fprintf(result_fp, ",");
         }
+        fprintf(result_fp, "]}}");
 
         for (i = 0; i < nr_trace; i++)
                 pthread_join(trace_loader_thread[i], NULL);
