@@ -126,7 +126,9 @@ static double time_since(struct timeval *start_tv, struct timeval *stop_tv)
 /* allocate a alignment-bytes aligned buffer */
 void *allocate_aligned_buffer(size_t size)
 {
-        void *p = (void *)memalign(getpagesize(), size);
+        void *p;
+
+        posix_memalign(&p, getpagesize(), size);
 
         if (!p) {
                 perror("memalign");
