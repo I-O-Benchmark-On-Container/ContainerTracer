@@ -24,6 +24,7 @@ matrix:
               - python3-pip
               - cppcheck
               - libaio-dev
+              - libjson-c-dev
       before_script:
       - pip3 install scons-compiledb
       - pip3 install scons
