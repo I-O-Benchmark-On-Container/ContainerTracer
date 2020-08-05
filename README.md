@@ -43,7 +43,7 @@ sudo pip3 install flask flask_restful
 ```bash
 sudo pip3 install scons scons-compiledb
 sudo pip3 install clang-format
-sudo apt install cppcheck libaio-dev
+sudo apt install cppcheck libaio-dev libjson-c-dev
 ```
 
 ## 사용 라이브러리
