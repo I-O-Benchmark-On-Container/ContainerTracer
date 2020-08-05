@@ -31,6 +31,8 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 #include <flist.h>
 #include <trace_replay.h>
@@ -564,9 +566,12 @@ Timeout:
 int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
 {
         struct io_stat_t total_stat;
+        struct realtime_msg rmsg;
         int i, j;
         int per_thread = nr_thread / nr_trace;
         double progress_percent = 0.0;
+        key_t server_qkey;
+        int server_qid;
 
         memset(&total_stat, 0x00, sizeof(struct io_stat_t));
         for (i = 0; i < nr_trace; i++) {
@@ -847,32 +852,54 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                 if (total_bytes < total_stat.total_bytes)
                         total_bytes = total_stat.total_bytes;
 
+                server_qkey = ftok(SERVER_KEY_PATHNAME, PROJECT_ID);
+                if (server_qkey < 0) {
+                        perror("ftok: server_qkey");
+                        goto no_msg;
+                }
+
+                server_qid = msgget(server_qkey, 0);
+                if (server_qid < 0) {
+                        perror("msgget: server_qid");
+                        goto no_msg;
+                }
+
+                memset(&rmsg, 0, sizeof(struct realtime_msg));
+
+                rmsg.mtype = 1;
+                rmsg.log.time = execution_time;
+                rmsg.log.avg_bw = avg_bw;
+                rmsg.log.cur_bw = cur_bw;
+                rmsg.log.lat = latency;
+                rmsg.log.time_diff = avg_time_diff;
+
                 if (timeout) {
-                        fprintf(json_fp,
-                                "{\"%f\":{\"remaining\":%f,\"avgbw\":%f,\"curbw\":%f,\"lat\":%f,\"time_diff\":%f}}",
-                                execution_time, timeout - execution_time,
-                                avg_bw, cur_bw, latency, avg_time_diff);
+                        rmsg.log.type = TIMEOUT;
+                        rmsg.log.remaining = timeout - execution_time;
+
                 } else if (wanted_io_count) {
                         long long remaining_bytes = wanted_io_count * io_size -
                                                     total_stat.total_bytes;
                         double remaining_time = remaining_bytes / MB / avg_bw;
 
-                        fprintf(json_fp,
-                                "{\"%f\":{\"remaining\":%f,\"remaining_percentage\":%f,\"avgbw\":%f,\"curbw\":%f,\"lat\":%f,\"time_diff\":%f}}",
-                                execution_time, remaining_time,
+                        rmsg.log.type = WANTED_IO_COUNT;
+                        rmsg.log.remaining = remaining_time;
+                        rmsg.log.remaining_percentage =
                                 (double)remaining_bytes /
-                                        (wanted_io_count * io_size) * 100,
-                                avg_bw, cur_bw, latency, avg_time_diff);
+                                (wanted_io_count * io_size) * 100;
                 } else {
-                        fprintf(json_fp,
-                                "{\"%f\":{\"remaining\":%f,\"remaining_percentage\":%f,\"bw\":%f,\"curbw\":%f,\"lat\":%f,\"time_diff\":%f}}",
-                                execution_time,
+                        rmsg.log.type = NONE;
+                        rmsg.log.remaining =
                                 execution_time / progress_percent * 100 -
-                                        execution_time,
-                                (double)100 - progress_percent, avg_bw, cur_bw,
-                                latency, avg_time_diff);
+                                execution_time;
+                        rmsg.log.remaining_percentage =
+                                (double)100 - progress_percent;
                 }
 
+                if (msgsnd(server_qid, &rmsg, sizeof(struct realtime_log), 0) <
+                    0)
+                        perror("msgsnd");
+        no_msg:
                 if (log_count == 0)
                         fprintf(log_fp,
                                 "#ExecTime\tAvgBW\tCurBw\tI/O Issued\n");
@@ -923,6 +950,10 @@ int remove_lastchars(FILE *fp, int len)
 
 void finalize()
 {
+        struct realtime_msg rmsg;
+        key_t server_qkey;
+        int server_qid;
+
         gettimeofday(&tv_end, NULL);
         timeval_subtract(&tv_result, &tv_end, &tv_start);
         execution_time = time_since(&tv_start, &tv_end);
@@ -937,6 +968,25 @@ void finalize()
         fclose(result_fp);
         fclose(log_fp);
         fclose(json_fp);
+
+        server_qkey = ftok(SERVER_KEY_PATHNAME, PROJECT_ID);
+        if (server_qkey < 0) {
+                perror("ftok: server_qkey");
+                goto no_msg;
+        }
+
+        server_qid = msgget(server_qkey, 0);
+        if (server_qid < 0) {
+                perror("msgget: server_qid");
+                goto no_msg;
+        }
+
+        rmsg.mtype = 1;
+        rmsg.log.type = FIN;
+
+        if (msgsnd(server_qid, &rmsg, sizeof(struct realtime_log), 0) < 0)
+                perror("msgsnd");
+no_msg:
         fprintf(stdout, "\n Finalizing Trace Replayer \n");
 }
 

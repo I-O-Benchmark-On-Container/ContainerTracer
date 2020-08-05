@@ -143,6 +143,28 @@ struct io_job {
         char *buf;
 };
 
+#define SERVER_KEY_PATHNAME "/tmp/trace-replay-msgq"
+#define PROJECT_ID 'M'
+#define QUEUE_PERM 0640
+
+enum realtime_log_type { TIMEOUT, WANTED_IO_COUNT, NONE, FIN };
+
+struct realtime_log {
+        int type;
+        double time;
+        double remaining;
+        double remaining_percentage;
+        double avg_bw;
+        double cur_bw;
+        double lat;
+        double time_diff;
+};
+
+struct realtime_msg {
+        long mtype;
+        struct realtime_log log;
+};
+
 typedef char __s8;
 typedef short __s16;
 typedef int __s32;
