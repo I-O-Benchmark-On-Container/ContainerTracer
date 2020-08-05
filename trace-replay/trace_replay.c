@@ -42,7 +42,6 @@
 
 FILE *result_fp;
 FILE *log_fp;
-FILE *json_fp;
 unsigned int log_count = 0;
 struct thread_info_t th_info[MAX_THREADS];
 struct trace_info_t traces[MAX_THREADS];
@@ -967,7 +966,6 @@ void finalize()
 
         fclose(result_fp);
         fclose(log_fp);
-        fclose(json_fp);
 
         server_qkey = ftok(SERVER_KEY_PATHNAME, PROJECT_ID);
         if (server_qkey < 0) {
@@ -1082,17 +1080,7 @@ void main_worker()
                 if (done == nr_thread)
                         break;
 
-                /* remove last two characters ']}' */
-                position = remove_lastchars(json_fp, 2);
-
-                /* {"log":[ */
-                if (position > 8)
-                        fprintf(json_fp, ",");
-
                 print_result(nr_trace, nr_thread, stdout, 0);
-
-                fprintf(json_fp, "]}");
-                fflush(json_fp);
 
                 usleep(REFRESH_SLEEP);
         }
@@ -1306,14 +1294,6 @@ int main(int argc, char **argv)
         sprintf(line, "%s.log", argv[ARG_OUTPUT]);
         log_fp = fopen(line, "w");
         if (log_fp == NULL) {
-                printf(" open file %s error \n", line);
-                return -1;
-        }
-
-        memset(line, 0, sizeof(char) * 201);
-        sprintf(line, "%s.json", argv[ARG_OUTPUT]);
-        json_fp = fopen(line, "w");
-        if (json_fp == NULL) {
                 printf(" open file %s error \n", line);
                 return -1;
         }
@@ -1569,7 +1549,6 @@ int main(int argc, char **argv)
         signal(SIGINT, sig_handler);
 
         /* json file for real time results */
-        fprintf(json_fp, "{\"log\":[]}");
         main_worker();
 
         destroy(threads, qdepth);
