@@ -43,6 +43,7 @@
 #define REFRESH_SLEEP 1000000
 
 FILE *log_fp;
+FILE *json_fp;
 unsigned int log_count = 0;
 struct thread_info_t th_info[MAX_THREADS];
 struct trace_info_t traces[MAX_THREADS];
@@ -763,6 +764,9 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                 if (temp_percent > progress_percent)
                         progress_percent = temp_percent;
         }
+
+        if (fp == result_fp)
+                fprintf(result_fp, "],");
 
         if (detail) {
                 double sum_sqr;
@@ -1538,6 +1542,7 @@ int main(int argc, char **argv)
                 total_results.config.traces[i].total_pages =
                         trace->start_page + trace->total_pages;
         }
+        fprintf(result_fp, "]}}");
 
         for (i = 0; i < nr_trace; i++)
                 pthread_join(trace_loader_thread[i], NULL);
