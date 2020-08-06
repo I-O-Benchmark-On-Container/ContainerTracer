@@ -6,10 +6,11 @@
  * @date 2020-08-05
  */
 
+#define _GNU_SOURCE
+
 /**< system header */
 #include <stdlib.h>
 #include <errno.h>
-#include <log.h>
 #include <search.h>
 #include <assert.h>
 #include <unistd.h>
@@ -26,6 +27,7 @@
 #include <generic.h>
 #include <runner.h>
 #include <tr-driver.h>
+#include <log.h>
 #include <sync.h>
 
 static const char *tr_valid_scheduler[] = {
@@ -37,8 +39,12 @@ static const char *tr_valid_scheduler[] = {
 
 static char *global_program_path =
         NULL; /**< trace-replay 실행 파일의 경로가 들어갑니다. */
-static struct tr_info *global_info_head = NULL;
+static struct tr_info *global_info_head =
+        NULL; /**< trace-replay의 각각을 실행시킬 때 필요한 정보를 담고있는 구조체 리스트의 헤드입니다. */
 
+/**
+ * @brief 실질적으로 trace-replay 관련 구조체의 동적 할당된 내용을 해제하는 부분에 해당합니다.
+ */
 static void __tr_free(void)
 {
         if (global_program_path != NULL) {
@@ -56,6 +62,16 @@ static void __tr_free(void)
                 global_info_head);
 }
 
+/**
+ * @brief 정수 형태의 `info->(member)`에 json에서 값을 읽어서 값을 주도록 합니다. 
+ *
+ * @param setting 탐색을 할 특정 위치를 지칭합니다.
+ * @param key json에서 가져오고자 하는 데이터의 key 또는 field에 해당합니다.
+ * @param member 실제 값이 삽입되는 위치에 해당합니다.
+ * @param is_print 에러를 사용자에게 출력을 할 지 말지를 선택합니다.
+ *
+ * @return 성공적으로 입력이 되었다면 0이 반환되고, 그렇지 않은 경우에는 -EINVAL이 반환됩니다.
+ */
 static int tr_info_int_value_set(struct json_object *setting, const char *key,
                                  unsigned int *member, int is_print)
 {
@@ -70,6 +86,16 @@ static int tr_info_int_value_set(struct json_object *setting, const char *key,
         return 0;
 }
 
+/**
+ * @brief 문자열 형태의 `info->(member)`에 json에서 값을 읽어서 값을 주도록 합니다. 
+ *
+ * @param setting 탐색을 할 특정 위치를 지칭합니다.
+ * @param key json에서 가져오고자 하는 데이터의 key 또는 field에 해당합니다.
+ * @param member 실제 값이 삽입되는 위치에 해당합니다.
+ * @param is_print 에러를 사용자에게 출력을 할 지 말지를 선택합니다.
+ *
+ * @return 성공적으로 입력이 되었다면 0이 반환되고, 그렇지 않은 경우에는 -EINVAL이 반환됩니다.
+ */
 static int tr_info_str_value_set(struct json_object *setting, const char *key,
                                  char *member, int is_print)
 {
@@ -85,6 +111,13 @@ static int tr_info_str_value_set(struct json_object *setting, const char *key,
         return 0;
 }
 
+/**
+ * @brief 현재 입력되는 scheduler가 driver가 지원하는 지를 확인하도록 합니다.
+ *
+ * @param scheduler 검사하고자 하는 스케쥴러 문자열을 가진 문자열 포인터입니다.
+ *
+ * @return 가지고 있는 경우 0이 반환되고, 그렇지 않은 경우 -EINVAL이 반환됩니다.
+ */
 static int valid_scheduler_test(const char *scheduler)
 {
         const char *index = tr_valid_scheduler[0];
@@ -97,6 +130,15 @@ static int valid_scheduler_test(const char *scheduler)
         return -EINVAL;
 }
 
+/**
+ * @brief 각각의 프로세스의 동작 옵션을 설정을 해주도록 합니다.
+ *
+ * @param setting 설정 값을 가지고 있는 json 객체의 포인터에 해당합니다.
+ * @param index json의 task_option의 배열 순번에 대한 정보를 가집니다.
+ * @param info 실제 값이 들어가는 위치에 해당합니다.
+ *
+ * @return 정상적으로 초기화가 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ */
 static int __tr_info_init(struct json_object *setting, int index,
                           struct tr_info *info)
 {
@@ -169,6 +211,14 @@ exception:
         return ret;
 }
 
+/**
+ * @brief 각 프로세스에 들어가는 info 객체를 __생성__하고 구축하여 반환합니다.
+ *
+ * @param setting 설정 값을 가지고 있는 json 객체의 포인터에 해당합니다.
+ * @param index json의 task_option의 배열 순번에 대한 정보를 가집니다.
+ *
+ * @return 정상적으로 초기화가 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ */
 static struct tr_info *tr_info_init(struct json_object *setting, int index)
 {
         struct tr_info *info = NULL;
@@ -222,6 +272,13 @@ exception:
         return info;
 }
 
+/**
+ * @brief 전역 옵션을 설정한 후에 각각의 프로세스 별로 할당할 옵션을 설정하도록 합니다.
+ *
+ * @param object 전역 runner_config의 포인터가 들어가야 합니다.
+ *
+ * @return 정상적으로 초기화가 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ */
 int tr_init(void *object)
 {
         struct runner_config *config = (struct runner_config *)object;
@@ -301,6 +358,11 @@ exception:
         return ret;
 }
 
+/**
+ * @brief 현재 info의 내용을 출력합니다. 
+ *
+ * @param info 출력하고자 하는 info의 포인터에 해당합니다.
+ */
 static void tr_debug(const struct tr_info *info)
 {
         pr_info(INFO,
@@ -324,6 +386,11 @@ static void tr_debug(const struct tr_info *info)
                 info->next);
 }
 
+/**
+ * @brief trace-replay를 실행시키도록 합니다.
+ *
+ * @return 정상적으로 동작이 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ */
 int tr_runner(void)
 {
         const struct tr_info *current = global_info_head;
@@ -334,11 +401,28 @@ int tr_runner(void)
         return 0;
 }
 
+/**
+ * @brief trace-replay가 실행 중일 때의 정보를 반환합니다.
+ *
+ * @param key 임의의 cgroup_id에 해당합니다.
+ * @param buffer 값이 반환되는 위치에 해당합니다.
+ *
+ * @return 정상적으로 동작이 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ */
 int tr_get_interval(const char *key, char *buffer)
 {
         (void)key, (void)buffer;
         return 0;
 }
+
+/**
+ * @brief trace-replay가 동작 완료한 후의 정보를 반환합니다.
+ *
+ * @param key 임의의 cgroup_id에 해당합니다.
+ * @param buffer 값이 반환되는 위치에 해당합니다.
+ *
+ * @return 정상적으로 동작이 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ */
 
 int tr_get_total(const char *key, char *buffer)
 {
@@ -346,6 +430,9 @@ int tr_get_total(const char *key, char *buffer)
         return 0;
 }
 
+/**
+ * @brief trace-replay 관련 동적 할당 정보를 해제합니다.
+ */
 void tr_free(void)
 {
         __tr_free();
