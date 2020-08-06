@@ -33,6 +33,8 @@
 #include <sys/time.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <sys/shm.h>
+#include <sys/sem.h>
 
 #include <flist.h>
 #include <trace_replay.h>
@@ -40,11 +42,11 @@
 
 #define REFRESH_SLEEP 1000000
 
-FILE *result_fp;
 FILE *log_fp;
 unsigned int log_count = 0;
 struct thread_info_t th_info[MAX_THREADS];
 struct trace_info_t traces[MAX_THREADS];
+struct total_results total_results;
 pthread_t threads[MAX_THREADS];
 int qdepth;
 int cnt = 0;
@@ -633,27 +635,29 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                         double mean;
                         double variance;
 
-                        if (i)
-                                fprintf(fp, ",");
-
-                        fprintf(fp, "{\"%d\":{", i);
-                        fprintf(fp, "\"name\":\"%s\",", traces[i].tracename);
+                        sprintf(total_results.results.per_trace[i].name, "%s",
+                                traces[i].tracename);
                         io_stat_dst.execution_time =
                                 io_stat_dst.execution_time / per_thread;
-                        fprintf(fp, "\"exec_time\":%f,",
-                                io_stat_dst.execution_time);
+                        total_results.results.per_trace[i].stats.exec_time =
+                                io_stat_dst.execution_time;
+                        total_results.results.per_trace[i].issynthetic =
+                                traces[i].synthetic;
 
-                        fprintf(fp, "\"synthetic\":{");
                         if (traces[i].synthetic) {
-                                fprintf(fp, "\"working_set_size\":%d,",
-                                        traces[i].working_set_size);
-                                fprintf(fp, "\"utilization\":%d,",
-                                        traces[i].utilization);
-                                fprintf(fp, "\"touched_working_set_size\":%d,",
+                                total_results.results.per_trace[i]
+                                        .synthetic.working_set_size =
+                                        traces[i].working_set_size;
+                                total_results.results.per_trace[i]
+                                        .synthetic.utilization =
+                                        traces[i].utilization;
+                                total_results.results.per_trace[i]
+                                        .synthetic.touched_working_set_size =
                                         traces[i].working_set_size *
-                                                traces[i].utilization / 100);
-                                fprintf(fp, "\"io_size\":%d},",
-                                        traces[i].io_size / KB);
+                                        traces[i].utilization / 100;
+                                total_results.results.per_trace[i]
+                                        .synthetic.io_size =
+                                        traces[i].io_size / KB;
                         }
 
                         mean = (double)io_stat_dst.latency_sum /
@@ -662,56 +666,67 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                         variance = (sum_sqr - io_stat_dst.latency_sum * mean) /
                                    (io_stat_dst.latency_count - 1);
 
-                        fprintf(fp, "\"avg_lat\":%f,", mean);
-                        fprintf(fp, "\"avg_lat_var\":%f,", variance);
-                        fprintf(fp, "\"lat_min\":%f,", io_stat_dst.latency_min);
-                        fprintf(fp, "\"lat_max\":%f,", io_stat_dst.latency_max);
-                        fprintf(fp, "\"iops\":%f,",
+                        total_results.results.per_trace[i].stats.avg_lat = mean;
+                        total_results.results.per_trace[i].stats.avg_lat_var =
+                                variance;
+                        total_results.results.per_trace[i].stats.lat_min =
+                                io_stat_dst.latency_min;
+                        total_results.results.per_trace[i].stats.lat_max =
+                                io_stat_dst.latency_max;
+                        total_results.results.per_trace[i].stats.iops =
                                 io_stat_dst.latency_count /
-                                        io_stat_dst.execution_time);
-                        fprintf(fp, "\"total_bw\":%f,",
+                                io_stat_dst.execution_time;
+
+                        total_results.results.per_trace[i].stats.total_bw =
                                 io_stat_dst.execution_time ?
                                         (double)io_stat_dst.total_bytes / MB /
                                                 io_stat_dst.execution_time :
-                                        0);
-                        fprintf(fp, "\"read_bw\":%f,",
+                                        0;
+
+                        total_results.results.per_trace[i].stats.read_bw =
                                 io_stat_dst.execution_time ?
                                         (double)io_stat_dst.total_rbytes / MB /
                                                 io_stat_dst.execution_time :
-                                        0);
-                        fprintf(fp, "\"write_bw\":%f,",
+                                        0;
+
+                        total_results.results.per_trace[i].stats.write_bw =
                                 io_stat_dst.execution_time ?
                                         (double)io_stat_dst.total_wbytes / MB /
                                                 io_stat_dst.execution_time :
-                                        0);
-                        fprintf(fp, "\"total_traffic\":%f,",
-                                (double)io_stat_dst.total_bytes / MB);
-                        fprintf(fp, "\"read_traffic\":%f,",
-                                (double)io_stat_dst.total_rbytes / MB);
-                        fprintf(fp, "\"write_traffic\":%f,",
-                                (double)io_stat_dst.total_wbytes / MB);
-                        fprintf(fp, "\"read_ratio\":%f,",
+                                        0;
+
+                        total_results.results.per_trace[i].stats.total_traffic =
+                                (double)io_stat_dst.total_bytes / MB;
+                        total_results.results.per_trace[i].stats.read_traffic =
+                                (double)io_stat_dst.total_rbytes / MB;
+                        total_results.results.per_trace[i].stats.write_traffic =
+                                (double)io_stat_dst.total_wbytes / MB;
+                        total_results.results.per_trace[i].stats.read_ratio =
                                 (double)io_stat_dst.total_bytes ?
                                         (double)io_stat_dst.total_wbytes /
                                                 (double)io_stat_dst.total_bytes :
-                                        0);
-                        fprintf(fp, "\"total_avg_req_size\":%f,",
+                                        0;
+
+                        total_results.results.per_trace[i]
+                                .stats.total_avg_req_size =
                                 io_stat_dst.latency_count ?
                                         (double)io_stat_dst.total_bytes /
                                                 io_stat_dst.latency_count / KB :
-                                        0);
-                        fprintf(fp, "\"read_avg_req_size\":%f,",
+                                        0;
+                        total_results.results.per_trace[i]
+                                .stats.read_avg_req_size =
                                 io_stat_dst.latency_count ?
                                         (double)io_stat_dst.total_rbytes /
                                                 io_stat_dst.latency_count / KB :
-                                        0);
-                        fprintf(fp, "\"write_avg_req_size\":%f,",
+                                        0;
+                        total_results.results.per_trace[i]
+                                .stats.write_avg_req_size =
                                 io_stat_dst.latency_count ?
                                         (double)io_stat_dst.total_wbytes /
                                                 io_stat_dst.latency_count / KB :
-                                        0);
-                        fprintf(fp, "\"trace_reset_count\":%d}}",
-                                trace->trace_repeat_count);
+                                        0;
+                        total_results.results.per_trace[i].trace_reset_count =
+                                trace->trace_repeat_count;
                 }
 
                 if (!i) {
@@ -734,6 +749,7 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                 total_stat.cur_wbytes += io_stat_dst.cur_wbytes;
                 total_stat.latency_count += io_stat_dst.latency_count;
                 total_stat.latency_sum += io_stat_dst.latency_sum;
+                total_stat.latency_sum_sqr += io_stat_dst.latency_sum_sqr;
                 total_stat.time_diff += io_stat_dst.time_diff;
                 total_stat.time_diff_cnt += io_stat_dst.time_diff_cnt;
 
@@ -748,64 +764,73 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                         progress_percent = temp_percent;
         }
 
-        if (fp == result_fp)
-                fprintf(result_fp, "],");
-
         if (detail) {
-                fprintf(fp, "\"aggr_result\":{");
-                fprintf(fp, "\"aggr_exec_time\":%f,", execution_time);
-                fprintf(fp,
-                        "\"aggr_lat\":%f,\"aggr_lat_min\":%f,\"aggr_lat_max\":%f,",
-                        total_stat.latency_count ?
-                                (double)total_stat.latency_sum /
-                                        total_stat.latency_count :
-                                0,
-                        total_stat.latency_min, total_stat.latency_max);
-                fprintf(fp, "\"aggr_iops\":%f,",
+                double sum_sqr;
+                double mean;
+                double variance;
+
+                mean = total_stat.latency_count ?
+                               (double)total_stat.latency_sum /
+                                       total_stat.latency_count :
+                               0;
+                sum_sqr = total_stat.latency_sum_sqr;
+                variance = (sum_sqr - total_stat.latency_sum * mean) /
+                           (total_stat.latency_count - 1);
+
+                total_results.results.aggr_result.stats.exec_time =
+                        execution_time;
+                total_results.results.aggr_result.stats.avg_lat = mean;
+                total_results.results.aggr_result.stats.avg_lat_var = variance;
+                total_results.results.aggr_result.stats.lat_min =
+                        total_stat.latency_min;
+                total_results.results.aggr_result.stats.lat_max =
+                        total_stat.latency_max;
+
+                total_results.results.aggr_result.stats.iops =
                         execution_time ? (double)total_stat.latency_count /
                                                  execution_time :
-                                         0);
-                fprintf(fp, "\"aggr_total_bw\":%f,",
+                                         0;
+
+                total_results.results.aggr_result.stats.total_bw =
                         execution_time ? (double)total_stat.total_bytes / MB /
                                                  execution_time :
-                                         0);
-                fprintf(fp, "\"aggr_read_bw\":%f,",
+                                         0;
+                total_results.results.aggr_result.stats.read_bw =
                         execution_time ? (double)total_stat.total_rbytes / MB /
                                                  execution_time :
-                                         0);
-                fprintf(fp, "\"aggr_write_bw\":%f,",
+                                         0;
+                total_results.results.aggr_result.stats.write_bw =
                         execution_time ? (double)total_stat.total_wbytes / MB /
                                                  execution_time :
-                                         0);
-                fprintf(fp, "\"aggr_total_traffic\":%f,",
-                        (double)total_stat.total_bytes / MB);
-                fprintf(fp, "\"aggr_read_traffic\":%f,",
-                        (double)total_stat.total_rbytes / MB);
-                fprintf(fp, "\"aggr_write_traffic\":%f,",
-                        (double)total_stat.total_wbytes / MB);
-                fprintf(fp, "\"aggr_read_ratio\":%f,",
+                                         0;
+
+                total_results.results.aggr_result.stats.total_traffic =
+                        (double)total_stat.total_bytes / MB;
+                total_results.results.aggr_result.stats.read_traffic =
+                        (double)total_stat.total_rbytes / MB;
+                total_results.results.aggr_result.stats.write_traffic =
+                        (double)total_stat.total_wbytes / MB;
+                total_results.results.aggr_result.stats.read_ratio =
                         (double)total_stat.total_wbytes ?
                                 (double)total_stat.total_rbytes /
                                         (double)total_stat.total_wbytes :
-                                0);
+                                0;
 
-                fprintf(fp, "\"aggr_total_avg_req_size\":%f,",
+                total_results.results.aggr_result.stats.total_avg_req_size =
                         total_stat.latency_count ?
                                 (double)total_stat.total_bytes /
                                         total_stat.latency_count / KB :
-                                0);
-                fprintf(fp, "\"aggr_read_avg_req_size\":%f,",
+                                0;
+                total_results.results.aggr_result.stats.read_avg_req_size =
                         total_stat.latency_count ?
                                 (double)total_stat.total_rbytes /
                                         total_stat.latency_count / KB :
-                                0);
-                fprintf(fp, "\"aggr_write_avg_req_size\":%f}}",
+                                0;
+                total_results.results.aggr_result.stats.write_avg_req_size =
                         total_stat.latency_count ?
                                 (double)total_stat.total_wbytes /
                                         total_stat.latency_count / KB :
-                                0);
-
-                fflush(fp);
+                                0;
         } else {
                 double avg_bw, cur_bw;
                 double latency;
@@ -851,7 +876,7 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                 if (total_bytes < total_stat.total_bytes)
                         total_bytes = total_stat.total_bytes;
 
-                server_qkey = ftok(SERVER_KEY_PATHNAME, PROJECT_ID);
+                server_qkey = ftok(MSGQ_KEY_PATHNAME, PROJECT_ID);
                 if (server_qkey < 0) {
                         perror("ftok: server_qkey");
                         goto no_msg;
@@ -950,41 +975,68 @@ int remove_lastchars(FILE *fp, int len)
 void finalize()
 {
         struct realtime_msg rmsg;
-        key_t server_qkey;
-        int server_qid;
+        struct total_results *shm_ptr;
+        struct sembuf asem[1];
+        key_t server_qkey, server_shmkey, server_semkey;
+        int server_qid, server_shmid, signal_sem;
 
         gettimeofday(&tv_end, NULL);
         timeval_subtract(&tv_result, &tv_end, &tv_start);
         execution_time = time_since(&tv_start, &tv_end);
 
-        /* remove last a character '}' */
-        remove_lastchars(result_fp, 1);
+        print_result(nr_trace, nr_thread, stdout, 1);
 
-        fprintf(result_fp, ",\"results\":{\"per_trace\":[");
-        print_result(nr_trace, nr_thread, result_fp, 1);
-        fprintf(result_fp, "}");
-
-        fclose(result_fp);
         fclose(log_fp);
 
-        server_qkey = ftok(SERVER_KEY_PATHNAME, PROJECT_ID);
-        if (server_qkey < 0) {
+        while ((server_qkey = ftok(MSGQ_KEY_PATHNAME, PROJECT_ID)) < 0)
                 perror("ftok: server_qkey");
-                goto no_msg;
-        }
 
-        server_qid = msgget(server_qkey, 0);
-        if (server_qid < 0) {
+        while ((server_qid = msgget(server_qkey, 0)) < 0)
                 perror("msgget: server_qid");
-                goto no_msg;
-        }
 
         rmsg.mtype = 1;
         rmsg.log.type = FIN;
 
-        if (msgsnd(server_qid, &rmsg, sizeof(struct realtime_log), 0) < 0)
+        while (msgsnd(server_qid, &rmsg, sizeof(struct realtime_log), 0) < 0)
                 perror("msgsnd");
 no_msg:
+        server_semkey = ftok(SEM_KEY_PATHNAME, PROJECT_ID);
+        if (server_semkey < 0) {
+                perror("ftok: server_semkey");
+                goto no_shm;
+        }
+        signal_sem = semget(server_semkey, 1, 0);
+        if (signal_sem < 0) {
+                perror("semget: signal_sem");
+                goto no_shm;
+        }
+
+        server_shmkey = ftok(SHM_KEY_PATHNAME, PROJECT_ID);
+        if (server_shmkey < 0) {
+                perror("ftok: server_shmkey");
+                goto no_shm;
+        }
+        server_shmid = shmget(server_shmkey, sizeof(struct total_results), 0);
+        if (server_shmid < 0) {
+                perror("shmget: server_shmid");
+                goto no_shm;
+        }
+        shm_ptr = (struct total_results *)shmat(server_shmid, NULL, 0);
+        if ((long)shm_ptr == -1) {
+                perror("shmat: shm_ptr");
+                goto no_shm;
+        }
+
+        asem[0].sem_num = 0;
+        asem[0].sem_op = 0;
+        asem[0].sem_flg = 0;
+
+        *shm_ptr = total_results;
+
+        asem[0].sem_op = 1;
+        while (semop(signal_sem, asem, 1) < 0)
+                perror("semop: signal_sem");
+no_shm:
         fprintf(stdout, "\n Finalizing Trace Replayer \n");
 }
 
@@ -1285,12 +1337,6 @@ int main(int argc, char **argv)
         if (repeat == 0)
                 repeat = 1;
 
-        result_fp = fopen(argv[ARG_OUTPUT], "w");
-        if (result_fp == NULL) {
-                printf(" open file %s error \n", argv[ARG_OUTPUT]);
-                return -1;
-        }
-
         sprintf(line, "%s.log", argv[ARG_OUTPUT]);
         log_fp = fopen(line, "w");
         if (log_fp == NULL) {
@@ -1298,10 +1344,12 @@ int main(int argc, char **argv)
                 return -1;
         }
 
-        fprintf(result_fp,
-                "{\"config\":{\"qdepth\":%d,\"timeout\":%f,\"nr_trace\":%d,\"nr_thread\":%d,\"per_thread\":%d,\"result_file\":\"%s\",\"traces\":[",
-                qdepth, timeout, nr_trace, nr_thread, per_thread,
-                argv[ARG_OUTPUT]);
+        total_results.config.qdepth = qdepth;
+        total_results.config.timeout = timeout;
+        total_results.config.nr_trace = nr_trace;
+        total_results.config.nr_thread = nr_thread;
+        total_results.config.per_thread = per_thread;
+        sprintf(total_results.config.result_file, "%s", argv[ARG_OUTPUT]);
 
         for (i = 0; i < nr_trace; i++) {
                 struct trace_info_t *trace = &traces[i];
@@ -1482,18 +1530,14 @@ int main(int argc, char **argv)
                         }
                 }
 
-                fprintf(result_fp,
-                        "{\"%d\":{\"start_partition\":%f, \"total_size\":%f, \"start_page\":%llu, \"total_pages\":%llu}}",
-                        (int)i,
-                        (double)trace->start_partition / 1024 / 1024 / 1024,
-                        (double)trace->total_capacity / 1024 / 1024 / 1024,
-                        trace->start_page,
-                        trace->start_page + trace->total_pages);
-
-                if (i != nr_trace - 1)
-                        fprintf(result_fp, ",");
+                total_results.config.traces[i].start_partition =
+                        (double)trace->start_partition / 1024 / 1024 / 1024;
+                total_results.config.traces[i].total_size =
+                        (double)trace->total_capacity / 1024 / 1024 / 1024;
+                total_results.config.traces[i].start_page = trace->start_page;
+                total_results.config.traces[i].total_pages =
+                        trace->start_page + trace->total_pages;
         }
-        fprintf(result_fp, "]}}");
 
         for (i = 0; i < nr_trace; i++)
                 pthread_join(trace_loader_thread[i], NULL);

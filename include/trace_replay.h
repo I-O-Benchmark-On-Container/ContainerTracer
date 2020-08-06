@@ -143,9 +143,11 @@ struct io_job {
         char *buf;
 };
 
-#define SERVER_KEY_PATHNAME "/tmp/trace-replay-msgq"
+#define MSGQ_KEY_PATHNAME "/tmp/trace_replay_msgq"
+#define SHM_KEY_PATHNAME "/tmp/trace_replay_shm"
+#define SEM_KEY_PATHNAME "/tmp/trace_replay_sem"
 #define PROJECT_ID 'M'
-#define QUEUE_PERM 0640
+#define PROJECT_PERM 0640
 
 enum realtime_log_type { TIMEOUT, WANTED_IO_COUNT, NONE, FIN };
 
@@ -163,6 +165,74 @@ struct realtime_log {
 struct realtime_msg {
         long mtype;
         struct realtime_log log;
+};
+
+struct trace {
+        double start_partition; // in GB
+        double total_size; // in GB
+        long long start_page;
+        long long total_pages;
+};
+
+struct config {
+        int qdepth;
+        double timeout;
+        int nr_trace;
+        int nr_thread;
+        int per_thread;
+        char result_file[201];
+        struct trace traces[MAX_THREADS];
+};
+
+struct synthetic {
+        int working_set_size; // in MB
+        int utilization; // % Percent
+        int touched_working_set_size; // in MB
+        int io_size; // in KB
+};
+
+struct trace_stat {
+        double exec_time;
+        double avg_lat;
+        double avg_lat_var;
+        double lat_min;
+        double lat_max;
+        double iops;
+        double total_bw; // MB/s
+        double read_bw; // MB/s
+        double write_bw; // MB/s
+        double total_traffic; // in MB
+        double read_traffic; // in MB
+        double write_traffic; // in MB
+        double read_ratio; // % Percent
+        double total_avg_req_size; // in KB
+        double read_avg_req_size; // in KB
+        double write_avg_req_size; // in KB
+};
+
+struct trace_result {
+        char name[STR_SIZE];
+
+        int issynthetic;
+        struct synthetic synthetic;
+
+        struct trace_stat stats;
+
+        int trace_reset_count;
+};
+
+struct aggr_result {
+        struct trace_stat stats;
+};
+
+struct result {
+        struct trace_result per_trace[MAX_THREADS];
+        struct aggr_result aggr_result;
+};
+
+struct total_results {
+        struct config config;
+        struct result results;
 };
 
 typedef char __s8;
