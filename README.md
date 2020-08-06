@@ -71,6 +71,7 @@ black 포맷팅을 진행한 후에 flake8 검사를 실시한 후에 문제가 
 
 trace-replay나 runner의 경우에 반드시 아래 절차에 따라서 수행한 후에 PR을 진행해야 합니다.
 
-1. `scons test`를 반드시 수행한 후에 `build/log` 또는 출력에서 발생하는 모든 내용은 오류를 발생 시켜서는 안됩니다. 단, 경고의 경우에는 PR을 올려도 되나 반드시 경고 내용을 함께 동봉해주시길 바랍니다.
+1. `scons test`를 반드시 수행한 후에 `build/log` 또는 출력에서 발생하는 모든 치명적인 오류는 반드시 수정되어야 합니다.
+2. 프로젝트 최상위 폴더에서 `valgrind --leak-check=full --show-leak-kinds=all ./build/release/<PROGRAM>`을 수행하여 메모리 누수를 확인하셔야 합니다.
 
 [clang-format](https://clang.llvm.org/docs/ClangFormat.html)은 `pip install clang-format`으로 설치할 수 있고, [cppcheck](http://cppcheck.sourceforge.net/)의 경우에는 `sudo apt install cppcheck`를 통해 설치 가능합니다.
