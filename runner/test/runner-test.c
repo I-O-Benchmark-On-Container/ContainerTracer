@@ -1,6 +1,11 @@
+/**< system header */
 #include <stdlib.h>
-#include <jemalloc/jemalloc.h>
 #include <unity.h>
+
+/**< external header */
+#include <jemalloc/jemalloc.h>
+
+/**< user header */
 #include <generic.h>
 #include <runner.h>
 
@@ -17,7 +22,7 @@ void setUp(void)
 					\
 				    \"prefix_cgroup_name\": \"tester.trace.\", \
 					\"scheduler\": \"bfq\", \
-					\"task_option\": [ {\"name\": \"cgroup-1\" , \"weight\":100}, {\"name\": \"cgroup-2\" ,\"weight\":250}, {\"name\": \"cgroup-3\" ,\"weight\":500}, {\"name\": \"cgroup-4\" ,\"weight\":1000}],\
+					\"task_option\": [ {\"cgroup_id\": \"cgroup-1\" , \"weight\":100, \"trace_data_path\":\"./sample/sample1.dat\"}, {\"cgroup_id\": \"cgroup-2\" ,\"weight\":250, \"trace_data_path\":\"./sample/sample2.dat\"}, {\"cgroup_id\": \"cgroup-3\" ,\"weight\":500, \"trace_data_path\":\"./sample/sample1.dat\"}, {\"cgroup_id\": \"cgroup-4\" ,\"weight\":1000, \"trace_data_path\":\"./sample/sample2.dat\"}],\
 					} \
 				}";
         const struct runner_config *config = NULL;

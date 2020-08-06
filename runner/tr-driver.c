@@ -5,42 +5,55 @@
  * @version 0.1
  * @date 2020-08-05
  */
+
+/**< system header */
 #include <stdlib.h>
-#include <jemalloc/jemalloc.h>
 #include <errno.h>
 #include <log.h>
-#include <json.h>
 #include <search.h>
 #include <assert.h>
 #include <unistd.h>
-
-#include <generic.h>
-#include <runner.h>
-#include <tr-driver.h>
-
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/sem.h>
+
+/**< external header */
+#include <json.h>
+#include <jemalloc/jemalloc.h>
+
+/**< user header */
+#include <generic.h>
+#include <runner.h>
+#include <tr-driver.h>
+#include <sync.h>
 
 static const char *tr_valid_scheduler[] = {
         "none",
         "kyber",
         "bfq",
         NULL,
-};
+}; /**< 현재 드라이버에서 사용 가능한 스케쥴러가 들어갑니다. */
 
-static struct tr_info *info_head = NULL;
+static char *global_program_path =
+        NULL; /**< trace-replay 실행 파일의 경로가 들어갑니다. */
+static struct tr_info *global_info_head = NULL;
 
 static void __tr_free(void)
 {
-        while (info_head != NULL) {
-                struct tr_info *next = info_head->next;
-                pr_info(INFO, "Delete target %p\n", info_head);
-                free(info_head);
-                info_head = next;
+        if (global_program_path != NULL) {
+                free(global_program_path);
+                global_program_path = NULL;
         }
-        pr_info(INFO, "Do trace-replay free success ==> %p\n", info_head);
+
+        while (global_info_head != NULL) {
+                struct tr_info *next = global_info_head->next;
+                pr_info(INFO, "Delete target %p\n", global_info_head);
+                free(global_info_head);
+                global_info_head = next;
+        }
+        pr_info(INFO, "Do trace-replay free success ==> %p\n",
+                global_info_head);
 }
 
 static int tr_info_int_value_set(struct json_object *setting, const char *key,
@@ -68,6 +81,7 @@ static int tr_info_str_value_set(struct json_object *setting, const char *key,
                 return -EINVAL;
         }
         strcpy(member, json_object_get_string(tmp));
+        generic_strip_string(member, '\"');
         return 0;
 }
 
@@ -127,12 +141,19 @@ static int __tr_info_init(struct json_object *setting, int index,
                 goto exception;
         }
 
-        ret = tr_info_str_value_set(tmp, "name", info->name, TR_ERROR_PRINT);
+        ret = tr_info_str_value_set(tmp, "trace_data_path",
+                                    info->trace_data_path, TR_ERROR_PRINT);
         if (ret != 0) {
                 goto exception;
         }
 
-        item.key = info->name;
+        ret = tr_info_str_value_set(tmp, "cgroup_id", info->cgroup_id,
+                                    TR_ERROR_PRINT);
+        if (ret != 0) {
+                goto exception;
+        }
+
+        item.key = info->cgroup_id;
         if (NULL != (result = hsearch(item, FIND))) {
                 pr_info(ERROR, "Duplicate c-group name detected (name: %s)\n",
                         result->key);
@@ -140,7 +161,7 @@ static int __tr_info_init(struct json_object *setting, int index,
                 goto exception;
         }
 
-        item.key = info->name;
+        item.key = info->cgroup_id;
         item.data = info;
         hsearch(item, ENTER);
 
@@ -156,8 +177,11 @@ static struct tr_info *tr_info_init(struct json_object *setting, int index)
         info = (struct tr_info *)malloc(sizeof(struct tr_info));
         if (!info) {
                 pr_info(ERROR, "Memory allocation fail (name: %s)\n", "info");
+                ret = -ENOMEM;
                 goto exception;
         }
+
+        memset(info, 0, sizeof(struct tr_info));
 
         ret |= tr_info_int_value_set(setting, "time", &info->time,
                                      TR_ERROR_PRINT);
@@ -209,10 +233,7 @@ int tr_init(void *object)
         int ret = 0, i = 0;
         int nr_tasks = -1;
 
-        char trace_replay_path[PATH_MAX];
         char cwd[PATH_MAX];
-
-        trace_replay_path[0] = '\0';
 
         getcwd(cwd, PATH_MAX);
         pr_info(INFO, "Current directory: %s\n", cwd);
@@ -227,14 +248,22 @@ int tr_init(void *object)
         assert(op->get_total != NULL);
         assert(op->free != NULL);
 
+        global_program_path = (char *)malloc(sizeof(char) * PATH_MAX);
+        if (!global_program_path) {
+                pr_info(ERROR, "Memory allocation fail (name: %s)\n",
+                        "global_program_path");
+                ret = -ENOMEM;
+                goto exception;
+        }
+
         if (!json_object_object_get_ex(setting, "trace_replay_path", &tmp)) {
                 pr_info(ERROR, "Not exist error (key: %s)\n",
                         "trace_replay_path");
                 ret = -EACCES;
                 goto exception;
         }
-        strcpy(trace_replay_path, json_object_get_string(tmp));
-        pr_info(INFO, "Trace-replay path: %s\n", trace_replay_path);
+        strcpy(global_program_path, json_object_get_string(tmp));
+        pr_info(INFO, "Trace-replay path: %s\n", global_program_path);
 
         if (!json_object_object_get_ex(setting, "nr_tasks", &tmp)) {
                 pr_info(ERROR, "Not exist error (key: %s)\n", "nr_tasks");
@@ -258,8 +287,8 @@ int tr_init(void *object)
                         goto exception;
                 }
 
-                if (info_head == NULL) { /**< 초기화 과정 */
-                        prev = info_head = current;
+                if (global_info_head == NULL) { /**< 초기화 과정 */
+                        prev = global_info_head = current;
                 } else {
                         prev->next = current;
                         prev = current;
@@ -272,8 +301,36 @@ exception:
         return ret;
 }
 
+static void tr_debug(const struct tr_info *info)
+{
+        pr_info(INFO,
+                "\n"
+                "\t\t[[ current %p ]]\n"
+                "\t\ttime: %u\n"
+                "\t\tq_depth: %u\n"
+                "\t\tnr_thread: %u\n"
+                "\t\tweight: %u\n"
+                "\t\tqid: %d\n"
+                "\t\tshmid: %d\n"
+                "\t\tsemid: %d\n"
+                "\t\tprefix_cgroup_name: %s\n"
+                "\t\tscheduler: %s\n"
+                "\t\tname: %s\n"
+                "\t\ttrace_data_path: %s\n"
+                "\t\tnext: %p\n",
+                info, info->time, info->q_depth, info->nr_thread, info->weight,
+                info->qid, info->shmid, info->semid, info->prefix_cgroup_name,
+                info->scheduler, info->cgroup_id, info->trace_data_path,
+                info->next);
+}
+
 int tr_runner(void)
 {
+        const struct tr_info *current = global_info_head;
+        while (current != NULL) {
+                tr_debug(current);
+                current = current->next;
+        }
         return 0;
 }
 

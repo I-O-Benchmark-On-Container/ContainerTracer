@@ -19,6 +19,7 @@ int TELL_WAIT(void)
 
 int TELL_PARENT(pid_t pid)
 {
+        (void)pid;
         if (write(pfd2[1], "c", 1) != 1) {
                 fprintf(stderr, "[%s] write error...\n", __func__);
                 return -EIO;
@@ -45,6 +46,7 @@ int WAIT_PARENT(void)
 
 int TELL_CHILD(pid_t pid)
 {
+        (void)pid;
         if (write(pfd1[1], "p", 1) != 1) {
                 fprintf(stderr, "[%s] write error...\n", __func__);
                 return -EIO;
