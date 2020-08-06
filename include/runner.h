@@ -10,22 +10,27 @@
 
 #include <linux/limits.h>
 #include <json.h>
+#include <generic.h>
 
-struct runner_op {
-        int (*runner)(struct json_object *);
-        int (*reader)(char *buffer);
-        void (*free)(void);
+enum { RUNNER_FREE_ALL_MASK = 0xFFFF,
+};
+
+enum { RUNNER_FREE_ALL =
+               0xFFFF, /**< 동적으로 할당된 모든 설정 내역을 지울 때 사용합니다. */
 };
 
 struct runner_config {
         char driver[PATH_MAX];
-        struct json_object *driver_json_setting;
-        struct runner_op op;
+        struct generic_driver_op op;
+        struct json_object *setting;
 };
 
 int runner_init(const char *json_str);
-int runner_run(struct json_object *);
-void runner_reader(char *buffer);
+int runner_run(void);
+char *runner_get_interval_result(void);
+char *runner_get_total_result(void);
+void runner_put_result_free(char *buffer);
+void runner_free(void);
 const struct runner_config *runner_get_global_config(void);
 
 #endif

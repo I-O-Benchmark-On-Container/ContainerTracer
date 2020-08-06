@@ -6,6 +6,7 @@
  * @date 2020-08-04
  */
 #include <stdlib.h>
+#include <jemalloc/jemalloc.h>
 #include <string.h>
 #include <errno.h>
 #include <log.h>
@@ -14,20 +15,44 @@
 #include <linux/limits.h>
 
 #include <generic.h>
+#include <runner.h>
 
-static struct runner_config global_config;
+static struct runner_config *global_config = NULL;
 
-static void runner_strip_string(char *str, char ch)
+/**
+ * @brief global_runner가 가진 멤버 중 동적할당이 되어 있는 데이터를 반환합니다.
+ *
+ * @param flags global_runner의 멤버 중 지우고 싶은 멤버를 선택할 수 있습니다.
+ */
+static void __runner_free(const int flags)
 {
-        int i = 0, j = 0;
-        while (i < PATH_MAX && str[i] != '\0') {
-                i++;
-                if (str[i] == ch) {
-                        continue;
-                }
-                str[j] = str[i];
-                j++;
+        if (global_config == NULL) {
+                pr_info(ERROR, "invalid global_config location: %p\n",
+                        global_config);
+                return;
         }
+
+        if ((flags & RUNNER_FREE_ALL_MASK) != RUNNER_FREE_ALL) {
+                pr_info(WARNING,
+                        "Nothing occurred in this functions... (flags: 0x%X)\n",
+                        flags);
+                return;
+        }
+
+        assert(global_config->op.free != NULL);
+        (global_config->op.free)();
+
+        if (global_config->setting != NULL) {
+                json_object_put(global_config->setting);
+                global_config->setting = NULL;
+                pr_info(INFO,
+                        "setting deallcated success: expected (nil) ==> %p\n",
+                        global_config->setting);
+        }
+        global_config->driver[0] = '\0';
+
+        free(global_config);
+        global_config = NULL;
 }
 
 /**
@@ -44,57 +69,86 @@ int runner_init(const char *json_str)
         struct json_object *json_obj, *tmp;
         int ret = 0;
         assert(json_str != NULL);
+
+        global_config =
+                (struct runner_config *)malloc(sizeof(struct runner_config));
+        assert(global_config != NULL);
+
+        memset(global_config, 0, sizeof(struct runner_config));
+
+        if (global_config->setting != NULL) {
+                json_object_put(global_config->setting);
+        }
         json_obj = json_tokener_parse(json_str);
 
         if (!json_object_object_get_ex(json_obj, "driver", &tmp)) {
-                pr_info(ERROR, "Not exist error (key: %s)", "driver");
+                pr_info(ERROR, "Not exist error (key: %s)\n", "driver");
                 ret = -EACCES;
-                goto exit;
+                goto exception;
         };
-        strcpy(global_config.driver,
+        strcpy(global_config->driver,
                json_object_to_json_string_ext(tmp, JSON_C_TO_STRING_PLAIN));
-        runner_strip_string(global_config.driver, '\"');
-        pr_info(INFO, "driver ==> %s\n", global_config.driver);
+        generic_strip_string(global_config->driver, '\"');
+        pr_info(INFO, "driver ==> %s\n", global_config->driver);
         if (!json_object_object_get_ex(json_obj, "setting", &tmp)) {
-                pr_info(ERROR, "Not exist error (key: %s)", "setting");
+                pr_info(ERROR, "Not exist error (key: %s)\n", "setting");
                 ret = -EACCES;
-                goto exit;
+                goto exception;
         };
-        global_config.driver_json_setting = tmp;
-        if (!global_config.driver_json_setting) {
-                pr_info(ERROR, "global_config.driver_json_setting is %p\n",
-                        (void *)global_config.driver_json_setting);
-                ret = -EINVAL;
-                goto exit;
-        }
 
-        global_config.op.reader = NULL;
-        global_config.op.runner = NULL;
-        global_config.op.free = NULL;
+        global_config->setting = tmp;
 
-        ret = generic_driver_init(global_config.driver, &global_config.op);
+        ret = generic_driver_init(global_config->driver, global_config);
         if (ret < 0) {
                 pr_info(ERROR, "Initialize failed... (errno: %d)\n", ret);
-                goto exit;
+                goto exception;
         }
 
-        assert(global_config.op.reader != NULL);
-        assert(global_config.op.runner != NULL);
-        assert(global_config.op.free != NULL);
-
         pr_info(INFO, "Successfully binding driver: %s\n",
-                global_config.driver);
-
-exit:
+                global_config->driver);
+        if (json_obj != NULL) {
+                json_object_put(json_obj);
+                json_obj = NULL;
+        }
+        global_config->setting = NULL;
         return ret;
+exception:
+        if (json_obj != NULL) {
+                json_object_put(json_obj);
+                json_obj = NULL;
+        }
+        global_config->setting = NULL;
+        __runner_free(RUNNER_FREE_ALL);
+        return ret;
+}
+
+/**
+ * @brief 실제로 프로그램을 각각의 프로세스와 cgroup에 할당을 한 후에 실행을 하는 부분에 해당합니다.
+ *
+ * @return driver에서의 수행한 결과가 반환됩니다. 정상 종료의 경우에는 0이 반환됩니다.
+ */
+int runner_run(void)
+{
+        return (global_config->op.runner)();
+}
+
+/**
+ * @brief __runner_free의 wrapping 함수에 해당하는 함수입니다.
+ */
+void runner_free(void)
+{
+        int flags = RUNNER_FREE_ALL;
+        __runner_free(flags);
+        pr_info(INFO, "runner free success (flags: 0x%X)\n", flags);
 }
 
 /**
  * @brief global_config의 주소를 반환하여 외부에서 global config
  *
  * @return global_config의 내용의 변경이 불가능한 상수 포인터를 반환합니다.
+ * @note 이는 굉장히 제한적인 디버깅과 같은 환경에서만 사용해야 합니다!!
  */
 const struct runner_config *runner_get_global_config(void)
 {
-        return &global_config;
+        return global_config;
 }

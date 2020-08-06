@@ -25,6 +25,7 @@ matrix:
               - cppcheck
               - libaio-dev
               - libjson-c-dev
+              - libjemalloc-dev
       before_script:
       - pip3 install scons-compiledb
       - pip3 install scons
