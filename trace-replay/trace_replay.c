@@ -1003,7 +1003,7 @@ void finalize()
 
         while (msgsnd(server_qid, &rmsg, sizeof(struct realtime_log), 0) < 0)
                 perror("msgsnd");
-no_msg:
+
         server_semkey = ftok(SEM_KEY_PATHNAME, PROJECT_ID);
         if (server_semkey < 0) {
                 perror("ftok: server_semkey");
