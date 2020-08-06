@@ -20,6 +20,7 @@
 #include <json.h>
 
 /**< user header */
+#include <log.h>
 
 enum { TRACE_REPLAY_DRIVER = 0,
 };
@@ -45,13 +46,12 @@ int generic_driver_init(const char *name, void *object);
 static inline void generic_strip_string(char *str, char ch)
 {
         int i = 0, j = 0;
-        while (i < PATH_MAX && str[i] != '\0') {
-                i++;
+        while (i < PATH_MAX && str[j] != '\0') {
                 if (str[i] == ch) {
+                        i++;
                         continue;
                 }
-                str[j] = str[i];
-                j++;
+                str[j++] = str[i++];
         }
 }
 

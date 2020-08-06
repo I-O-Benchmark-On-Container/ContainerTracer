@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <log.h>
 #include <assert.h>
 #include <linux/limits.h>
 
@@ -21,6 +20,7 @@
 /**< user header */
 #include <generic.h>
 #include <runner.h>
+#include <log.h>
 
 static struct runner_config *global_config = NULL;
 
@@ -44,8 +44,9 @@ static void __runner_free(const int flags)
                 return;
         }
 
-        assert(global_config->op.free != NULL);
-        (global_config->op.free)();
+        if (global_config->op.free != NULL) {
+                (global_config->op.free)();
+        }
 
         if (global_config->setting != NULL) {
                 json_object_put(global_config->setting);
