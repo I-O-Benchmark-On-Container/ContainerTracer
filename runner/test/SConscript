@@ -7,7 +7,7 @@ CURRENT_PROJECT = "runner-test"
 current_env = env.Clone()
 current_env.Append(CPPPATH=[env["INCLUDE_LOCATION"]])
 current_env.Append(LIBS=["json-c"])
-current_env.Append(CFLAGS=["-I/usr/local/include/json-c/"])
+current_env.Append(CFLAGS=["-I/usr/include/json-c/"])
 object = current_env.Object(Glob("*.c"))
 
 exclude_files = [str(Dir(env["RUNNER_LOCATION"])) + os.sep + "main.o"]
