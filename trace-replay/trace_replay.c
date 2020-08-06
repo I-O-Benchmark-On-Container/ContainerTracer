@@ -765,9 +765,6 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                         progress_percent = temp_percent;
         }
 
-        if (fp == result_fp)
-                fprintf(result_fp, "],");
-
         if (detail) {
                 double sum_sqr;
                 double mean;
@@ -1542,7 +1539,6 @@ int main(int argc, char **argv)
                 total_results.config.traces[i].total_pages =
                         trace->start_page + trace->total_pages;
         }
-        fprintf(result_fp, "]}}");
 
         for (i = 0; i < nr_trace; i++)
                 pthread_join(trace_loader_thread[i], NULL);
