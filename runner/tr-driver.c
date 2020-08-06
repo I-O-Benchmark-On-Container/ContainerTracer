@@ -195,6 +195,15 @@ static int __tr_info_init(struct json_object *setting, int index,
                 goto exception;
         }
 
+        if ((ret = access(info->trace_data_path, F_OK)) == -1) {
+                pr_info(ERROR, "Trace data file not exist: %s\n",
+                        info->trace_data_path);
+                goto exception;
+        } else {
+                pr_info(INFO, "Trace data file exist: %s\n",
+                        info->trace_data_path);
+        }
+
         item.key = info->cgroup_id;
         if (NULL != (result = hsearch(item, FIND))) {
                 pr_info(ERROR, "Duplicate c-group name detected (name: %s)\n",
@@ -290,11 +299,6 @@ int tr_init(void *object)
         int ret = 0, i = 0;
         int nr_tasks = -1;
 
-        char cwd[PATH_MAX];
-
-        getcwd(cwd, PATH_MAX);
-        pr_info(INFO, "Current directory: %s\n", cwd);
-
         op->runner = tr_runner;
         op->get_interval = tr_get_interval;
         op->get_total = tr_get_total;
@@ -321,6 +325,13 @@ int tr_init(void *object)
         }
         strcpy(global_program_path, json_object_get_string(tmp));
         pr_info(INFO, "Trace-replay path: %s\n", global_program_path);
+        if ((ret = access(global_program_path, F_OK)) == -1) {
+                pr_info(ERROR, "trace-replay not exist: %s\n",
+                        global_program_path);
+                goto exception;
+        } else {
+                pr_info(INFO, "trace-replay exist: %s\n", global_program_path);
+        }
 
         if (!json_object_object_get_ex(setting, "nr_tasks", &tmp)) {
                 pr_info(ERROR, "Not exist error (key: %s)\n", "nr_tasks");
@@ -368,6 +379,7 @@ static void tr_debug(const struct tr_info *info)
         pr_info(INFO,
                 "\n"
                 "\t\t[[ current %p ]]\n"
+                "\t\tpid: %d\n"
                 "\t\ttime: %u\n"
                 "\t\tq_depth: %u\n"
                 "\t\tnr_thread: %u\n"
@@ -380,10 +392,10 @@ static void tr_debug(const struct tr_info *info)
                 "\t\tname: %s\n"
                 "\t\ttrace_data_path: %s\n"
                 "\t\tnext: %p\n",
-                info, info->time, info->q_depth, info->nr_thread, info->weight,
-                info->qid, info->shmid, info->semid, info->prefix_cgroup_name,
-                info->scheduler, info->cgroup_id, info->trace_data_path,
-                info->next);
+                info, info->pid, info->time, info->q_depth, info->nr_thread,
+                info->weight, info->qid, info->shmid, info->semid,
+                info->prefix_cgroup_name, info->scheduler, info->cgroup_id,
+                info->trace_data_path, info->next);
 }
 
 /**
