@@ -32,7 +32,6 @@ matrix:
       - pip3 install clang-format 
       script:
       - scons
-      - scons test
 
 notifications:
   email:

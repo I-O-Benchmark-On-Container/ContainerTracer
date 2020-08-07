@@ -52,7 +52,7 @@ sudo apt install cppcheck libaio-dev libjson-c-dev
 그리고 아래의 명령을 통해서 빌드를 수행합니다.
 
 ```bash
-scons && scons test
+scons
 ```
 
 ## 사용 라이브러리
