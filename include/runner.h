@@ -10,12 +10,15 @@
 
 /**< system header */
 #include <linux/limits.h>
+#include <sys/user.h>
 
 /**< external header */
 #include <json.h>
 
 /**< user header */
 #include <generic.h>
+
+#define RESULT_STRING_SIZE (PAGE_SIZE)
 
 enum { RUNNER_FREE_ALL_MASK = 0xFFFF,
 };
@@ -32,9 +35,9 @@ struct runner_config {
 
 int runner_init(const char *json_str);
 int runner_run(void);
-char *runner_get_interval_result(void);
-char *runner_get_total_result(void);
-void runner_put_result_free(char *buffer);
+char *runner_get_interval_result(const char *key);
+char *runner_get_total_result(const char *key);
+void runner_put_result_string(char *buffer);
 void runner_free(void);
 const struct runner_config *runner_get_global_config(void);
 

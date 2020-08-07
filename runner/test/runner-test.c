@@ -31,6 +31,7 @@ void setUp(void)
         TEST_ASSERT_EQUAL_STRING(config->driver, "trace-replay");
         TEST_ASSERT_EQUAL(TRACE_REPLAY_DRIVER,
                           get_generic_driver_index(config->driver));
+        TEST_ASSERT_EQUAL(0, runner_run());
 }
 
 void tearDown(void)
@@ -38,16 +39,28 @@ void tearDown(void)
         runner_free();
 }
 
-void test(void)
+void test_interval_result(void)
 {
-        TEST_ASSERT_EQUAL(0, runner_run());
+        char *buffer = runner_get_interval_result("cgroup-2");
+        TEST_ASSERT_NOT_NULL(buffer);
+        TEST_ASSERT_EQUAL_STRING(buffer, "interval ==> cgroup-2");
+        runner_put_result_string(buffer);
+}
+
+void test_total_result(void)
+{
+        char *buffer = runner_get_total_result("cgroup-2");
+        TEST_ASSERT_NOT_NULL(buffer);
+        TEST_ASSERT_EQUAL_STRING(buffer, "total ==> cgroup-2");
+        runner_put_result_string(buffer);
 }
 
 int main(void)
 {
         UNITY_BEGIN();
 
-        RUN_TEST(test);
+        RUN_TEST(test_interval_result);
+        RUN_TEST(test_total_result);
 
         return UNITY_END();
 }

@@ -309,6 +309,12 @@ int tr_init(void *object)
         assert(op->get_total != NULL);
         assert(op->free != NULL);
 
+        if (getuid() != 0) {
+                pr_info(ERROR,
+                        "You have to run this program with superuser privilege\n");
+                return -EINVAL;
+        }
+
         global_program_path = (char *)malloc(sizeof(char) * PATH_MAX);
         if (!global_program_path) {
                 pr_info(ERROR, "Memory allocation fail (name: %s)\n",
@@ -423,7 +429,7 @@ int tr_runner(void)
  */
 int tr_get_interval(const char *key, char *buffer)
 {
-        (void)key, (void)buffer;
+        sprintf(buffer, "interval: %s", key);
         return 0;
 }
 
@@ -438,7 +444,7 @@ int tr_get_interval(const char *key, char *buffer)
 
 int tr_get_total(const char *key, char *buffer)
 {
-        (void)key, (void)buffer;
+        sprintf(buffer, "total: %s", key);
         return 0;
 }
 

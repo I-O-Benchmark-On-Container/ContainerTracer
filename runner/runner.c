@@ -11,6 +11,7 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <unistd.h>
 #include <linux/limits.h>
 
 /**< external header */
@@ -146,6 +147,73 @@ void runner_free(void)
         int flags = RUNNER_FREE_ALL;
         __runner_free(flags);
         pr_info(INFO, "runner free success (flags: 0x%X)\n", flags);
+}
+
+static int runner_get_result_string(char **buffer)
+{
+        *buffer = (char *)malloc(RESULT_STRING_SIZE);
+        if (!*buffer) {
+                pr_info(WARNING, "Memory allocation failed. (%s)\n", "buffer");
+                return -EINVAL;
+        }
+        return 0;
+}
+
+void runner_put_result_string(char *buffer)
+{
+        if (buffer != NULL) {
+                free(buffer);
+        }
+}
+
+char *runner_get_interval_result(const char *key)
+{
+        char *buffer = NULL;
+        int ret = 0;
+
+        ret = runner_get_result_string(&buffer);
+        if (ret) {
+                goto exception;
+        }
+
+        ret = (global_config->op.get_interval)(key, buffer);
+        if (ret) {
+                goto exception;
+        }
+
+        pr_info(INFO, "Current buffer(key: %s) contents in %p ==> \"%s\"\n",
+                key, buffer, buffer);
+
+        return buffer;
+exception:
+        runner_put_result_string(buffer);
+        buffer = NULL;
+        return buffer;
+}
+
+char *runner_get_total_result(const char *key)
+{
+        char *buffer = NULL;
+        int ret = 0;
+
+        ret = runner_get_result_string(&buffer);
+        if (ret) {
+                goto exception;
+        }
+
+        ret = (global_config->op.get_total)(key, buffer);
+        if (ret) {
+                goto exception;
+        }
+
+        pr_info(INFO, "Current buffer(key: %s) contents ==> \"%s\"\n", key,
+                buffer);
+
+        return buffer;
+exception:
+        runner_put_result_string(buffer);
+        buffer = NULL;
+        return buffer;
 }
 
 /**
