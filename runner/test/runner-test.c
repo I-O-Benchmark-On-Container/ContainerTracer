@@ -43,7 +43,7 @@ void test_interval_result(void)
 {
         char *buffer = runner_get_interval_result("cgroup-2");
         TEST_ASSERT_NOT_NULL(buffer);
-        TEST_ASSERT_EQUAL_STRING(buffer, "interval ==> cgroup-2");
+        TEST_ASSERT_EQUAL_STRING(buffer, "interval: cgroup-2");
         runner_put_result_string(buffer);
 }
 
@@ -51,7 +51,7 @@ void test_total_result(void)
 {
         char *buffer = runner_get_total_result("cgroup-2");
         TEST_ASSERT_NOT_NULL(buffer);
-        TEST_ASSERT_EQUAL_STRING(buffer, "total ==> cgroup-2");
+        TEST_ASSERT_EQUAL_STRING(buffer, "total: cgroup-2");
         runner_put_result_string(buffer);
 }
 

@@ -429,7 +429,9 @@ int tr_runner(void)
  */
 int tr_get_interval(const char *key, char *buffer)
 {
+        srand(time(NULL));
         sprintf(buffer, "interval: %s", key);
+        sleep(rand() % 3 + 1);
         return 0;
 }
 
