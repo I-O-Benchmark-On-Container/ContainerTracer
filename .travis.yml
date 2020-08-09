@@ -25,12 +25,13 @@ matrix:
               - cppcheck
               - libaio-dev
               - libjson-c-dev
+              - libjemalloc-dev
       before_script:
       - pip3 install scons-compiledb
       - pip3 install scons
       - pip3 install clang-format 
       script:
-      - scons test
+      - scons
 
 notifications:
   email:
