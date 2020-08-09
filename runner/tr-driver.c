@@ -671,8 +671,7 @@ static void tr_realtime_serializer(const struct tr_info *info,
                                json_object_new_double(log->time_diff));
         json_object_object_add(object, "data", data);
 
-        strncpy(buffer, json_object_to_json_string(object),
-                INTERVAL_RESULT_STRING_SIZE);
+        strcpy(buffer, json_object_to_json_string(object));
 
         json_object_put(object);
 }
@@ -976,8 +975,7 @@ static void tr_total_serializer(const struct tr_info *info,
         json_object_object_add(total_results, "results", results);
         json_object_object_add(object, "data", total_results);
 
-        strncpy(buffer, json_object_to_json_string(object),
-                TOTAL_RESULT_STRING_SIZE);
+        strcpy(buffer, json_object_to_json_string(object));
 
         json_object_put(object);
 
@@ -1002,7 +1000,7 @@ int tr_get_interval(const char *key, char *buffer)
 
         struct tr_info *info = NULL;
 
-        strncpy(buffer, key, INTERVAL_RESULT_STRING_SIZE);
+        strcpy(buffer, key);
 
         query.key = buffer;
         if (NULL == (result = hsearch(query, FIND))) {
@@ -1034,7 +1032,7 @@ int tr_get_total(const char *key, char *buffer)
 
         struct tr_info *info = NULL;
 
-        strncpy(buffer, key, TOTAL_RESULT_STRING_SIZE);
+        strcpy(buffer, key);
 
         query.key = buffer;
         if (NULL == (result = hsearch(query, FIND))) {
