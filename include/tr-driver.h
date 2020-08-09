@@ -19,6 +19,10 @@
 /**< user header */
 #include <generic.h>
 
+// #define TR_DEBUG
+#define tr_info_list_traverse(ptr, head)                                       \
+        for (ptr = head; ptr != NULL; ptr = current->next)
+
 enum { TR_ERROR_PRINT, /**< json의 에러를 사용자에게 노출되도록 합니다.*/
        TR_PRINT_NONE, /**< json의 에러를 사용자에게 노출되지 않도록 합니다. */
 };
@@ -27,6 +31,7 @@ enum { TR_ERROR_PRINT, /**< json의 에러를 사용자에게 노출되도록 �
  * @brief 실제 각각의 프로세스에 대한 정보가 들어가는 구조체에 해당합니다.
  */
 struct tr_info {
+        pid_t ppid;
         pid_t pid; /**< fork로 자식 프로세스에서 trace-replay를 수행했을 때 해당 자식의 pid에 해당합니다. */
 
         unsigned int time;
@@ -41,11 +46,14 @@ struct tr_info {
         int semid; /**< semaphore ID */
 
         char prefix_cgroup_name[NAME_MAX];
+        char device[NAME_MAX];
         char scheduler[NAME_MAX];
         char cgroup_id
                 [NAME_MAX]; /**< 현재 cgroup의 이름입니다. 이 값은 고유값이어야 합니다. */
+        char trace_replay_path[PATH_MAX];
         char trace_data_path[PATH_MAX];
 
+        void *global_config;
         struct tr_info *next;
 };
 

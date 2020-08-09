@@ -18,9 +18,11 @@
 /**< user header */
 #include <generic.h>
 
-#define RESULT_STRING_SIZE (PAGE_SIZE)
+#define INTERVAL_RESULT_STRING_SIZE (PAGE_SIZE) /**< 4KB 예상 */
+#define TOTAL_RESULT_STRING_SIZE (PAGE_SIZE * PAGE_SIZE) /**< 16MB 예상 */
 
 enum { RUNNER_FREE_ALL_MASK = 0xFFFF,
+       RUNNER_FREE_DRIVER_MASK = 0x0001,
 };
 
 enum { RUNNER_FREE_ALL =
@@ -39,6 +41,7 @@ char *runner_get_interval_result(const char *key);
 char *runner_get_total_result(const char *key);
 void runner_put_result_string(char *buffer);
 void runner_free(void);
+void runner_config_free(struct runner_config *config, const int flags);
 const struct runner_config *runner_get_global_config(void);
 
 #endif

@@ -20,9 +20,12 @@
 
 #include <stdio.h>
 #include <libaio.h>
-#include "flist.h"
+#include <flist.h>
 
 #define USE_MAINWORKER 0
+
+#define LINUX 0
+#define TEST_OS (LINUX)
 
 #define KB (1024)
 #define MB (1024 * 1024)
@@ -31,7 +34,9 @@
 #define MAX_THREADS 512
 #define STR_SIZE 128
 
+#ifndef PAGE_SIZE
 #define PAGE_SIZE 4096
+#endif
 #define SECTOR_SIZE 512
 #define SPP (PAGE_SIZE / SECTOR_SIZE)
 #define MAX_BYTES (1024 * 1024 * 1024)

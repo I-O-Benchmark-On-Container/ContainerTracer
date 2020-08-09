@@ -14,6 +14,7 @@ void setUp(void)
         const char *json = "{\"driver\":\"trace-replay\", \
 				  \"setting\": { \
 				    \"trace_replay_path\":\"./build/release/trace-replay\", \
+					\"device\": \"sdb\", \
 					\"nr_tasks\": 4, \
 					\"time\": 60, \
 					\
@@ -42,16 +43,19 @@ void tearDown(void)
 void test_interval_result(void)
 {
         char *buffer = runner_get_interval_result("cgroup-2");
+        pr_info(INFO, "============= %s =============\n",
+                "INTERVAL RESULT TEST");
         TEST_ASSERT_NOT_NULL(buffer);
-        TEST_ASSERT_EQUAL_STRING(buffer, "interval: cgroup-2");
+        pr_info(INFO, "checkpoint: %s\n", buffer);
         runner_put_result_string(buffer);
 }
 
 void test_total_result(void)
 {
         char *buffer = runner_get_total_result("cgroup-2");
+        pr_info(INFO, "============= %s =============\n", "TOTAL RESULT TEST");
         TEST_ASSERT_NOT_NULL(buffer);
-        TEST_ASSERT_EQUAL_STRING(buffer, "total: cgroup-2");
+        pr_info(INFO, "checkpoint: %s\n", buffer);
         runner_put_result_string(buffer);
 }
 
