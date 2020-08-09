@@ -59,6 +59,7 @@ struct timeval tv_start, tv_end, tv_result, tv_start2;
 double execution_time = 0.0;
 double timeout;
 long long wanted_io_count;
+char key_pathname[BASE_KEY_PATHNAME_LEN];
 
 void sgenrand(unsigned long seed);
 unsigned long genrand();
@@ -877,7 +878,8 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                 if (total_bytes < total_stat.total_bytes)
                         total_bytes = total_stat.total_bytes;
 
-                server_qkey = ftok(MSGQ_KEY_PATHNAME, PROJECT_ID);
+                sprintf(key_pathname, "%s_%d", MSGQ_KEY_PATHNAME, getpid());
+                server_qkey = ftok(key_pathname, PROJECT_ID);
                 if (server_qkey < 0) {
                         perror("ftok: server_qkey");
                         goto no_msg;
@@ -989,7 +991,8 @@ void finalize()
 
         fclose(log_fp);
 
-        while ((server_qkey = ftok(MSGQ_KEY_PATHNAME, PROJECT_ID)) < 0)
+        sprintf(key_pathname, "%s_%d", MSGQ_KEY_PATHNAME, getpid());
+        while ((server_qkey = ftok(key_pathname, PROJECT_ID)) < 0)
                 perror("ftok: server_qkey");
 
         while ((server_qid = msgget(server_qkey, 0)) < 0)
@@ -1001,7 +1004,8 @@ void finalize()
         while (msgsnd(server_qid, &rmsg, sizeof(struct realtime_log), 0) < 0)
                 perror("msgsnd");
 
-        server_semkey = ftok(SEM_KEY_PATHNAME, PROJECT_ID);
+        sprintf(key_pathname, "%s_%d", SEM_KEY_PATHNAME, getpid());
+        server_semkey = ftok(key_pathname, PROJECT_ID);
         if (server_semkey < 0) {
                 perror("ftok: server_semkey");
                 goto no_shm;
@@ -1012,7 +1016,8 @@ void finalize()
                 goto no_shm;
         }
 
-        server_shmkey = ftok(SHM_KEY_PATHNAME, PROJECT_ID);
+        sprintf(key_pathname, "%s_%d", SHM_KEY_PATHNAME, getpid());
+        server_shmkey = ftok(key_pathname, PROJECT_ID);
         if (server_shmkey < 0) {
                 perror("ftok: server_shmkey");
                 goto no_shm;
