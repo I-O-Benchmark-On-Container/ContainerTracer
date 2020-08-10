@@ -610,26 +610,11 @@ exit:
         return ret;
 }
 
-/**
- * @brief json으로 구조체에 있는 내용을 변환합니다.
- *
- * @param info 현재 tr_info 구조체의 포인터입니다.
- * @param log 현재 출력 로그에 해당합니다.
- * @param buffer 수행 결과 만들어진 json 내용이 들어가는 부분에 해당합니다.
- *
- * @warning buffer는 반드시 이 함수를 부르기 전에 할당되어야하며, 그 크기는 INTERVAL_RESULT_STRING_SIZE 보다 커야 합니다.
- * @todo 리팩토링이 필요합니다.
- */
-static void tr_realtime_serializer(const struct tr_info *info,
-                                   struct realtime_log *log, char *buffer)
+static struct json_object *tr_info_serializer(const struct tr_info *info)
 {
-        struct json_object *object, *meta, *data;
+        struct json_object *meta;
+
         assert(NULL != info);
-        assert(NULL != log);
-        assert(NULL != buffer);
-
-        object = json_object_new_object();
-
         meta = json_object_new_object();
         json_object_object_add(meta, "pid", json_object_new_int(info->pid));
         json_object_object_add(meta, "time", json_object_new_int(info->time));
@@ -652,7 +637,14 @@ static void tr_realtime_serializer(const struct tr_info *info,
         json_object_object_add(meta, "trace_data_path",
                                json_object_new_string(info->trace_data_path));
         json_object_object_add(meta, "device", json_object_new_int(info->pid));
-        json_object_object_add(object, "meta", meta);
+
+        return meta;
+}
+
+static struct json_object *
+tr_realtime_log_serializer(const struct realtime_log *log)
+{
+        struct json_object *data;
 
         data = json_object_new_object();
         json_object_object_add(data, "type", json_object_new_int(log->type));
@@ -669,85 +661,51 @@ static void tr_realtime_serializer(const struct tr_info *info,
         json_object_object_add(data, "lat", json_object_new_double(log->lat));
         json_object_object_add(data, "time_diff",
                                json_object_new_double(log->time_diff));
-        json_object_object_add(object, "data", data);
 
-        strcpy(buffer, json_object_to_json_string(object));
-
-        json_object_put(object);
+        assert(NULL != log);
+        return data;
 }
 
 /**
  * @brief json으로 구조체에 있는 내용을 변환합니다.
  *
  * @param info 현재 tr_info 구조체의 포인터입니다.
- * @param results 현재 info에 해당하는 전체 내용에 해당합니다.
+ * @param log 현재 출력 로그에 해당합니다.
  * @param buffer 수행 결과 만들어진 json 내용이 들어가는 부분에 해당합니다.
  *
- * @warning buffer는 반드시 이 함수를 부르기 전에 할당되어야하며, 그 크기는 TOTAL_RESULT_STRING_SIZE 보다 커야 합니다.
+ * @warning buffer는 반드시 이 함수를 부르기 전에 할당되어야하며, 그 크기는 INTERVAL_RESULT_STRING_SIZE 보다 커야 합니다.
  * @todo 리팩토링이 필요합니다.
  */
-static void tr_total_serializer(const struct tr_info *info,
-                                struct total_results *total, char *buffer)
+static void tr_realtime_serializer(const struct tr_info *info,
+                                   const struct realtime_log *log, char *buffer)
 {
         struct json_object *object;
-        struct json_object *meta;
-        struct json_object *total_results, *config, *results;
-        struct json_object *traces, **trace;
-        struct json_object *per_traces, **per_trace;
-        struct json_object **synthetic, **stats;
-        struct json_object *aggr_result;
-
-        int i = 0;
-
-        trace = (struct json_object **)malloc(sizeof(struct json_object *) *
-                                              MAX_THREADS);
-        assert(NULL != trace);
-        per_trace = (struct json_object **)malloc(sizeof(struct json_object *) *
-                                                  MAX_THREADS);
-        assert(NULL != per_trace);
-        synthetic = (struct json_object **)malloc(sizeof(struct json_object *) *
-                                                  MAX_THREADS);
-        assert(NULL != synthetic);
-        stats = (struct json_object **)malloc(sizeof(struct json_object *) *
-                                              MAX_THREADS);
-        assert(NULL != stats);
 
         assert(NULL != info);
-        assert(NULL != total);
+        assert(NULL != log);
         assert(NULL != buffer);
 
         object = json_object_new_object();
+        json_object_object_add(object, "meta", tr_info_serializer(info));
+        json_object_object_add(object, "data", tr_realtime_log_serializer(log));
 
-        /**< info 내용을 meta에 집어넣습니다. */
-        meta = json_object_new_object();
-        json_object_object_add(meta, "pid", json_object_new_int(info->pid));
-        json_object_object_add(meta, "time", json_object_new_int(info->time));
-        json_object_object_add(meta, "q_depth",
-                               json_object_new_int(info->q_depth));
-        json_object_object_add(meta, "nr_thread",
-                               json_object_new_int(info->nr_thread));
-        json_object_object_add(meta, "weight",
-                               json_object_new_int(info->weight));
-        json_object_object_add(meta, "qid", json_object_new_int(info->qid));
-        json_object_object_add(meta, "shmid", json_object_new_int(info->shmid));
-        json_object_object_add(meta, "semid", json_object_new_int(info->semid));
-        json_object_object_add(
-                meta, "prefix_cgroup_name",
-                json_object_new_string(info->prefix_cgroup_name));
-        json_object_object_add(meta, "scheduler",
-                               json_object_new_string(info->scheduler));
-        json_object_object_add(meta, "cgroup_id",
-                               json_object_new_string(info->cgroup_id));
-        json_object_object_add(meta, "trace_data_path",
-                               json_object_new_string(info->trace_data_path));
-        json_object_object_add(meta, "device", json_object_new_int(info->pid));
+        strcpy(buffer, json_object_to_json_string(object));
 
-        json_object_object_add(object, "meta", meta);
+        json_object_put(object);
+}
 
-        /**< total 정보를 기입합니다. */
-        total_results = json_object_new_object();
+static struct json_object *
+tr_total_config_serializer(const struct total_results *total,
+                           struct tr_total_json_object *jobject)
+{
+        struct json_object *config;
+        struct json_object *traces;
+        struct json_object **trace = jobject->trace;
+        int i;
 
-        /**< config 정보 설정 */
+        assert(NULL != total);
+        assert(NULL != trace);
+
         config = json_object_new_object();
         json_object_object_add(config, "qdepth",
                                json_object_new_int(total->config.qdepth));
@@ -788,10 +746,83 @@ static void tr_total_serializer(const struct tr_info *info,
                 json_object_array_add(traces, trace[i]);
         }
         json_object_object_add(config, "traces", traces);
-        json_object_object_add(total_results, "config", config);
+        return config;
+}
 
-        /**< result 정보 설정 */
-        results = json_object_new_object();
+static struct json_object *
+tr_synthetic_serializer(const struct synthetic *_synthetic)
+{
+        struct json_object *synthetic;
+        synthetic = json_object_new_object();
+        json_object_object_add(
+                synthetic, "working_set_size",
+                json_object_new_int(_synthetic->working_set_size));
+        json_object_object_add(synthetic, "utilization",
+                               json_object_new_int(_synthetic->utilization));
+        json_object_object_add(
+                synthetic, "touched_working_set_size",
+                json_object_new_int(_synthetic->touched_working_set_size));
+        json_object_object_add(synthetic, "io_size",
+                               json_object_new_int(_synthetic->io_size));
+        return synthetic;
+}
+
+static struct json_object *tr_stats_serializer(const struct trace_stat *_stats)
+{
+        struct json_object *stats;
+        struct tr_json_field *field, *begin, *end;
+        struct tr_json_field fields[] = {
+                { "exec_time", &_stats->exec_time },
+                { "avg_lat", &_stats->avg_lat },
+                { "avg_lat_var", &_stats->avg_lat_var },
+                { "lat_min", &_stats->lat_min },
+                { "lat_max", &_stats->lat_max },
+                { "iops", &_stats->iops },
+                { "total_bw", &_stats->total_bw },
+                { "read_bw", &_stats->read_bw },
+                { "write_bw", &_stats->write_bw },
+                { "total_traffic", &_stats->total_traffic },
+                { "read_traffic", &_stats->read_traffic },
+                { "write_traffic", &_stats->write_traffic },
+                { "read_ratio", &_stats->read_ratio },
+                { "total_avg_req_size", &_stats->total_avg_req_size },
+                { "read_avg_req_size", &_stats->read_avg_req_size },
+                { "write_avg_req_size", &_stats->write_avg_req_size },
+        };
+
+        stats = json_object_new_object();
+        begin = &fields[0];
+        end = &fields[sizeof(fields) / sizeof(struct tr_json_field)];
+        tr_json_field_traverse(field, begin, end)
+        {
+                struct json_object *current;
+                double value;
+
+                assert(NULL != field);
+                value = *(double *)field->member;
+
+                current = json_object_new_double(value);
+                assert(NULL != current);
+
+                json_object_object_add(stats, field->name, current);
+        }
+        return stats;
+}
+
+static struct json_object *
+tr_total_per_trace_serializer(const struct total_results *total,
+                              struct tr_total_json_object *jobject)
+{
+        struct json_object *per_traces;
+        struct json_object **synthetic = jobject->synthetic;
+        struct json_object **stats = jobject->stats;
+        struct json_object **per_trace = jobject->per_trace;
+        int i;
+
+        assert(NULL != total);
+        assert(NULL != synthetic);
+        assert(NULL != stats);
+        assert(NULL != per_trace);
 
         per_traces = json_object_new_array();
         for (i = 0; i < total->config.nr_thread; i++) {
@@ -805,184 +836,97 @@ static void tr_total_serializer(const struct tr_info *info,
                         _per_trace, "issynthetic",
                         json_object_new_int(
                                 total->results.per_trace[i].issynthetic));
-                synthetic[i] = json_object_new_object();
-                json_object_object_add(
-                        synthetic[i], "working_set_size",
-                        json_object_new_int(
-                                total->results.per_trace[i]
-                                        .synthetic.working_set_size));
-                json_object_object_add(
-                        synthetic[i], "utilization",
-                        json_object_new_int(total->results.per_trace[i]
-                                                    .synthetic.utilization));
-                json_object_object_add(
-                        synthetic[i], "touched_working_set_size",
-                        json_object_new_int(
-                                total->results.per_trace[i]
-                                        .synthetic.touched_working_set_size));
-                json_object_object_add(
-                        synthetic[i], "io_size",
-                        json_object_new_int(
-                                total->results.per_trace[i].synthetic.io_size));
 
+                synthetic[i] = tr_synthetic_serializer(
+                        &total->results.per_trace[i].synthetic);
                 json_object_object_add(_per_trace, "synthetic", synthetic[i]);
 
-                stats[i] = json_object_new_object();
-                json_object_object_add(
-                        stats[i], "exec_time",
-                        json_object_new_double(
-                                total->results.per_trace[i].stats.exec_time));
-                json_object_object_add(
-                        stats[i], "avg_lat",
-                        json_object_new_double(
-                                total->results.per_trace[i].stats.avg_lat));
-                json_object_object_add(
-                        stats[i], "avg_lat_var",
-                        json_object_new_double(
-                                total->results.per_trace[i].stats.avg_lat_var));
-                json_object_object_add(
-                        stats[i], "lat_min",
-                        json_object_new_double(
-                                total->results.per_trace[i].stats.lat_min));
-                json_object_object_add(
-                        stats[i], "lat_max",
-                        json_object_new_double(
-                                total->results.per_trace[i].stats.lat_max));
-                json_object_object_add(
-                        stats[i], "iops",
-                        json_object_new_double(
-                                total->results.per_trace[i].stats.iops));
-                json_object_object_add(
-                        stats[i], "total_bw",
-                        json_object_new_double(
-                                total->results.per_trace[i].stats.total_bw));
-                json_object_object_add(
-                        stats[i], "read_bw",
-                        json_object_new_double(
-                                total->results.per_trace[i].stats.read_bw));
-                json_object_object_add(
-                        stats[i], "write_bw",
-                        json_object_new_double(
-                                total->results.per_trace[i].stats.write_bw));
-                json_object_object_add(
-                        stats[i], "total_traffic",
-                        json_object_new_double(total->results.per_trace[i]
-                                                       .stats.total_traffic));
-                json_object_object_add(
-                        stats[i], "read_traffic",
-                        json_object_new_double(
-                                total->results.per_trace[i].stats.read_traffic));
-                json_object_object_add(
-                        stats[i], "write_traffic",
-                        json_object_new_double(total->results.per_trace[i]
-                                                       .stats.write_traffic));
-                json_object_object_add(
-                        stats[i], "read_ratio",
-                        json_object_new_double(
-                                total->results.per_trace[i].stats.read_ratio));
-                json_object_object_add(
-                        stats[i], "total_avg_req_size",
-                        json_object_new_double(
-                                total->results.per_trace[i]
-                                        .stats.total_avg_req_size));
-                json_object_object_add(
-                        stats[i], "read_avg_req_size",
-                        json_object_new_double(
-                                total->results.per_trace[i]
-                                        .stats.read_avg_req_size));
-                json_object_object_add(
-                        stats[i], "write_avg_req_size",
-                        json_object_new_double(
-                                total->results.per_trace[i]
-                                        .stats.write_avg_req_size));
+                stats[i] =
+                        tr_stats_serializer(&total->results.per_trace[i].stats);
                 json_object_object_add(_per_trace, "stats", stats[i]);
 
                 json_object_object_add(
                         _per_trace, "trace_reset_count",
                         json_object_new_int(
                                 total->results.per_trace[i].trace_reset_count));
+
                 per_trace[i] = _per_trace;
                 json_object_array_add(per_traces, per_trace[i]);
         }
-        json_object_object_add(results, "per_trace", per_traces);
+        return per_traces;
+}
 
-        aggr_result = json_object_new_object();
-        json_object_object_add(
-                aggr_result, "exec_time",
-                json_object_new_double(
-                        total->results.aggr_result.stats.exec_time));
-        json_object_object_add(
-                aggr_result, "avg_lat",
-                json_object_new_double(
-                        total->results.aggr_result.stats.avg_lat));
-        json_object_object_add(
-                aggr_result, "avg_lat_var",
-                json_object_new_double(
-                        total->results.aggr_result.stats.avg_lat_var));
-        json_object_object_add(
-                aggr_result, "lat_min",
-                json_object_new_double(
-                        total->results.aggr_result.stats.lat_min));
-        json_object_object_add(
-                aggr_result, "lat_max",
-                json_object_new_double(
-                        total->results.aggr_result.stats.lat_max));
-        json_object_object_add(
-                aggr_result, "iops",
-                json_object_new_double(total->results.aggr_result.stats.iops));
-        json_object_object_add(
-                aggr_result, "total_bw",
-                json_object_new_double(
-                        total->results.aggr_result.stats.total_bw));
-        json_object_object_add(
-                aggr_result, "read_bw",
-                json_object_new_double(
-                        total->results.aggr_result.stats.read_bw));
-        json_object_object_add(
-                aggr_result, "write_bw",
-                json_object_new_double(
-                        total->results.aggr_result.stats.write_bw));
-        json_object_object_add(
-                aggr_result, "total_traffic",
-                json_object_new_double(
-                        total->results.aggr_result.stats.total_traffic));
-        json_object_object_add(
-                aggr_result, "read_traffic",
-                json_object_new_double(
-                        total->results.aggr_result.stats.read_traffic));
-        json_object_object_add(
-                aggr_result, "write_traffic",
-                json_object_new_double(
-                        total->results.aggr_result.stats.write_traffic));
-        json_object_object_add(
-                aggr_result, "read_ratio",
-                json_object_new_double(
-                        total->results.aggr_result.stats.read_ratio));
-        json_object_object_add(
-                aggr_result, "total_avg_req_size",
-                json_object_new_double(
-                        total->results.aggr_result.stats.total_avg_req_size));
-        json_object_object_add(
-                aggr_result, "read_avg_req_size",
-                json_object_new_double(
-                        total->results.aggr_result.stats.read_avg_req_size));
-        json_object_object_add(
-                aggr_result, "write_avg_req_size",
-                json_object_new_double(
-                        total->results.aggr_result.stats.write_avg_req_size));
-        json_object_object_add(results, "aggr_result", aggr_result);
+static struct json_object *
+tr_total_aggr_serializer(const struct total_results *total)
+{
+        return tr_stats_serializer(&total->results.aggr_result.stats);
+}
 
-        json_object_object_add(total_results, "results", results);
-        json_object_object_add(object, "data", total_results);
+static struct json_object *
+tr_total_result_serializer(const struct total_results *total,
+                           struct tr_total_json_object *jobject)
+{
+        struct json_object *results;
+        results = json_object_new_object();
+        json_object_object_add(results, "per_trace",
+                               tr_total_per_trace_serializer(total, jobject));
+
+        json_object_object_add(results, "aggr_result",
+                               tr_total_aggr_serializer(total));
+        return results;
+}
+
+static struct json_object *
+tr_total_results_serializer(const struct total_results *total,
+                            struct tr_total_json_object *jobject)
+{
+        struct json_object *total_results;
+        total_results = json_object_new_object();
+        json_object_object_add(total_results, "config",
+                               tr_total_config_serializer(total, jobject));
+        json_object_object_add(total_results, "results",
+                               tr_total_result_serializer(total, jobject));
+        return total_results;
+}
+
+/**
+ * @brief json으로 구조체에 있는 내용을 변환합니다.
+ *
+ * @param info 현재 tr_info 구조체의 포인터입니다.
+ * @param results 현재 info에 해당하는 전체 내용에 해당합니다.
+ * @param buffer 수행 결과 만들어진 json 내용이 들어가는 부분에 해당합니다.
+ *
+ * @warning buffer는 반드시 이 함수를 부르기 전에 할당되어야하며, 그 크기는 TOTAL_RESULT_STRING_SIZE 보다 커야 합니다.
+ * @todo 리팩토링이 필요합니다.
+ */
+static void tr_total_serializer(const struct tr_info *info,
+                                const struct total_results *total, char *buffer)
+{
+        struct json_object *object;
+        struct json_object *info_object, *total_object;
+        struct tr_total_json_object *jobject;
+
+        assert(NULL != info);
+        assert(NULL != total);
+
+        jobject = (struct tr_total_json_object *)malloc(
+                sizeof(struct tr_total_json_object));
+        assert(NULL != jobject);
+
+        object = json_object_new_object();
+
+        info_object = tr_info_serializer(info);
+        total_object = tr_total_results_serializer(total, jobject);
+
+        json_object_object_add(object, "meta", info_object);
+        pr_info(INFO, "Adds meta success %p\n", (void *)info_object);
+
+        json_object_object_add(object, "data", total_object);
+        pr_info(INFO, "Adds data success %p\n", (void *)total_object);
 
         strcpy(buffer, json_object_to_json_string(object));
-
         json_object_put(object);
-
-        free(trace);
-        free(per_trace);
-        free(synthetic);
-        free(stats);
+        free(jobject);
 }
 /**
  * @brief trace-replay가 실행 중일 때의 정보를 반환합니다.
@@ -1011,6 +955,9 @@ int tr_get_interval(const char *key, char *buffer)
         if (NULL != info) {
                 struct realtime_log log = { 0 }; /**< TODO: 반드시 삭제하세요. */
                 tr_realtime_serializer(info, &log, buffer);
+        } else {
+                pr_info(ERROR, "`info` doesn't exist: %p\n", info);
+                return -EACCES;
         }
 
         return 0;
@@ -1046,6 +993,9 @@ int tr_get_total(const char *key, char *buffer)
                 }; /**< TODO: 반드시 삭제하세요. */
                 results.config.nr_thread = 10;
                 tr_total_serializer(info, &results, buffer);
+        } else {
+                pr_info(ERROR, "`info` doesn't exist: %p\n", info);
+                return -EACCES;
         }
 
         return 0;

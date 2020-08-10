@@ -18,15 +18,29 @@
 
 /**< user header */
 #include <generic.h>
+#include <trace_replay.h>
 
 // #define TR_DEBUG
 #define tr_info_list_traverse(ptr, head)                                       \
         for (ptr = head; ptr != NULL; ptr = current->next)
 
+#define tr_json_field_traverse(ptr, begin, end)                                \
+        for (ptr = begin; ptr != end; ptr++)
+
 enum { TR_ERROR_PRINT, /**< json의 에러를 사용자에게 노출되도록 합니다.*/
        TR_PRINT_NONE, /**< json의 에러를 사용자에게 노출되지 않도록 합니다. */
 };
 
+struct tr_json_field {
+        const char *name;
+        const void *member;
+};
+struct tr_total_json_object {
+        struct json_object *trace[MAX_THREADS];
+        struct json_object *per_trace[MAX_THREADS];
+        struct json_object *synthetic[MAX_THREADS];
+        struct json_object *stats[MAX_THREADS];
+};
 /**
  * @brief 실제 각각의 프로세스에 대한 정보가 들어가는 구조체에 해당합니다.
  */
