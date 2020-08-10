@@ -71,10 +71,54 @@ struct tr_info {
         struct tr_info *next;
 };
 
+/**< tr-driver.c */
 int tr_init(void *object);
 int tr_runner(void);
+int tr_valid_scheduler_test(const char *scheduler);
 int tr_get_interval(const char *key, char *buffer);
 int tr_get_total(const char *key, char *buffer);
 void tr_free(void);
+
+/**< tr-serializer.c */
+void tr_total_serializer(const struct tr_info *info,
+                         const struct total_results *total, char *buffer);
+void tr_realtime_serializer(const struct tr_info *info,
+                            const struct realtime_log *log, char *buffer);
+/**< tr-info.c */
+struct tr_info *tr_info_init(struct json_object *setting, int index);
+
+#ifdef TR_DEBUG
+/**
+ * @brief 현재 info의 내용을 출력합니다. 
+ *
+ * @param info 출력하고자 하는 info의 포인터에 해당합니다.
+ */
+static inline void tr_debug(const struct tr_info *info)
+{
+        pr_info(INFO,
+                "\n"
+                "\t\t[[ current %p ]]\n"
+                "\t\tpid: %d\n"
+                "\t\ttime: %u\n"
+                "\t\tq_depth: %u\n"
+                "\t\tnr_thread: %u\n"
+                "\t\tweight: %u\n"
+                "\t\tqid: %d\n"
+                "\t\tshmid: %d\n"
+                "\t\tsemid: %d\n"
+                "\t\tprefix_cgroup_name: %s\n"
+                "\t\tscheduler: %s\n"
+                "\t\tname: %s\n"
+                "\t\ttrace_data_path: %s\n"
+                "\t\tdevice: %s\n"
+                "\t\tglobal_config: %p\n"
+                "\t\tnext: %p\n",
+                info, info->pid, info->time, info->q_depth, info->nr_thread,
+                info->weight, info->qid, info->shmid, info->semid,
+                info->prefix_cgroup_name, info->scheduler, info->cgroup_id,
+                info->trace_data_path, info->device, info->global_config,
+                info->next);
+}
+#endif
 
 #endif
