@@ -1,3 +1,11 @@
+/**
+ * @file tr-serializer.c
+ * @brief 임의의 구조체를 json화 시키는 방식이 구현된 소스입니다.
+ * @author BlaCkinkGJ (ss5kijun@gmail.com)
+ * @version 0.1
+ * @date 2020-08-10
+ */
+
 /**< system header */
 #include <stdlib.h>
 #include <assert.h>
@@ -9,6 +17,13 @@
 /**< user header */
 #include <driver/tr-driver.h>
 
+/**
+ * @brief tr_info 구조체의 내용을 json_object로 만들어주도록 합니다.
+ *
+ * @param info json으로 변환시킬 tr_info 형태의 구조체입니다.
+ *
+ * @return meta tr_info 구조체의 json 객체가 반환됩니다.
+ */
 static struct json_object *tr_info_serializer(const struct tr_info *info)
 {
         struct json_object *meta;
@@ -23,7 +38,7 @@ static struct json_object *tr_info_serializer(const struct tr_info *info)
                                json_object_new_int(info->nr_thread));
         json_object_object_add(meta, "weight",
                                json_object_new_int(info->weight));
-        json_object_object_add(meta, "qid", json_object_new_int(info->qid));
+        json_object_object_add(meta, "mqid", json_object_new_int(info->mqid));
         json_object_object_add(meta, "shmid", json_object_new_int(info->shmid));
         json_object_object_add(meta, "semid", json_object_new_int(info->semid));
         json_object_object_add(
@@ -45,7 +60,9 @@ tr_realtime_log_serializer(const struct realtime_log *log)
 {
         struct json_object *data;
 
+        assert(NULL != log);
         data = json_object_new_object();
+
         json_object_object_add(data, "type", json_object_new_int(log->type));
         json_object_object_add(data, "time", json_object_new_double(log->time));
         json_object_object_add(data, "remaining",
@@ -60,8 +77,6 @@ tr_realtime_log_serializer(const struct realtime_log *log)
         json_object_object_add(data, "lat", json_object_new_double(log->lat));
         json_object_object_add(data, "time_diff",
                                json_object_new_double(log->time_diff));
-
-        assert(NULL != log);
         return data;
 }
 
@@ -109,7 +124,7 @@ tr_total_config_serializer(const struct total_results *total,
 
         traces = json_object_new_array();
 
-        for (i = 0; i < total->config.nr_thread; i++) {
+        for (i = 0; i < total->config.nr_trace; i++) {
                 trace[i] = tr_total_trace_serializer(&total->config.traces[i]);
                 json_object_array_add(traces, trace[i]);
         }
@@ -138,7 +153,8 @@ tr_synthetic_serializer(const struct synthetic *_synthetic)
 static struct json_object *tr_stats_serializer(const struct trace_stat *_stats)
 {
         struct json_object *stats;
-        struct tr_json_field *field, *begin, *end;
+        struct tr_json_field *field = NULL;
+        struct tr_json_field *begin, *end;
         struct tr_json_field fields[] = {
                 { "exec_time", &_stats->exec_time },
                 { "avg_lat", &_stats->avg_lat },
@@ -193,7 +209,7 @@ tr_total_per_trace_serializer(const struct total_results *total,
         assert(NULL != per_trace);
 
         per_traces = json_object_new_array();
-        for (i = 0; i < total->config.nr_thread; i++) {
+        for (i = 0; i < total->config.nr_trace; i++) {
                 struct json_object *_per_trace;
                 _per_trace = json_object_new_object();
                 json_object_object_add(

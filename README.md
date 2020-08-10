@@ -58,7 +58,7 @@ scons DEBUG=True
 만약 테스트 파일을 만들어서 테스트를 하고 싶으신 경우에는 아래와 같이 진행해주시길 바랍니다.
 
 ```bash
-scons DEBUG=True && sudo scons test DEBUG=True 
+scons DEBUG=True && sudo scons test DEBUG=True
 ```
 
 Release 모드로 생성할 시에는 아래와 같은 명령을 사용하여 빌드를 진행하시면 됩니다.
@@ -66,6 +66,11 @@ Release 모드로 생성할 시에는 아래와 같은 명령을 사용하여 �
 ```bash
 scons
 ```
+
+## 유의 사항
+
+***trace replay는 Direct-IO를 수행하므로 동작 과정에서 사용자 디스크의 파일 시스템을 붕괴 시킵니다.
+따라서, 파일 시스템이 구축되지 않은 디스크 및 백업이 간편한 가상 환경에서 수행해주시길 바랍니다***
 
 ## 사용 라이브러리
 

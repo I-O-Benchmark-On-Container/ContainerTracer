@@ -41,8 +41,6 @@ static const char *tr_valid_scheduler[] = {
         NULL,
 }; /**< 현재 드라이버에서 사용 가능한 스케쥴러가 들어갑니다. */
 
-static char *global_program_path =
-        NULL; /**< trace-replay 실행 파일의 경로가 들어갑니다. */
 static struct tr_info *global_info_head =
         NULL; /**< trace-replay의 각각을 실행시킬 때 필요한 정보를 담고있는 구조체 리스트의 헤드입니다. */
 
@@ -72,11 +70,6 @@ static void tr_kill_handle(int signum)
  */
 static void __tr_free(void)
 {
-        if (NULL != global_program_path) {
-                free(global_program_path);
-                global_program_path = NULL;
-        }
-
         while (global_info_head != NULL) {
                 struct tr_info *current = global_info_head;
                 struct tr_info *next = global_info_head->next;
@@ -106,6 +99,9 @@ static void __tr_free(void)
                                         current->pid, status);
                                 _exit(EXIT_FAILURE);
                         }
+                        /**< IPC 객체를 삭제합니다. */
+                        tr_shm_free(current, TR_IPC_FREE);
+                        tr_mq_free(current, TR_IPC_FREE);
                 }
 
                 pr_info(INFO, "Delete target %p\n", current);
@@ -171,28 +167,11 @@ int tr_init(void *object)
                 return -EINVAL;
         }
 
-        global_program_path = (char *)malloc(sizeof(char) * PATH_MAX);
-        if (!global_program_path) {
-                pr_info(ERROR, "Memory allocation fail (name: %s)\n",
-                        "global_program_path");
-                ret = -ENOMEM;
-                goto exception;
-        }
-
         if (!json_object_object_get_ex(setting, "trace_replay_path", &tmp)) {
                 pr_info(ERROR, "Not exist error (key: %s)\n",
                         "trace_replay_path");
                 ret = -EACCES;
                 goto exception;
-        }
-        strcpy(global_program_path, json_object_get_string(tmp));
-        pr_info(INFO, "Trace-replay path: %s\n", global_program_path);
-        if (-1 == (ret = access(global_program_path, F_OK))) {
-                pr_info(ERROR, "trace-replay not exist: %s\n",
-                        global_program_path);
-                goto exception;
-        } else {
-                pr_info(INFO, "trace-replay exist: %s\n", global_program_path);
         }
 
         if (!json_object_object_get_ex(setting, "nr_tasks", &tmp)) {
@@ -287,14 +266,42 @@ static int tr_set_cgroup_state(struct tr_info *current)
         return 0;
 }
 
-int tr_do_exec(struct tr_info *info)
+static int tr_do_exec(struct tr_info *current)
 {
+        struct tr_info info;
         char filename[PATH_MAX];
-        WAIT_PARENT();
-        snprintf(filename, PATH_MAX, "%s_%d_%d_%s.txt", info->scheduler,
-                 info->ppid, info->weight, info->cgroup_id);
+        char q_depth_str[PAGE_SIZE];
+        char nr_thread_str[PAGE_SIZE];
+        char time_str[PAGE_SIZE];
+        char device_path[PAGE_SIZE];
+
+        const char *NR_TRACE = "1";
+        assert(NULL != current);
+        if (current) {
+                assert(NULL != current->global_config);
+                runner_config_free(current->global_config, RUNNER_FREE_ALL);
+        }
+        memcpy(&info, current, sizeof(struct tr_info));
+        sprintf(filename, "%s_%d_%d_%s.txt", info.scheduler, info.ppid,
+                info.weight, info.cgroup_id);
+        sprintf(q_depth_str, "%d", info.q_depth);
+        sprintf(nr_thread_str, "%d", info.nr_thread);
+        sprintf(time_str, "%d", info.time);
+        sprintf(device_path, "/dev/%s", info.device);
         pr_info(INFO, "trace replay save location: \"%s\"\n", filename);
-        return 0;
+        WAIT_PARENT();
+#ifdef TR_DEBUG
+        tr_debug(&info);
+#endif
+        if (-1 == access(info.trace_replay_path, F_OK)) {
+                pr_info(ERROR, "trace replay doesn't exist: \"%s\"",
+                        info.trace_replay_path);
+                return -EACCES;
+        }
+        return execlp(info.trace_replay_path, info.trace_replay_path,
+                      q_depth_str, nr_thread_str, filename, time_str, NR_TRACE,
+                      device_path, info.trace_data_path, "0", "0", "0",
+                      (char *)0);
 }
 
 /**
@@ -341,18 +348,30 @@ int tr_runner(void)
                         act.sa_handler = tr_kill_handle;
                         sigaction(SIGTERM, &act, NULL);
                         if (0 != (ret = tr_do_exec(current))) {
-                                tr_kill_handle(SIGKILL); /**< execute 실패 */
                                 pr_info(ERROR,
                                         "Cannot execute program (errno: %d)\n",
                                         ret);
+                                perror("Execution error detected");
+                                tr_kill_handle(SIGKILL); /**< execute 실패 */
                                 _exit(EXIT_FAILURE);
                         }
+                        pr_info(WARNING,
+                                "Child process reaches the restriction area. (pid: %d)\n",
+                                getpid());
                         tr_kill_handle(SIGTERM);
                         _exit(EXIT_SUCCESS);
                 }
                 /**< 부모 프로세스 */
                 current->pid = pid;
                 tr_set_cgroup_state(current);
+
+                /**< IPC 객체를 생성합니다. */
+                if (0 > (ret = tr_shm_init(current))) {
+                        goto exit;
+                }
+                if (0 > (ret = tr_mq_init(current))) {
+                        goto exit;
+                }
         }
 
         /**< 모든 자식을 깨우도록 합니다. */
@@ -371,7 +390,7 @@ exit:
  * @param key 임의의 cgroup_id에 해당합니다.
  * @param buffer 값이 반환되는 위치에 해당합니다.
  *
- * @return 정상적으로 동작이 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ * @return ret 정상적으로 종료되는 경우에는 log.type 정보가 반환되고, 그렇지 않은 경우 적절한 음수 값이 반환됩니다.
  * @note buffer를 재활용을 많이 하기 때문에 buffer의 내용은 반드시 미리 runner에서 할당이 되어 있어야 합니다.
  */
 int tr_get_interval(const char *key, char *buffer)
@@ -380,24 +399,33 @@ int tr_get_interval(const char *key, char *buffer)
         ENTRY *result = NULL;
 
         struct tr_info *info = NULL;
+        struct realtime_log log = { 0 };
+
+        int ret;
 
         strcpy(buffer, key);
 
         query.key = buffer;
         if (NULL == (result = hsearch(query, FIND))) {
                 pr_info(ERROR, "Cannot find item (key: %s)\n", buffer);
-                return -EINVAL;
+                ret = -EINVAL;
+                goto exit;
         }
         info = (struct tr_info *)result->data;
         if (NULL != info) {
-                struct realtime_log log = { 0 }; /**< TODO: 반드시 삭제하세요. */
+                if (0 > (ret = tr_mq_get(info, (void *)&log))) {
+                        goto exit;
+                }
                 tr_realtime_serializer(info, &log, buffer);
         } else {
                 pr_info(ERROR, "`info` doesn't exist: %p\n", info);
-                return -EACCES;
+                ret = -EACCES;
+                goto exit;
         }
 
-        return 0;
+exit:
+        ret = log.type;
+        return ret;
 }
 
 /**
@@ -408,34 +436,38 @@ int tr_get_interval(const char *key, char *buffer)
  *
  * @return 정상적으로 동작이 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
  */
-
 int tr_get_total(const char *key, char *buffer)
 {
         ENTRY query = { .key = NULL, .data = NULL };
         ENTRY *result = NULL;
 
         struct tr_info *info = NULL;
+        struct total_results results = { 0 };
+
+        int ret;
 
         strcpy(buffer, key);
 
         query.key = buffer;
         if (NULL == (result = hsearch(query, FIND))) {
                 pr_info(ERROR, "Cannot find item (key: %s)\n", buffer);
-                return -EINVAL;
+                ret = -EINVAL;
+                goto exit;
         }
         info = (struct tr_info *)result->data;
         if (NULL != info) {
-                struct total_results results = {
-                        0
-                }; /**< TODO: 반드시 삭제하세요. */
-                results.config.nr_thread = 10;
+                if (0 > (ret = tr_shm_get(info, (void *)&results))) {
+                        goto exit;
+                }
                 tr_total_serializer(info, &results, buffer);
         } else {
                 pr_info(ERROR, "`info` doesn't exist: %p\n", info);
-                return -EACCES;
+                ret = -EACCES;
+                goto exit;
         }
 
-        return 0;
+exit:
+        return ret;
 }
 
 /**

@@ -1,0 +1,123 @@
+/**
+ * @file tr-mq.c
+ * @brief Message Queue를 생성 및 사용하는 방식이 구현되어 있습니다.
+ * @author BlaCkinkGJ (ss5kijun@gmail.com)
+ * @version 0.1
+ * @date 2020-08-10
+ */
+
+/**< system header */
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <fcntl.h>
+
+/**< external header */
+
+/**< user header */
+#include <trace_replay.h>
+#include <log.h>
+#include <driver/tr-driver.h>
+
+static int __tr_mq_init(const pid_t pid)
+{
+        char *mq_path;
+        key_t mq_key = 0;
+        int mqid = -1, ret = -1;
+
+        mq_path = (char *)malloc(BASE_KEY_PATHNAME_LEN * sizeof(char));
+        if (!mq_path) {
+                pr_info(ERROR, "Memory allocation fail. (\"%s\")", "mq_path");
+                ret = -ENOMEM;
+                goto exception;
+        }
+        sprintf(mq_path, "%s_%d", MSGQ_KEY_PATHNAME, pid);
+
+        /**< 파일이 존재하지 않는 경우에 파일을 생성합니다. */
+        (void)close(open(mq_path, O_WRONLY | O_CREAT, 0));
+
+        if (0 > (mq_key = ftok(mq_path, PROJECT_ID))) {
+                pr_info(ERROR, "Key generation failed (name: %s, token: %c)\n",
+                        mq_path, PROJECT_ID);
+                ret = -ENOKEY;
+                goto exception;
+        }
+
+        if (0 > (mqid = msgget(mq_key, IPC_CREAT | PROJECT_PERM))) {
+                pr_info(ERROR, "Message Queue get failed (key: %d)\n", mq_key);
+                ret = -EINVAL;
+                goto exception;
+        }
+
+        free(mq_path);
+        return mqid;
+exception:
+        if (mq_path) {
+                free(mq_path);
+        }
+        if (0 <= mqid) {
+                msgctl(mqid, IPC_RMID, NULL);
+        }
+        mqid = ret;
+        return mqid;
+}
+
+int tr_mq_init(struct tr_info *info)
+{
+        int mqid = -1;
+        int ret = 0;
+
+        assert(NULL != info);
+        assert(0 != info->pid);
+
+        if (0 > (mqid = __tr_mq_init(info->pid))) {
+                pr_info(ERROR,
+                        "Message Queue initialization fail. (target pid :%d)\n",
+                        info->pid);
+                ret = mqid;
+                goto exit;
+        }
+        pr_info(INFO, "Message Queue create success. (path: %s_%d)\n",
+                SHM_KEY_PATHNAME, info->pid);
+
+        info->mqid = mqid;
+
+exit:
+        return ret;
+}
+
+int tr_mq_get(const struct tr_info *info, void *buffer)
+{
+        struct realtime_msg rmsg;
+
+        assert(NULL != buffer);
+        assert(NULL != info);
+        assert(-1 != info->mqid);
+
+        if (0 > msgrcv(info->mqid, &rmsg, sizeof(struct realtime_log), 0, 0)) {
+                pr_info(ERROR, "Cannot get message queue (mqid: %d)\n",
+                        info->mqid);
+                return -EFAULT;
+        }
+        memcpy(buffer, &rmsg.log, sizeof(struct realtime_log));
+        return 0;
+}
+
+void tr_mq_free(struct tr_info *info, int flags)
+{
+        int mqid;
+
+        assert(NULL != info);
+
+        mqid = info->mqid;
+
+        if ((TR_IPC_FREE & flags) && 0 <= mqid) {
+                msgctl(mqid, IPC_RMID, NULL);
+        }
+
+        info->mqid = -1;
+}

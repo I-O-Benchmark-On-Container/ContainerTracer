@@ -155,7 +155,7 @@ struct io_job {
 #define PROJECT_ID 'M'
 #define PROJECT_PERM 0640
 
-enum realtime_log_type { TIMEOUT, WANTED_IO_COUNT, NONE, FIN };
+enum realtime_log_type { TIMEOUT = 0, WANTED_IO_COUNT, NONE, FIN };
 
 struct realtime_log {
         int type;

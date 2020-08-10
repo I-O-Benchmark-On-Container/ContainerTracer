@@ -1,3 +1,11 @@
+/**
+ * @file tr-info.c
+ * @brief info 구조체를 초기화하는 역할을 합니다.
+ * @author BlaCkinkGJ (ss5kijun@gmail.com)
+ * @version 0.1
+ * @date 2020-08-10
+ */
+
 /**< system header */
 #include <stdlib.h>
 #include <search.h>
@@ -206,6 +214,8 @@ struct tr_info *tr_info_init(struct json_object *setting, int index)
                 pr_info(ERROR, "error detected (errno: %d)\n", ret);
                 goto exception;
         }
+
+        info->mqid = info->semid = info->shmid = -1;
 
         info->next = NULL;
 

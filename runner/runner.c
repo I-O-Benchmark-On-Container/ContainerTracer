@@ -120,6 +120,7 @@ int runner_init(const char *json_str)
         global_config->setting = NULL;
         return ret;
 exception:
+        errno = ret;
         if (NULL != json_obj) {
                 json_object_put(json_obj);
                 json_obj = NULL;
@@ -172,20 +173,19 @@ char *runner_get_interval_result(const char *key)
         int ret = 0;
 
         ret = runner_get_result_string(&buffer, INTERVAL_RESULT_STRING_SIZE);
-        if (ret) {
+        if (0 > ret) {
                 goto exception;
         }
 
         ret = (global_config->op.get_interval)(key, buffer);
-        if (ret) {
+        if (0 > ret) {
                 goto exception;
         }
 
-        pr_info(INFO, "Current buffer(key: %s) contents in %p ==> \"%s\"\n",
-                key, buffer, buffer);
-
         return buffer;
 exception:
+        errno = ret;
+        perror("Error detected while running");
         runner_put_result_string(buffer);
         buffer = NULL;
         return buffer;
@@ -197,20 +197,19 @@ char *runner_get_total_result(const char *key)
         int ret = 0;
 
         ret = runner_get_result_string(&buffer, TOTAL_RESULT_STRING_SIZE);
-        if (ret) {
+        if (0 > ret) {
                 goto exception;
         }
 
         ret = (global_config->op.get_total)(key, buffer);
-        if (ret) {
+        if (0 > ret) {
                 goto exception;
         }
 
-        pr_info(INFO, "Current buffer(key: %s) contents ==> \"%s\"\n", key,
-                buffer);
-
         return buffer;
 exception:
+        errno = ret;
+        perror("Error detected while running");
         runner_put_result_string(buffer);
         buffer = NULL;
         return buffer;
