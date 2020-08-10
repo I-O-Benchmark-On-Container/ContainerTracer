@@ -54,7 +54,8 @@ static int __tr_mq_init(const pid_t pid)
         }
 
         free(mq_path);
-        return mqid;
+        ret = mqid;
+        return ret;
 exception:
         if (mq_path) {
                 free(mq_path);

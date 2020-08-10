@@ -14,6 +14,8 @@
 #include <trace_replay.h>
 
 #define TEST_DISK_PATH "sdb"
+#define SCHEDULER "none"
+
 void setUp(void)
 {
         const char *json = "{\"driver\":\"trace-replay\", \
@@ -27,7 +29,7 @@ void setUp(void)
 					\"nr_thread\": 4, \
 					\
 				    \"prefix_cgroup_name\": \"tester.trace.\", \
-					\"scheduler\": \"bfq\", \
+					\"scheduler\": \"" SCHEDULER "\", \
 					\"task_option\": [ {\"cgroup_id\": \"cgroup-1\" , \"weight\":100, \"trace_data_path\":\"./sample/sample1.dat\"}, {\"cgroup_id\": \"cgroup-2\" ,\"weight\":250, \"trace_data_path\":\"./sample/sample2.dat\"}, {\"cgroup_id\": \"cgroup-3\" ,\"weight\":500, \"trace_data_path\":\"./sample/sample1.dat\"}, {\"cgroup_id\": \"cgroup-4\" ,\"weight\":1000, \"trace_data_path\":\"./sample/sample2.dat\"}],\
 					} \
 				}";
@@ -87,7 +89,6 @@ void test(void)
                         runner_put_result_string(buffer);
                         json_object_put(object);
                 }
-                usleep(100);
         }
         for (int i = 0; i < 4; i++) {
                 buffer = runner_get_total_result(key[i]);
@@ -99,9 +100,10 @@ void test(void)
 
 int main(void)
 {
+        char ch;
         printf("Performing this test can completely erase the contents of your /dev/" TEST_DISK_PATH
                "/ disk. Nevertheless, will you proceed?(y/n)");
-        char ch = getchar();
+        scanf("%c", &ch);
         if (ch == 'y') {
                 UNITY_BEGIN();
 

@@ -67,7 +67,8 @@ static int __tr_sem_init(const pid_t pid)
         }
 
         free(sem_path);
-        return semid;
+        ret = semid;
+        return ret;
 exception:
         if (sem_path) {
                 free(sem_path);
@@ -113,7 +114,8 @@ static int __tr_shm_init(const pid_t pid)
         }
 
         free(shm_path);
-        return shmid;
+        ret = shmid;
+        return ret;
 exception:
         if (shm_path) {
                 free(shm_path);
