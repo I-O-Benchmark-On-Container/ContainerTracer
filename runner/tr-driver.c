@@ -694,6 +694,21 @@ static void tr_realtime_serializer(const struct tr_info *info,
         json_object_put(object);
 }
 
+static struct json_object *tr_total_trace_serializer(const struct trace *traces)
+{
+        struct json_object *_trace;
+        _trace = json_object_new_object();
+        json_object_object_add(_trace, "start_partition",
+                               json_object_new_double(traces->start_partition));
+        json_object_object_add(_trace, "total_size",
+                               json_object_new_double(traces->total_size));
+        json_object_object_add(_trace, "start_page",
+                               json_object_new_int64(traces->start_page));
+        json_object_object_add(_trace, "total_pages",
+                               json_object_new_int64(traces->total_pages));
+        return _trace;
+}
+
 static struct json_object *
 tr_total_config_serializer(const struct total_results *total,
                            struct tr_total_json_object *jobject)
@@ -724,25 +739,7 @@ tr_total_config_serializer(const struct total_results *total,
         traces = json_object_new_array();
 
         for (i = 0; i < total->config.nr_thread; i++) {
-                struct json_object *_trace;
-                _trace = json_object_new_object();
-                json_object_object_add(
-                        _trace, "start_partition",
-                        json_object_new_double(
-                                total->config.traces[i].start_partition));
-                json_object_object_add(
-                        _trace, "total_size",
-                        json_object_new_double(
-                                total->config.traces[i].total_size));
-                json_object_object_add(
-                        _trace, "start_page",
-                        json_object_new_int64(
-                                total->config.traces[i].start_page));
-                json_object_object_add(
-                        _trace, "total_pages",
-                        json_object_new_int64(
-                                total->config.traces[i].total_pages));
-                trace[i] = _trace;
+                trace[i] = tr_total_trace_serializer(&total->config.traces[i]);
                 json_object_array_add(traces, trace[i]);
         }
         json_object_object_add(config, "traces", traces);
