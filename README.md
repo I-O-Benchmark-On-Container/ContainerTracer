@@ -52,6 +52,18 @@ sudo apt install cppcheck libaio-dev libjson-c-dev
 그리고 아래의 명령을 통해서 빌드를 수행합니다.
 
 ```bash
+scons DEBUG=True
+```
+
+만약 테스트 파일을 만들어서 테스트를 하고 싶으신 경우에는 아래와 같이 진행해주시길 바랍니다.
+
+```bash
+scons DEBUG=True && sudo scons test DEBUG=True 
+```
+
+Release 모드로 생성할 시에는 아래와 같은 명령을 사용하여 빌드를 진행하시면 됩니다.
+
+```bash
 scons
 ```
 

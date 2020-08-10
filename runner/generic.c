@@ -13,7 +13,7 @@
 
 /**< user header */
 #include <generic.h>
-#include <tr-driver.h>
+#include <driver/tr-driver.h>
 
 const char *driver_name_tbl[] = { [TRACE_REPLAY_DRIVER] = "trace-replay",
                                   NULL };

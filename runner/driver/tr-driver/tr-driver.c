@@ -27,7 +27,7 @@
 /**< user header */
 #include <generic.h>
 #include <runner.h>
-#include <tr-driver.h>
+#include <driver/tr-driver.h>
 #include <log.h>
 #include <sync.h>
 #include <trace_replay.h>
