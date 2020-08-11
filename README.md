@@ -46,7 +46,7 @@ sudo pip3 install flask flask_restful
 ```bash
 sudo pip3 install scons scons-compiledb
 sudo pip3 install clang-format
-sudo apt install cppcheck libaio-dev libjson-c-dev
+sudo apt install cppcheck libaio-dev libjson-c-dev libjemalloc-dev
 ```
 
 그리고 아래의 명령을 통해서 빌드 및 테스트를 수행합니다.
@@ -81,6 +81,7 @@ scons
 1. rt: Real-Time 라이브러리
 1. [json-c](https://github.com/json-c/json-c):  C용 json 라이브러리
 1. [unity](https://github.com/ThrowTheSwitch/Unity): C용 unit test 라이브러리
+1. [jemalloc](https://github.com/jemalloc/jemalloc): 효율적인 메모리 동적 할당을 해주는 라이브러리
 
 ## 코드 기여 규칙
 
