@@ -1,43 +1,88 @@
-#!/usr/bin/python3
-# source from: https://blog.nerdfactory.ai/2019/04/04/flask-unittest.html
-import flask_restful
-import flask
-from flask_restful import reqparse
-
-app = flask.Flask(__name__)
-api = flask_restful.Api(app)
+from flask import Flask, render_template, session
+import os
+import time
+import random
+from flask_socketio import SocketIO, emit
 
 
-def multiply(x, y):
-    return x * y
+app = Flask(__name__)
+app.secret_key = "secret"
+socketio = SocketIO(app)
+user_no = 1
 
 
-class HelloWorld(flask_restful.Resource):
-    def get(self):
-        parser = reqparse.RequestParser()
+class Config:
+    def __init__(self):
+        self.config_data = dict()
 
-        # parameter1 과 parameter2를 parsing
-        parser.add_argument("parameter1")
-        parser.add_argument("parameter2")
-        args = parser.parse_args()
-
-        # 해당 변수에 parameter1과 parameter2를 할당
-        parameter1 = args["parameter1"]
-        parameter2 = args["parameter2"]
-
-        # 해당 변수 중 하나라도 None일 경우 아래를 return
-        if (not parameter1) or (not parameter2):
-            return {"state": 0, "response": None}
-
-        parameter1 = int(parameter1)
-        parameter2 = int(parameter2)
-
-        # 두 변수 모두를 곱하여 아래를 return
-        result = multiply(parameter1, parameter2)
-        return {"state": 1, "response": result}
+    def store(self, data):
+        for key in data:
+            self.config_data[key] = data[key]
 
 
-api.add_resource(HelloWorld, "/api/multiply")
+@app.before_request
+def before_request():
+    global user_no
+    if "session" in session and "user-id" in session:
+        pass
+    else:
+        session["session"] = os.urandom(24)
+        session["username"] = "user" + str(user_no)
+        user_no += 1
+
+
+@socketio.on("connect", namespace="/config")
+def connect():
+    emit("response", {"data": "Connected", "username": session["username"]})
+
+
+@socketio.on("disconnect", namespace="/config")
+def disconnect():
+    session.clear()
+    print("Disconnected")
+
+
+@socketio.on("request", namespace="/config")
+def request(message):
+    emit(
+        "response",
+        {"data": message["data"], "username": session["username"]},
+        broadcast=True,
+    )
+
+
+@socketio.on("set_driver", namespace="/config")
+def set_driver(message):
+    c.store(message)
+    emit("set_driver_ret", {}, broadcast=True)
+
+
+@socketio.on("set_options", namespace="/config")
+def set_options(message):
+    c.store(message)
+    nr_cgroup = int(c.config_data["nr_cgroup"])
+    emit("chart_start", nr_cgroup, broadcast=True)
+
+    response_data = [0] * nr_cgroup
+    for _ in range(int(c.config_data["time"])):
+        for idx in range(nr_cgroup):
+            latency, throughput = get_data()
+            response_data[idx] = [latency, throughput]
+        emit("chart_data_result", response_data, broadcast=True)
+        time.sleep(1)
+    else:
+        emit("chart_end", {}, broadcast=True)
+
+
+def get_data():
+    return int(random.random() * 100), int(random.random() * 100)
+
+
+@app.route("/")
+def info():
+    return render_template("index.html")
+
 
 if __name__ == "__main__":
-    app.run()
+    c = Config()
+    socketio.run(app, port=3000, host="0.0.0.0", debug=True)
