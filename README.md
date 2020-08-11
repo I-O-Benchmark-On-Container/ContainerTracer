@@ -49,25 +49,26 @@ sudo pip3 install clang-format
 sudo apt install cppcheck libaio-dev libjson-c-dev
 ```
 
-그리고 아래의 명령을 통해서 빌드를 수행합니다.
+그리고 아래의 명령을 통해서 빌드 및 테스트를 수행합니다.
 
 ```bash
-scons DEBUG=True
+sudo scons -c
+sudo scons test DEBUG=True
 ```
 
-만약 테스트 파일을 만들어서 테스트를 하고 싶으신 경우에는 아래와 같이 진행해주시길 바랍니다.
+배포판을 만드는 경우에는 아래와 같은 방법으로 진행해주시길 바랍니다.
 
-```bash
-scons DEBUG=True && sudo scons test DEBUG=True
 ```
-
-Release 모드로 생성할 시에는 아래와 같은 명령을 사용하여 빌드를 진행하시면 됩니다.
-
-```bash
+sudo scons -c
 scons
 ```
 
-## 유의 사항
+#### 참고 사항
+
+- `DEBUG=True`를 주게되면 모든 로그가 다 출력되어 좀 더 수월하게 디버깅이 가능해집니다.
+- `sudo`를 주는 이유는 `trace-replay`가 실행되기 위해서는 `sudo` 권한을 필요로 하기 때문입니다.
+
+#### 유의 사항
 
 ***trace replay는 Direct-IO를 수행하므로 동작 과정에서 사용자 디스크의 파일 시스템을 붕괴 시킵니다.
 따라서, 파일 시스템이 구축되지 않은 디스크 및 백업이 간편한 가상 환경에서 수행해주시길 바랍니다***
@@ -99,11 +100,12 @@ black 포맷팅을 진행한 후에 flake8 검사를 실시한 후에 문제가 
 
 ### trace-replay나 runner의 코드 기여 규칙
 
-trace-replay나 runner의 경우에 반드시 아래 절차에 따라서 수행한 후에 PR을 진행해야 합니다.
+trace-replay나 runner의 경우에 반드시 아래 절차를 확인한 후에 PR을 진행해야 합니다.
 
-1. `scons test`를 반드시 수행한 후에 `build/log` 또는 출력에서 발생하는 모든 치명적인 오류는 반드시 수정되어야 합니다.
-1. 프로젝트 최상위 폴더에서 `valgrind --leak-check=full --show-leak-kinds=all ./build/release/<PROGRAM>`를
+1. `sudo scons test`를 반드시 수행한 후에 `build/log` 또는 출력에서 발생하는 모든 치명적인 오류는 반드시 수정되어야 합니다.
+1. 프로젝트 최상위 폴더에서 `sudo valgrind --leak-check=full --show-leak-kinds=all ./build/release/<PROGRAM>`를
    수행하여 메모리 누수를 확인하셔야 합니다.
+1. 되도록 비교 구문 작성 시에는 `if (상수 == 변수)`의 형태로 작성해주시길 바랍니다.
 
 [clang-format](https://clang.llvm.org/docs/ClangFormat.html)은 `pip install clang-format`으로
 설치할 수 있고, [cppcheck](http://cppcheck.sourceforge.net/)의 경우에는

@@ -18,15 +18,14 @@ current_env.Append(CFLAGS= TRACE_REPLAY_CFLAGS + RUNNER_CFLAGS)
 
 object = current_env.Object(Glob("*.c") + Glob("driver/*/*.c"))
 
-exclude_files = [str(Dir(env["RUNNER_LOCATION"])) + os.sep + "main.o"]
+exclude_files = [str(Dir(env["RUNNER_LOCATION"])) + os.sep + "main.os"]
 except_main = [
-    x for x in Glob(env["RUNNER_LOCATION"] + "/*.o") if not str(x) in exclude_files
+    x for x in Glob(env["RUNNER_LOCATION"] + "/*.os") if not str(x) in exclude_files
 ]
 
-program = current_env.Program(
+tester = current_env.Program(
     target=env["PROGRAM_LOCATION"] + "/" + CURRENT_PROJECT,
-    source=Glob("*.o") + Glob(env["RUNNER_LOCATION"] + "/driver/*/*.o") + Glob(env["UNITY_LOCATION"] + "/*.o") + except_main,
+    source=Glob("*.o") + Glob(env["RUNNER_LOCATION"] + "/driver/*/*.os") + Glob(env["UNITY_LOCATION"] + "/*.o") + except_main,
 )
 
-test_alias = Alias("test", [program], program[0].path)
-AlwaysBuild(test_alias)
+Return ('tester')

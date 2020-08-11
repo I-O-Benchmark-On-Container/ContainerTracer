@@ -8,6 +8,23 @@ SConscript('setting/SConscript')
 Import('env')
 scons_compiledb.enable(env)
 
+if env["BUILD_UNIT_TEST"] == True:
+	if os.getuid() != 0:
+		print("[ERROR] `test` mode requires the sudo privileges.", file=sys.stderr)
+		sys.exit()
+
+if env.GetOption('clean'):
+	print("Delete All Object file manually")
+	os.system("find ./ -name \"*.o\" -print0 | xargs -0 rm -f ")
+	os.system("find ./ -name \"*.os\" -print0 | xargs -0 rm -f ")
+
+if env["DEBUG"] == True:
+	env.Append(CFLAGS=["-g", "-pg"])
+	env.Append(CFLAGS=["-DLOG_INFO"])
+else:
+	pass
+
+
 if env["BUILD_UNIT_TEST"]:
 	SConscript("unity/SConscript")
 SConscript("include/SConscript")

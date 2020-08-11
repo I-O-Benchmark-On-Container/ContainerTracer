@@ -24,6 +24,13 @@
 #include <log.h>
 #include <driver/tr-driver.h>
 
+/**
+ * @brief 세마포어만을 초기화하는 함수입니다.
+ *
+ * @param pid 이 세마포어를 사용하는 Process의 ID입니다.
+ *
+ * @return ret 성공적으로 종료된 경우에는 세마포어의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ */
 static int __tr_sem_init(const pid_t pid)
 {
         char *sem_path = NULL;
@@ -82,6 +89,13 @@ exception:
         return semid;
 }
 
+/**
+ * @brief Shared Memory만을 초기화하는 함수입니다.
+ *
+ * @param pid 이 Shared Memory를 사용하는 Process ID입니다.
+ *
+ * @return ret 성공적으로 종료된 경우에는 Shared Memory의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ */
 static int __tr_shm_init(const pid_t pid)
 {
         char *shm_path;
@@ -127,6 +141,11 @@ exception:
         return shmid;
 }
 
+/**
+ * @brief 세마포어 락을 획득합니다.
+ *
+ * @param info 세마포어 획득 대상 정보를 가진 구조체 포인터입니다.
+ */
 static void tr_sem_wait(const struct tr_info *info)
 {
         struct sembuf sop = {
@@ -140,6 +159,11 @@ static void tr_sem_wait(const struct tr_info *info)
         assert(-1 != semop(info->semid, &sop, 1));
 }
 
+/**
+ * @brief 세마포어 락을 반환합니다.
+ *
+ * @param info 세마포어 반환 대상 정보를 가진 구조체 포인터입니다.
+ */
 static void tr_sem_post(const struct tr_info *info)
 {
         struct sembuf sop = {
@@ -152,6 +176,13 @@ static void tr_sem_post(const struct tr_info *info)
         assert(-1 != semop(info->semid, &sop, 1));
 }
 
+/**
+ * @brief Shared Memory와 관련된 설정에 대해서 초기화를 진행하도록 합니다.
+ *
+ * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
+ *
+ * @return ret 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ */
 int tr_shm_init(struct tr_info *info)
 {
         int shmid = -1, semid = -1;
@@ -187,6 +218,14 @@ exit:
         return ret;
 }
 
+/**
+ * @brief Shared Memory로 부터 데이터를 가져오는 함수입니다.
+ *
+ * @param info 데이터를 가져와야 하는 곳을 가리키는 정보를 가진 구조체의 포인터에 해당합니다.
+ * @param buffer 데이터가 실제 저장되는 버퍼를 가리킵니다.
+ *
+ * @return 정상 종료가 된 경우에는 0, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ */
 int tr_shm_get(const struct tr_info *info, void *buffer)
 {
         struct total_results *shm;
@@ -206,6 +245,12 @@ int tr_shm_get(const struct tr_info *info, void *buffer)
         return 0;
 }
 
+/**
+ * @brief Shared Memory의 할당된 내용을 해제하도록 합니다.
+ *
+ * @param info 할당 해제를 진행할 tr_info에 해당합니다.
+ * @param flags 해제의 정도를 설정하는 flag에 해당합니다.
+ */
 void tr_shm_free(struct tr_info *info, int flags)
 {
         int semid;

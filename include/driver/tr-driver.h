@@ -107,6 +107,7 @@ void tr_mq_free(struct tr_info *info, int flags);
  */
 static inline void tr_debug(const struct tr_info *info)
 {
+        (void)info;
         pr_info(INFO,
                 "\n"
                 "\t\t[[ current %p ]]\n"

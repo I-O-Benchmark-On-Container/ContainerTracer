@@ -34,12 +34,16 @@ enum { TR_NONE_SCHEDULER = 0,
        TR_BFQ_SCHEDULER,
 };
 
+/**
+ * @brief 현재 tr-driver에서 지원하는 I/O 스케줄러가 들어가게 됩니다.
+ * @warning kyber는 SCSI를 지원하지 않음을 유의해주시길 바랍니다.
+ */
 static const char *tr_valid_scheduler[] = {
-        "none",
-        "kyber",
-        "bfq",
+        [TR_NONE_SCHEDULER] = "none",
+        [TR_KYBER_SCHEDULER] = "kyber",
+        [TR_BFQ_SCHEDULER] = "bfq",
         NULL,
-}; /**< 현재 드라이버에서 사용 가능한 스케쥴러가 들어갑니다. */
+};
 
 static struct tr_info *global_info_head =
         NULL; /**< trace-replay의 각각을 실행시킬 때 필요한 정보를 담고있는 구조체 리스트의 헤드입니다. */
@@ -237,8 +241,8 @@ static int tr_set_cgroup_state(struct tr_info *current)
                 return -EINVAL;
         }
 
-        ret = strcmp(current->scheduler, tr_valid_scheduler[TR_NONE_SCHEDULER]);
-        if (ret != 0) { /**< None 스케줄러가 아니면 weight를 설정해줍니다. */
+        ret = strcmp(current->scheduler, tr_valid_scheduler[TR_BFQ_SCHEDULER]);
+        if (ret == 0) { /**< BFQ 스케쥴러이면 weight를 설정해줍니다. */
                 snprintf(cmd, PATH_MAX,
                          "echo %d > /sys/fs/cgroup/blkio/%s%d/blkio.%s.weight",
                          current->weight, current->prefix_cgroup_name,
@@ -266,6 +270,13 @@ static int tr_set_cgroup_state(struct tr_info *current)
         return 0;
 }
 
+/**
+ * @brief 자식 프로세스에 trace-replay를 올려서 동작시키는 함수입니다.
+ *
+ * @param current 자식 프로세스에 돌릴 trace-replay 설정에 해당합니다.
+ *
+ * @return 성공한 경우에는 0, 그렇지 않은 경우 음수 값이 들어갑니다.
+ */
 static int tr_do_exec(struct tr_info *current)
 {
         struct tr_info info;

@@ -23,6 +23,13 @@
 #include <log.h>
 #include <driver/tr-driver.h>
 
+/**
+ * @brief Message Queue를 초기화하는 함수입니다.
+ *
+ * @param pid 이 메시지 큐를 사용하는 Process의 ID입니다.
+ *
+ * @return ret 성공적으로 종료된 경우에는 메시지 큐의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ */
 static int __tr_mq_init(const pid_t pid)
 {
         char *mq_path;
@@ -67,6 +74,13 @@ exception:
         return mqid;
 }
 
+/**
+ * @brief Message Queue와 관련된 설정에 대해서 초기화를 진행하도록 합니다.
+ *
+ * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
+ *
+ * @return ret 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ */
 int tr_mq_init(struct tr_info *info)
 {
         int mqid = -1;
@@ -91,6 +105,14 @@ exit:
         return ret;
 }
 
+/**
+ * @brief Message Queue로 부터 데이터를 가져오는 함수입니다.
+ *
+ * @param info 데이터를 가져와야 하는 곳을 가리키는 정보를 가진 구조체의 포인터에 해당합니다.
+ * @param buffer 데이터가 실제 저장되는 버퍼를 가리킵니다.
+ *
+ * @return 정상 종료가 된 경우에는 0, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ */
 int tr_mq_get(const struct tr_info *info, void *buffer)
 {
         struct realtime_msg rmsg;
@@ -108,6 +130,12 @@ int tr_mq_get(const struct tr_info *info, void *buffer)
         return 0;
 }
 
+/**
+ * @brief Message Queue의 할당된 내용을 해제하도록 합니다.
+ *
+ * @param info 할당 해제를 진행할 tr_info에 해당합니다.
+ * @param flags 해제의 정도를 설정하는 flag에 해당합니다.
+ */
 void tr_mq_free(struct tr_info *info, int flags)
 {
         int mqid;

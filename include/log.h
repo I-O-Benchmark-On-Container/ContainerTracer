@@ -15,7 +15,7 @@
  * - `LOG_ERROR`: ERROR에 해당하는 로그만 출력합니다.
  * - `UNDEFINED`: 아무것도 출력하지 않습니다.
  */
-#define LOG_INFO
+// #define LOG_INFO
 //#define LOG_WARNING
 //#define LOG_ERROR
 

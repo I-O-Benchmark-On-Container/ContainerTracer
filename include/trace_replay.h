@@ -241,7 +241,9 @@ struct total_results {
         struct result results;
 };
 
+#ifndef __s8
 typedef char __s8;
+#endif
 typedef short __s16;
 typedef int __s32;
 

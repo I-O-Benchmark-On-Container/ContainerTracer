@@ -23,6 +23,8 @@
  * @param info json으로 변환시킬 tr_info 형태의 구조체입니다.
  *
  * @return meta tr_info 구조체의 json 객체가 반환됩니다.
+ *
+ * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
 static struct json_object *tr_info_serializer(const struct tr_info *info)
 {
@@ -55,6 +57,15 @@ static struct json_object *tr_info_serializer(const struct tr_info *info)
         return meta;
 }
 
+/**
+ * @brief realtime_log 구조체의 내용을 json_object로 만들어주도록 합니다.
+ *
+ * @param log json으로 변환시킬 realtime_log 형태의 구조체입니다.
+ *
+ * @return data realtime_log 구조체의 json 객체가 반환됩니다.
+ *
+ * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ */
 static struct json_object *
 tr_realtime_log_serializer(const struct realtime_log *log)
 {
@@ -80,6 +91,15 @@ tr_realtime_log_serializer(const struct realtime_log *log)
         return data;
 }
 
+/**
+ * @brief trace 구조체의 내용을 json_object로 만들어주도록 합니다.
+ *
+ * @param traces json으로 변환시킬 trace 형태의 구조체입니다.
+ *
+ * @return _trace trace 구조체의 json 객체가 반환됩니다.
+ *
+ * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ */
 static struct json_object *tr_total_trace_serializer(const struct trace *traces)
 {
         struct json_object *_trace;
@@ -95,6 +115,16 @@ static struct json_object *tr_total_trace_serializer(const struct trace *traces)
         return _trace;
 }
 
+/**
+ * @brief total_results 구조체 config 멤버의 내용을 json_object로 만들어주도록 합니다.
+ *
+ * @param total json으로 변환시킬 config를 멤버를 가진 total_results 형태의 구조체입니다.
+ * @param jobject 동적 할당된 내용이 들어간 tr_total_json_object 형태 구조체입니다.
+ *
+ * @return config total_results 구조체 config 멤버의 json 객체가 반환됩니다.
+ *
+ * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ */
 static struct json_object *
 tr_total_config_serializer(const struct total_results *total,
                            struct tr_total_json_object *jobject)
@@ -132,6 +162,15 @@ tr_total_config_serializer(const struct total_results *total,
         return config;
 }
 
+/**
+ * @brief synthetic 구조체의 내용을 json_object로 만들어주도록 합니다.
+ *
+ * @param _synthetic json으로 변환시킬 synthetic 형태의 구조체입니다.
+ *
+ * @return synthetic synthetic 구조체의 json 객체가 반환됩니다.
+ *
+ * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ */
 static struct json_object *
 tr_synthetic_serializer(const struct synthetic *_synthetic)
 {
@@ -150,6 +189,15 @@ tr_synthetic_serializer(const struct synthetic *_synthetic)
         return synthetic;
 }
 
+/**
+ * @brief trace_stat 구조체의 내용을 json_object로 만들어주도록 합니다.
+ *
+ * @param _stat json으로 변환시킬 trace_stat 형태의 구조체입니다.
+ *
+ * @return stats trace_stat 구조체의 json 객체가 반환됩니다.
+ *
+ * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ */
 static struct json_object *tr_stats_serializer(const struct trace_stat *_stats)
 {
         struct json_object *stats;
@@ -193,6 +241,16 @@ static struct json_object *tr_stats_serializer(const struct trace_stat *_stats)
         return stats;
 }
 
+/**
+ * @brief total_results 구조체 per_trace 멤버의 내용을 json_object로 만들어주도록 합니다.
+ *
+ * @param total json으로 변환시킬 per_trace를 멤버를 가진 total_results 형태의 구조체입니다.
+ * @param jobject 동적 할당된 내용이 들어간 tr_total_json_object 형태 구조체입니다.
+ *
+ * @return per_traces total_results 구조체 config 멤버의 json 객체가 반환됩니다.
+ *
+ * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ */
 static struct json_object *
 tr_total_per_trace_serializer(const struct total_results *total,
                               struct tr_total_json_object *jobject)
@@ -221,9 +279,13 @@ tr_total_per_trace_serializer(const struct total_results *total,
                         json_object_new_int(
                                 total->results.per_trace[i].issynthetic));
 
-                synthetic[i] = tr_synthetic_serializer(
-                        &total->results.per_trace[i].synthetic);
-                json_object_object_add(_per_trace, "synthetic", synthetic[i]);
+                /**< issynthetic 값이 1인 경우에만 synthetic 정보는 의미가 있습니다. */
+                if (1 == total->results.per_trace[i].issynthetic) {
+                        synthetic[i] = tr_synthetic_serializer(
+                                &total->results.per_trace[i].synthetic);
+                        json_object_object_add(_per_trace, "synthetic",
+                                               synthetic[i]);
+                }
 
                 stats[i] =
                         tr_stats_serializer(&total->results.per_trace[i].stats);
@@ -240,12 +302,31 @@ tr_total_per_trace_serializer(const struct total_results *total,
         return per_traces;
 }
 
+/**
+ * @brief total_results 구조체의 aggr_results 내용을 json_object로 만들어주도록 합니다.
+ *
+ * @param total json으로 변환시킬 aggr_result 멤버를 가진 total_results 형태의 구조체입니다.
+ *
+ * @return aggr_result가 stats만 가지고 있으므로 stats를 json화 시키는 함수를 통과시켜주도록 합니다.
+ *
+ * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ */
 static struct json_object *
 tr_total_aggr_serializer(const struct total_results *total)
 {
         return tr_stats_serializer(&total->results.aggr_result.stats);
 }
 
+/**
+ * @brief total_results 구조체 내용 중 per_trace랑 aggr_results를 json_object로 만들어주도록 합니다.
+ *
+ * @param total json으로 변환시킬 total_results 형태의 구조체입니다.
+ * @param jobject 동적 할당된 내용이 들어간 tr_total_json_object 형태 구조체입니다.
+ *
+ * @return results total_results 구조체의 per_trace랑 aggr_results를 가지고 만든 json 객체가 반환됩니다.
+ *
+ * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ */
 static struct json_object *
 tr_total_result_serializer(const struct total_results *total,
                            struct tr_total_json_object *jobject)
@@ -260,6 +341,16 @@ tr_total_result_serializer(const struct total_results *total,
         return results;
 }
 
+/**
+ * @brief total_results 구조체 내용을 json_object로 만들어주도록 합니다.
+ *
+ * @param total json으로 변환시킬 total_results 형태의 구조체입니다.
+ * @param jobject 동적 할당된 내용이 들어간 tr_total_json_object 형태 구조체입니다.
+ *
+ * @return total_results total_results 구조체 json 객체가 반환됩니다.
+ *
+ * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ */
 static struct json_object *
 tr_total_results_serializer(const struct total_results *total,
                             struct tr_total_json_object *jobject)
@@ -281,7 +372,6 @@ tr_total_results_serializer(const struct total_results *total,
  * @param buffer 수행 결과 만들어진 json 내용이 들어가는 부분에 해당합니다.
  *
  * @warning buffer는 반드시 이 함수를 부르기 전에 할당되어야하며, 그 크기는 INTERVAL_RESULT_STRING_SIZE 보다 커야 합니다.
- * @todo 리팩토링이 필요합니다.
  */
 void tr_realtime_serializer(const struct tr_info *info,
                             const struct realtime_log *log, char *buffer)
@@ -309,7 +399,6 @@ void tr_realtime_serializer(const struct tr_info *info,
  * @param buffer 수행 결과 만들어진 json 내용이 들어가는 부분에 해당합니다.
  *
  * @warning buffer는 반드시 이 함수를 부르기 전에 할당되어야하며, 그 크기는 TOTAL_RESULT_STRING_SIZE 보다 커야 합니다.
- * @todo 리팩토링이 필요합니다.
  */
 void tr_total_serializer(const struct tr_info *info,
                          const struct total_results *total, char *buffer)

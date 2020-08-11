@@ -150,6 +150,14 @@ void runner_free(void)
         pr_info(INFO, "runner free success (flags: 0x%X)\n", RUNNER_FREE_ALL);
 }
 
+/**
+ * @brief 수행 결과를 담는 buffer를 만드는 함수입니다.
+ *
+ * @param buffer 할당을 받고자 하는 대상이 되는 버퍼에 해당합니다.
+ * @param size 버퍼의 크기를 지칭합니다.
+ *
+ * @return buffer의 할당 성공 여부를 반환합니다.
+ */
 static int runner_get_result_string(char **buffer, size_t size)
 {
         *buffer = (char *)malloc(size * sizeof(char));
@@ -160,6 +168,11 @@ static int runner_get_result_string(char **buffer, size_t size)
         return 0;
 }
 
+/**
+ * @brief `runner_get_result_string`에서 할당 받은 buffer를 해제합니다.
+ *
+ * @param buffer 해제 대상이 되는 동적 할당된 버퍼입니다.
+ */
 void runner_put_result_string(char *buffer)
 {
         if (NULL != buffer) {
@@ -167,6 +180,17 @@ void runner_put_result_string(char *buffer)
         }
 }
 
+/**
+ * @brief 임의의 드라이버에 대한 실시간 수행 출력 결과를 반환합니다.
+ *
+ * @param key 출력하고자 하는 대상을 지칭하는 key입니다.
+ *
+ * @return buffer json 문자열로 구성된 실시간 수행 결과를 담고 있습니다.
+ * 만약 할당을 실패한 경우에는 NULL이 반환됩니다.
+ *
+ * @warning buffer는 동적 할당된 내용이므로 반드시 외부에서
+ * `runner_put_result_string`으로 해제해줘야 합니다.
+ */
 char *runner_get_interval_result(const char *key)
 {
         char *buffer = NULL;
@@ -191,6 +215,17 @@ exception:
         return buffer;
 }
 
+/**
+ * @brief 임의의 드라이버에 대한 전체 수행 출력 결과를 반환합니다.
+ *
+ * @param key 출력하고자 하는 대상을 지칭하는 key입니다.
+ *
+ * @return buffer json 문자열로 구성된 전체 수행 결과를 담고 있습니다.
+ * 만약 할당을 실패한 경우에는 NULL이 반환됩니다.
+ *
+ * @warning buffer는 동적 할당된 내용이므로 반드시 외부에서
+ * `runner_put_result_string`으로 해제해줘야 합니다.
+ */
 char *runner_get_total_result(const char *key)
 {
         char *buffer = NULL;
