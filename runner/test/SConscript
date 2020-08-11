@@ -6,7 +6,7 @@ CURRENT_PROJECT = "runner-test"
 
 current_env = env.Clone()
 current_env.Append(CPPPATH=[env["INCLUDE_LOCATION"]])
-current_env.Append(LIBS=["json-c"])
+current_env.Append(LIBS=["json-c", "jemalloc"])
 current_env.Append(CFLAGS=["-I/usr/include/json-c/"])
 object = current_env.Object(Glob("*.c"))
 
