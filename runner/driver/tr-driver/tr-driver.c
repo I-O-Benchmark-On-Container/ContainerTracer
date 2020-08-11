@@ -293,11 +293,11 @@ static int tr_do_exec(struct tr_info *current)
         char iosize_str[PAGE_SIZE / 4];
 
         assert(NULL != current);
+        memcpy(&info, current, sizeof(struct tr_info));
         if (current) {
                 assert(NULL != current->global_config);
                 runner_config_free(current->global_config, RUNNER_FREE_ALL);
         }
-        memcpy(&info, current, sizeof(struct tr_info));
         sprintf(filename, "%s_%d_%d_%s.txt", info.scheduler, info.ppid,
                 info.weight, info.cgroup_id);
         sprintf(q_depth_str, "%u", info.q_depth);
@@ -357,9 +357,6 @@ int tr_runner(void)
         TELL_WAIT(); /**< 동기화를 준비하는 과정입니다. */
         tr_info_list_traverse(current, global_info_head)
         {
-#ifdef TR_DEBUG
-                tr_debug(current);
-#endif
                 if (0 > (pid = fork())) {
                         pr_info(ERROR, "Fork failed. (pid: %d)\n", pid);
                         ret = -EFAULT;
@@ -383,6 +380,7 @@ int tr_runner(void)
                         tr_kill_handle(SIGTERM);
                         _exit(EXIT_SUCCESS);
                 }
+
                 /**< 부모 프로세스 */
                 current->pid = pid;
                 tr_set_cgroup_state(current);

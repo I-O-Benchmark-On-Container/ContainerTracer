@@ -22,7 +22,7 @@
 
 #define TR_DEBUG
 #define tr_info_list_traverse(ptr, head)                                       \
-        for (ptr = head; ptr != NULL; ptr = current->next)
+        for (ptr = head; ptr != NULL; ptr = ptr->next)
 
 #define tr_json_field_traverse(ptr, begin, end)                                \
         for (ptr = begin; ptr != end; ptr++)
