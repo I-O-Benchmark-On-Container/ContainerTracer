@@ -67,6 +67,7 @@ scons
 
 - `DEBUG=True`를 주게되면 모든 로그가 다 출력되어 좀 더 수월하게 디버깅이 가능해집니다.
 - `sudo`를 주는 이유는 `trace-replay`가 실행되기 위해서는 `sudo` 권한을 필요로 하기 때문입니다.
+- `sudo scons test`를 하면 `compile_commands.json`이 생성되지 않으므로 생성을 원하는 경우 `scons`를 수행해주시길 바랍니다.
 
 #### 유의 사항
 

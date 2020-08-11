@@ -73,6 +73,7 @@ void setUp(void)
                 "}",
                 TRACE_REPLAY_PATH, TEST_DISK_PATH, NR_TASKS, TIME, Q_DEPTH,
                 NR_THREAD, PREFIX_CGROUP_NAME, SCHEDULER, task_options);
+        pr_info(INFO, "Current JSON: %s\n", json);
         TEST_ASSERT_EQUAL(0, runner_init(json)); /**< config 설정 과정 */
         TEST_ASSERT_NOT_NULL(config = runner_get_global_config());
         TEST_ASSERT_EQUAL_STRING(config->driver, "trace-replay");
