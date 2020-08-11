@@ -296,21 +296,19 @@ int trace_io_get(double *arrival_time, int *devno, int *blkno, int *bcount,
 
         io = &(trace->trace_buf[trace->trace_io_cur]);
 
+        *arrival_time = io->arrival_time;
+        *devno = io->devno;
+        *bcount = io->bcount;
+        *blkno = io->blkno;
+        *flags = io->flags;
+        trace->trace_io_cur++;
+        trace->trace_io_issue_count++;
+
         if (trace->timeout == 0.0 && trace->wanted_io_count &&
             trace->trace_io_issue_count >= trace->wanted_io_count) {
                 res = try_trace_reset(trace, io_stat);
         } else if (trace->trace_io_cur >= trace->trace_io_cnt) {
                 res = try_trace_reset(trace, io_stat);
-        }
-
-        if (res != -1) {
-                *arrival_time = io->arrival_time;
-                *devno = io->devno;
-                *bcount = io->bcount;
-                *blkno = io->blkno;
-                *flags = io->flags;
-                trace->trace_io_cur++;
-                trace->trace_io_issue_count++;
         }
 
         return res;
@@ -331,11 +329,10 @@ int make_jobs(struct thread_info_t *t_info, struct iocb **ioq,
         int blkno;
         int bcount;
         int flags;
-        int i;
         struct io_stat_t *io_stat = &t_info->io_stat;
         int cnt = 0;
 
-        for (i = 0; i < depth; i++) {
+        for (; cnt < depth; cnt++) {
                 struct trace_info_t *trace = t_info->trace;
                 struct timeval tv_now;
                 double now, tmp;
@@ -404,7 +401,6 @@ int make_jobs(struct thread_info_t *t_info, struct iocb **ioq,
 
 #endif
                 io_set_callback(&job->iocb, io_done);
-                cnt++;
         }
 
         return cnt;
@@ -513,7 +509,7 @@ void *sub_worker(void *threadid)
                 cnt = make_jobs(t_info, ioq, jobq, max);
                 if (!cnt && trace_eof(trace)) {
                         goto Timeout;
-                } else if (cnt) {
+                } else if (cnt > 0) {
                         rc = io_submit(t_info->io_ctx, cnt, ioq);
                         if (rc != cnt && rc < 0) {
                                 int i;
@@ -879,14 +875,11 @@ int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
                         total_bytes = total_stat.total_bytes;
 
                 sprintf(key_pathname, "%s_%d", MSGQ_KEY_PATHNAME, getpid());
-                server_qkey = ftok(key_pathname, PROJECT_ID);
-                if (server_qkey < 0) {
+                if ((server_qkey = ftok(key_pathname, PROJECT_ID)) < 0) {
                         perror("ftok: server_qkey");
                         goto no_msg;
                 }
-
-                server_qid = msgget(server_qkey, 0);
-                if (server_qid < 0) {
+                if ((server_qid = msgget(server_qkey, 0)) < 0) {
                         perror("msgget: server_qid");
                         goto no_msg;
                 }
@@ -992,43 +985,43 @@ void finalize()
         fclose(log_fp);
 
         sprintf(key_pathname, "%s_%d", MSGQ_KEY_PATHNAME, getpid());
-        while ((server_qkey = ftok(key_pathname, PROJECT_ID)) < 0)
+        if ((server_qkey = ftok(key_pathname, PROJECT_ID)) < 0) {
                 perror("ftok: server_qkey");
-
-        while ((server_qid = msgget(server_qkey, 0)) < 0)
+                goto no_msgq;
+        }
+        if ((server_qid = msgget(server_qkey, 0)) < 0) {
                 perror("msgget: server_qid");
+                goto no_msgq;
+        }
 
         rmsg.mtype = 1;
         rmsg.log.type = FIN;
 
-        while (msgsnd(server_qid, &rmsg, sizeof(struct realtime_log), 0) < 0)
+        if (msgsnd(server_qid, &rmsg, sizeof(struct realtime_log), 0) < 0)
                 perror("msgsnd");
-
+no_msgq:
         sprintf(key_pathname, "%s_%d", SEM_KEY_PATHNAME, getpid());
-        server_semkey = ftok(key_pathname, PROJECT_ID);
-        if (server_semkey < 0) {
+        if ((server_semkey = ftok(key_pathname, PROJECT_ID)) < 0) {
                 perror("ftok: server_semkey");
                 goto no_shm;
         }
-        signal_sem = semget(server_semkey, 1, 0);
-        if (signal_sem < 0) {
+        if ((signal_sem = semget(server_semkey, 1, 0)) < 0) {
                 perror("semget: signal_sem");
                 goto no_shm;
         }
 
         sprintf(key_pathname, "%s_%d", SHM_KEY_PATHNAME, getpid());
-        server_shmkey = ftok(key_pathname, PROJECT_ID);
-        if (server_shmkey < 0) {
+        if ((server_shmkey = ftok(key_pathname, PROJECT_ID)) < 0) {
                 perror("ftok: server_shmkey");
                 goto no_shm;
         }
-        server_shmid = shmget(server_shmkey, sizeof(struct total_results), 0);
-        if (server_shmid < 0) {
+        if ((server_shmid = shmget(server_shmkey, sizeof(struct total_results),
+                                   0)) < 0) {
                 perror("shmget: server_shmid");
                 goto no_shm;
         }
-        shm_ptr = (struct total_results *)shmat(server_shmid, NULL, 0);
-        if ((long)shm_ptr == -1) {
+        if ((long)(shm_ptr = (struct total_results *)shmat(server_shmid, NULL,
+                                                           0)) == -1) {
                 perror("shmat: shm_ptr");
                 goto no_shm;
         }
@@ -1040,7 +1033,7 @@ void finalize()
         *shm_ptr = total_results;
 
         asem[0].sem_op = 1;
-        while (semop(signal_sem, asem, 1) < 0)
+        if (semop(signal_sem, asem, 1) < 0)
                 perror("semop: signal_sem");
 no_shm:
         fprintf(stdout, "\n Finalizing Trace Replayer \n");
@@ -1240,6 +1233,7 @@ int destroy(pthread_t *threads, int qdepth)
                 if (!traces[t].synthetic) {
                         fclose(traces[t].trace_fp);
                 }
+                free(traces[t].trace_buf);
                 disk_close(traces[t].fd);
         }
 
@@ -1545,8 +1539,11 @@ int main(int argc, char **argv)
                         trace->start_page + trace->total_pages;
         }
 
-        for (i = 0; i < nr_trace; i++)
-                pthread_join(trace_loader_thread[i], NULL);
+        for (i = 0; i < nr_trace; i++) {
+                struct trace_info_t *trace = &traces[i];
+                if (!trace->synthetic)
+                        pthread_join(trace_loader_thread[i], NULL);
+        }
 
         for (t = 0; t < nr_thread; t++) {
                 struct thread_info_t *t_info = &th_info[t];
