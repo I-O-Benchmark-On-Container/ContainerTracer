@@ -1,15 +1,16 @@
 # 일반적인 빌드 옵션들이 들어가게 됩니다.
 import os
+import sys
 
 project_version = "0.0.1"
 
 variables = Variables()
 variables.AddVariables(
     ("PROJECT_VERSION", "프로젝트의 버전을 의미합니다.", project_version),
-    BoolVariable("BUILD_UNIT_TEST", "프로젝트의 단위 테스트 프로그램을 제작합니다.", default=True),
     BoolVariable("RUNNER", "통합 실행 프로그램을 빌드하도록 합니다.", default=True),
     BoolVariable("TRACE_REPLAY", "trace replay를 빌드하도록 합니다.", default=True),
     BoolVariable("WEB", "파이썬 프로젝트를 빌드하도록 합니다.", default=True),
+    BoolVariable("DEBUG", "디버그 모드를 활성화 합니다.", default=False),
 )
 
 env = Environment(variables=variables,)
@@ -22,6 +23,8 @@ env["INCLUDE_LOCATION"] = "#include"
 env["TRACE_REPLAY_LOCATION"] = "#trace-replay"
 env["RUNNER_LOCATION"] = "#runner"
 env["UNITY_LOCATION"] = "#unity"
+
+env["BUILD_UNIT_TEST"] = "test" in [arg.strip().lower() for arg in sys.argv[1:]]
 
 
 def PrintHelp(env):

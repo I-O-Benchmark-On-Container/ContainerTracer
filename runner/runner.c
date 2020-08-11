@@ -30,36 +30,34 @@ static struct runner_config *global_config = NULL;
  *
  * @param flags global_runner의 멤버 중 지우고 싶은 멤버를 선택할 수 있습니다.
  */
-static void __runner_free(const int flags)
+void runner_config_free(struct runner_config *config, const int flags)
 {
-        if (global_config == NULL) {
-                pr_info(ERROR, "invalid global_config location: %p\n",
-                        global_config);
+        if (NULL == config) {
+                pr_info(ERROR, "invalid config location: %p\n", config);
                 return;
         }
 
-        if ((flags & RUNNER_FREE_ALL_MASK) != RUNNER_FREE_ALL) {
+        if (RUNNER_FREE_ALL != (flags & RUNNER_FREE_ALL_MASK)) {
                 pr_info(WARNING,
                         "Nothing occurred in this functions... (flags: 0x%X)\n",
                         flags);
                 return;
         }
 
-        if (global_config->op.free != NULL) {
-                (global_config->op.free)();
+        if ((flags & RUNNER_FREE_DRIVER_MASK) && (NULL != config->op.free)) {
+                (config->op.free)();
         }
 
-        if (global_config->setting != NULL) {
-                json_object_put(global_config->setting);
-                global_config->setting = NULL;
+        if (NULL != config->setting) {
+                json_object_put(config->setting);
+                config->setting = NULL;
                 pr_info(INFO,
                         "setting deallcated success: expected (nil) ==> %p\n",
-                        global_config->setting);
+                        config->setting);
         }
-        global_config->driver[0] = '\0';
+        config->driver[0] = '\0';
 
-        free(global_config);
-        global_config = NULL;
+        free(config);
 }
 
 /**
@@ -75,18 +73,20 @@ int runner_init(const char *json_str)
 {
         struct json_object *json_obj, *tmp;
         int ret = 0;
-        assert(json_str != NULL);
+        assert(NULL != json_str);
 
         global_config =
                 (struct runner_config *)malloc(sizeof(struct runner_config));
-        assert(global_config != NULL);
+        assert(NULL != global_config);
 
         memset(global_config, 0, sizeof(struct runner_config));
 
-        if (global_config->setting != NULL) {
-                json_object_put(global_config->setting);
-        }
         json_obj = json_tokener_parse(json_str);
+        if (!json_obj) {
+                pr_info(ERROR, "Parse failed: \"%s\"\n", json_str);
+                ret = -EINVAL;
+                goto exception;
+        }
 
         if (!json_object_object_get_ex(json_obj, "driver", &tmp)) {
                 pr_info(ERROR, "Not exist error (key: %s)\n", "driver");
@@ -106,26 +106,27 @@ int runner_init(const char *json_str)
         global_config->setting = tmp;
 
         ret = generic_driver_init(global_config->driver, global_config);
-        if (ret < 0) {
+        if (0 > ret) {
                 pr_info(ERROR, "Initialize failed... (errno: %d)\n", ret);
                 goto exception;
         }
 
         pr_info(INFO, "Successfully binding driver: %s\n",
                 global_config->driver);
-        if (json_obj != NULL) {
+        if (NULL != json_obj) {
                 json_object_put(json_obj);
                 json_obj = NULL;
         }
         global_config->setting = NULL;
         return ret;
 exception:
-        if (json_obj != NULL) {
+        errno = ret;
+        if (NULL != json_obj) {
                 json_object_put(json_obj);
                 json_obj = NULL;
         }
         global_config->setting = NULL;
-        __runner_free(RUNNER_FREE_ALL);
+        runner_config_free(global_config, RUNNER_FREE_ALL);
         return ret;
 }
 
@@ -144,14 +145,22 @@ int runner_run(void)
  */
 void runner_free(void)
 {
-        int flags = RUNNER_FREE_ALL;
-        __runner_free(flags);
-        pr_info(INFO, "runner free success (flags: 0x%X)\n", flags);
+        runner_config_free(global_config, RUNNER_FREE_ALL);
+        global_config = NULL;
+        pr_info(INFO, "runner free success (flags: 0x%X)\n", RUNNER_FREE_ALL);
 }
 
-static int runner_get_result_string(char **buffer)
+/**
+ * @brief 수행 결과를 담는 buffer를 만드는 함수입니다.
+ *
+ * @param buffer 할당을 받고자 하는 대상이 되는 버퍼에 해당합니다.
+ * @param size 버퍼의 크기를 지칭합니다.
+ *
+ * @return buffer의 할당 성공 여부를 반환합니다.
+ */
+static int runner_get_result_string(char **buffer, size_t size)
 {
-        *buffer = (char *)malloc(RESULT_STRING_SIZE);
+        *buffer = (char *)malloc(size * sizeof(char));
         if (!*buffer) {
                 pr_info(WARNING, "Memory allocation failed. (%s)\n", "buffer");
                 return -EINVAL;
@@ -159,58 +168,83 @@ static int runner_get_result_string(char **buffer)
         return 0;
 }
 
+/**
+ * @brief `runner_get_result_string`에서 할당 받은 buffer를 해제합니다.
+ *
+ * @param buffer 해제 대상이 되는 동적 할당된 버퍼입니다.
+ */
 void runner_put_result_string(char *buffer)
 {
-        if (buffer != NULL) {
+        if (NULL != buffer) {
                 free(buffer);
         }
 }
 
+/**
+ * @brief 임의의 드라이버에 대한 실시간 수행 출력 결과를 반환합니다.
+ *
+ * @param key 출력하고자 하는 대상을 지칭하는 key입니다.
+ *
+ * @return buffer json 문자열로 구성된 실시간 수행 결과를 담고 있습니다.
+ * 만약 할당을 실패한 경우에는 NULL이 반환됩니다.
+ *
+ * @warning buffer는 동적 할당된 내용이므로 반드시 외부에서
+ * `runner_put_result_string`으로 해제해줘야 합니다.
+ */
 char *runner_get_interval_result(const char *key)
 {
         char *buffer = NULL;
         int ret = 0;
 
-        ret = runner_get_result_string(&buffer);
-        if (ret) {
+        ret = runner_get_result_string(&buffer, INTERVAL_RESULT_STRING_SIZE);
+        if (0 > ret) {
                 goto exception;
         }
 
         ret = (global_config->op.get_interval)(key, buffer);
-        if (ret) {
+        if (0 > ret) {
                 goto exception;
         }
 
-        pr_info(INFO, "Current buffer(key: %s) contents in %p ==> \"%s\"\n",
-                key, buffer, buffer);
-
         return buffer;
 exception:
+        errno = ret;
+        perror("Error detected while running");
         runner_put_result_string(buffer);
         buffer = NULL;
         return buffer;
 }
 
+/**
+ * @brief 임의의 드라이버에 대한 전체 수행 출력 결과를 반환합니다.
+ *
+ * @param key 출력하고자 하는 대상을 지칭하는 key입니다.
+ *
+ * @return buffer json 문자열로 구성된 전체 수행 결과를 담고 있습니다.
+ * 만약 할당을 실패한 경우에는 NULL이 반환됩니다.
+ *
+ * @warning buffer는 동적 할당된 내용이므로 반드시 외부에서
+ * `runner_put_result_string`으로 해제해줘야 합니다.
+ */
 char *runner_get_total_result(const char *key)
 {
         char *buffer = NULL;
         int ret = 0;
 
-        ret = runner_get_result_string(&buffer);
-        if (ret) {
+        ret = runner_get_result_string(&buffer, TOTAL_RESULT_STRING_SIZE);
+        if (0 > ret) {
                 goto exception;
         }
 
         ret = (global_config->op.get_total)(key, buffer);
-        if (ret) {
+        if (0 > ret) {
                 goto exception;
         }
 
-        pr_info(INFO, "Current buffer(key: %s) contents ==> \"%s\"\n", key,
-                buffer);
-
         return buffer;
 exception:
+        errno = ret;
+        perror("Error detected while running");
         runner_put_result_string(buffer);
         buffer = NULL;
         return buffer;
