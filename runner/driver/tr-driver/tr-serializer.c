@@ -43,6 +43,13 @@ static struct json_object *tr_info_serializer(const struct tr_info *info)
         json_object_object_add(meta, "mqid", json_object_new_int(info->mqid));
         json_object_object_add(meta, "shmid", json_object_new_int(info->shmid));
         json_object_object_add(meta, "semid", json_object_new_int(info->semid));
+        json_object_object_add(meta, "trace_repeat",
+                               json_object_new_int(info->trace_repeat));
+        json_object_object_add(meta, "wss", json_object_new_int(info->wss));
+        json_object_object_add(meta, "utilization",
+                               json_object_new_int(info->utilization));
+        json_object_object_add(meta, "iosize",
+                               json_object_new_int(info->iosize));
         json_object_object_add(
                 meta, "prefix_cgroup_name",
                 json_object_new_string(info->prefix_cgroup_name));

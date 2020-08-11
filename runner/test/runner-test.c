@@ -27,8 +27,9 @@ const char *key[] = { "cgroup-1", "cgroup-2", "cgroup-3",
                       "cgroup-4", "cgroup-5", "cgroup-6" };
 const int weight[] = { 100, 250, 500, 1000, 2000, 4000 };
 const char *test_path[] = {
-        "./sample/sample1.dat", "./sample/sample2.dat", "./sample/sample1.dat",
-        "./sample/sample2.dat", "./sample/sample1.dat", "./sample/sample2.dat",
+        "./sample/sample1.dat", "./sample/sample2.dat",
+        "./sample/sample1.dat", "rand_read",
+        "rand_mixed",           "seq_mixed",
 };
 const unsigned long key_len = sizeof(key) / sizeof(char *);
 
@@ -46,7 +47,7 @@ void setUp(void)
         json = (char *)malloc(PAGE_SIZE * sizeof(char));
         task_options = (char *)malloc(PAGE_SIZE * sizeof(char));
 
-        for (i = 0; i < key_len; i++) {
+        for (i = 0; i < key_len / 2; i++) {
                 char temp[PAGE_SIZE] = { 0 };
                 sprintf(temp,
                         "{\"cgroup_id\": \"%s\" , \"weight\":%d, \"trace_data_path\":\"%s\"},",
@@ -54,6 +55,17 @@ void setUp(void)
 
                 strcat(task_options, temp);
         }
+
+        for (i = key_len / 2; i < key_len; i++) {
+                char temp[PAGE_SIZE] = { 0 };
+                sprintf(temp,
+                        "{\"cgroup_id\": \"%s\" , \"weight\":%d, \"trace_data_path\":\"%s\","
+                        "\"wss\": %d, \"utilization\": %d, \"iosize\": %d},",
+                        key[i], weight[i], test_path[i], 128, 10, 4);
+
+                strcat(task_options, temp);
+        }
+
         sprintf(json,
                 "{\"driver\":\"trace-replay\","
                 "\"setting\": {"

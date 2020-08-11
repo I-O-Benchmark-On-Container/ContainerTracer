@@ -19,6 +19,15 @@
 #include <driver/tr-driver.h>
 
 /**
+ * @brief 알려진 synthetic 형태에 대한 정의입니다.
+ * 이 안에 있는 경우에는 파일로 확인을 하지 않습니다.
+ */
+static const char *global_synth_type[] = { "rand_read",  "rand_write",
+                                           "rand_mixed", "seq_read",
+                                           "seq_write",  "seq_mixed",
+                                           NULL };
+
+/**
  * @brief 정수 형태의 `info->(member)`에 json에서 값을 읽어서 값을 주도록 합니다. 
  *
  * @param setting 탐색을 할 특정 위치를 지칭합니다.
@@ -68,6 +77,24 @@ static int tr_info_str_value_set(struct json_object *setting, const char *key,
 }
 
 /**
+ * @brief 현재 trace_data_path 값이 synthetic 형태인지를 확인합니다.
+ *
+ * @param trace_data_path synthetic 여부를 확인하고자 하는 문자열입니다.
+ *
+ * @return 만약에 synthetic이면 TR_SYNTH를 아니면 TR_NOT_SYNTH를 반환합니다.
+ */
+static int tr_is_synth_type(const char *trace_data_path)
+{
+        int i = 0;
+        for (i = 0; global_synth_type[i] != NULL; i++) {
+                if (!strcmp(trace_data_path, global_synth_type[i])) {
+                        return TR_SYNTH;
+                }
+        }
+        return TR_NOT_SYNTH;
+}
+
+/**
  * @brief 각각의 프로세스의 동작 옵션을 설정을 해주도록 합니다.
  *
  * @param setting 설정 값을 가지고 있는 json 객체의 포인터에 해당합니다.
@@ -104,6 +131,13 @@ static int __tr_info_init(struct json_object *setting, int index,
         tr_info_int_value_set(tmp, "q_depth", &info->q_depth, TR_PRINT_NONE);
         tr_info_int_value_set(tmp, "nr_thread", &info->nr_thread,
                               TR_PRINT_NONE);
+        tr_info_int_value_set(tmp, "weight", &info->weight, TR_PRINT_NONE);
+        tr_info_int_value_set(tmp, "trace_repeat", &info->weight,
+                              TR_PRINT_NONE);
+        tr_info_int_value_set(tmp, "wss", &info->wss, TR_PRINT_NONE);
+        tr_info_int_value_set(tmp, "utilization", &info->utilization,
+                              TR_PRINT_NONE);
+        tr_info_int_value_set(tmp, "iosize", &info->iosize, TR_PRINT_NONE);
         tr_info_str_value_set(tmp, "prefix_cgroup_name",
                               info->prefix_cgroup_name, TR_PRINT_NONE);
         tr_info_str_value_set(tmp, "scheduler", info->scheduler, TR_PRINT_NONE);
@@ -135,13 +169,15 @@ static int __tr_info_init(struct json_object *setting, int index,
                 goto exception;
         }
 
-        if (-1 == (ret = access(info->trace_data_path, F_OK))) {
-                pr_info(ERROR, "Trace data file not exist: %s\n",
-                        info->trace_data_path);
-                goto exception;
-        } else {
-                pr_info(INFO, "Trace data file exist: %s\n",
-                        info->trace_data_path);
+        if (TR_SYNTH != tr_is_synth_type(info->trace_data_path)) {
+                if (-1 == (ret = access(info->trace_data_path, F_OK))) {
+                        pr_info(ERROR, "Trace data file not exist: %s\n",
+                                info->trace_data_path);
+                        goto exception;
+                } else {
+                        pr_info(INFO, "Trace data file exist: %s\n",
+                                info->trace_data_path);
+                }
         }
         info->ppid = getpid();
 
@@ -182,6 +218,7 @@ struct tr_info *tr_info_init(struct json_object *setting, int index)
         }
 
         memset(info, 0, sizeof(struct tr_info));
+        info->trace_repeat = 1;
 
         ret |= tr_info_int_value_set(setting, "time", &info->time,
                                      TR_ERROR_PRINT);
@@ -208,6 +245,17 @@ struct tr_info *tr_info_init(struct json_object *setting, int index)
                         info->scheduler);
                 goto exception;
         }
+
+        tr_info_int_value_set(setting, "weight", &info->weight, TR_PRINT_NONE);
+        tr_info_int_value_set(setting, "trace_repeat", &info->weight,
+                              TR_PRINT_NONE);
+        tr_info_int_value_set(setting, "wss", &info->wss, TR_PRINT_NONE);
+        tr_info_int_value_set(setting, "utilization", &info->utilization,
+                              TR_PRINT_NONE);
+        tr_info_int_value_set(setting, "iosize", &info->iosize, TR_PRINT_NONE);
+        /**< trace_data_path의 검사는 __tr_info_init에서 합니다. */
+        tr_info_str_value_set(setting, "trace_data_path", info->trace_data_path,
+                              TR_PRINT_NONE);
 
         ret = __tr_info_init(setting, index, info);
         if (0 != ret) {

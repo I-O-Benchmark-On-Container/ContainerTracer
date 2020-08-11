@@ -281,12 +281,17 @@ static int tr_do_exec(struct tr_info *current)
 {
         struct tr_info info;
         char filename[PATH_MAX];
-        char q_depth_str[PAGE_SIZE];
-        char nr_thread_str[PAGE_SIZE];
-        char time_str[PAGE_SIZE];
-        char device_path[PAGE_SIZE];
 
-        const char *NR_TRACE = "1";
+        char q_depth_str[PAGE_SIZE / 4];
+        char nr_thread_str[PAGE_SIZE / 4];
+        char time_str[PAGE_SIZE / 4];
+        char device_path[PAGE_SIZE / 4];
+
+        char trace_repeat_str[PAGE_SIZE / 4];
+        char wss_str[PAGE_SIZE / 4];
+        char utilization_str[PAGE_SIZE / 4];
+        char iosize_str[PAGE_SIZE / 4];
+
         assert(NULL != current);
         if (current) {
                 assert(NULL != current->global_config);
@@ -295,10 +300,16 @@ static int tr_do_exec(struct tr_info *current)
         memcpy(&info, current, sizeof(struct tr_info));
         sprintf(filename, "%s_%d_%d_%s.txt", info.scheduler, info.ppid,
                 info.weight, info.cgroup_id);
-        sprintf(q_depth_str, "%d", info.q_depth);
-        sprintf(nr_thread_str, "%d", info.nr_thread);
-        sprintf(time_str, "%d", info.time);
+        sprintf(q_depth_str, "%u", info.q_depth);
+        sprintf(nr_thread_str, "%u", info.nr_thread);
+        sprintf(time_str, "%u", info.time);
         sprintf(device_path, "/dev/%s", info.device);
+
+        sprintf(trace_repeat_str, "%u", info.trace_repeat);
+        sprintf(wss_str, "%u", info.wss);
+        sprintf(utilization_str, "%u", info.utilization);
+        sprintf(iosize_str, "%u", info.iosize);
+
         pr_info(INFO, "trace replay save location: \"%s\"\n", filename);
         WAIT_PARENT();
 #ifdef TR_DEBUG
@@ -310,9 +321,9 @@ static int tr_do_exec(struct tr_info *current)
                 return -EACCES;
         }
         return execlp(info.trace_replay_path, info.trace_replay_path,
-                      q_depth_str, nr_thread_str, filename, time_str, NR_TRACE,
-                      device_path, info.trace_data_path, "0", "0", "0",
-                      (char *)0);
+                      q_depth_str, nr_thread_str, filename, time_str,
+                      trace_repeat_str, device_path, info.trace_data_path,
+                      wss_str, utilization_str, iosize_str, (char *)0);
 }
 
 /**

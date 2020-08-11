@@ -28,6 +28,7 @@
         for (ptr = begin; ptr != end; ptr++)
 
 enum { TR_IPC_NOT_FREE = 0x0, TR_IPC_FREE = 0x1 };
+enum { TR_NOT_SYNTH = 0, TR_SYNTH = 0x1 };
 
 enum { TR_ERROR_PRINT, /**< json의 에러를 사용자에게 노출되도록 합니다.*/
        TR_PRINT_NONE, /**< json의 에러를 사용자에게 노출되지 않도록 합니다. */
@@ -60,6 +61,11 @@ struct tr_info {
         int mqid; /**< message queue ID */
         int shmid; /**< shared memory ID */
         int semid; /**< semaphore ID */
+
+        unsigned int trace_repeat;
+        unsigned int wss; /**< Working set size */
+        unsigned int utilization;
+        unsigned int iosize;
 
         char prefix_cgroup_name[NAME_MAX];
         char device[NAME_MAX];
@@ -116,6 +122,10 @@ static inline void tr_debug(const struct tr_info *info)
                 "\t\tq_depth: %u\n"
                 "\t\tnr_thread: %u\n"
                 "\t\tweight: %u\n"
+                "\t\ttrace_repeat: %u\n"
+                "\t\twss: %u\n"
+                "\t\tutilization: %u\n"
+                "\t\tiosize: %u\n"
                 "\t\tmqid: %d\n"
                 "\t\tshmid: %d\n"
                 "\t\tsemid: %d\n"
@@ -128,7 +138,8 @@ static inline void tr_debug(const struct tr_info *info)
                 "\t\tglobal_config: %p\n"
                 "\t\tnext: %p\n",
                 info, info->pid, info->time, info->q_depth, info->nr_thread,
-                info->weight, info->mqid, info->shmid, info->semid,
+                info->weight, info->trace_repeat, info->wss, info->utilization,
+                info->iosize, info->mqid, info->shmid, info->semid,
                 info->prefix_cgroup_name, info->scheduler, info->cgroup_id,
                 info->trace_replay_path, info->trace_data_path, info->device,
                 info->global_config, info->next);
