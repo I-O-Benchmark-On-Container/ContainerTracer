@@ -999,7 +999,7 @@ void finalize()
 
         if (msgsnd(server_qid, &rmsg, sizeof(struct realtime_log), 0) < 0)
                 perror("msgsnd");
-  
+no_msgq:
         sprintf(key_pathname, "%s_%d", SEM_KEY_PATHNAME, getpid());
         if ((server_semkey = ftok(key_pathname, PROJECT_ID)) < 0) {
                 perror("ftok: server_semkey");
