@@ -20,7 +20,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <malloc.h>
+#include <jemalloc/jemalloc.h>
 #include <pthread.h>
 #include <libaio.h>
 #include <errno.h>
