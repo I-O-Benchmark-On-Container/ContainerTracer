@@ -39,6 +39,19 @@ const unsigned long key_len = sizeof(key) / sizeof(char *);
 #define FLAGS_MASK (0x3F)
 
 char *json, *task_options;
+struct json_object *jobject;
+
+static void print_json_string(const char *msg, const char *buffer)
+{
+        const char *json_str;
+        TEST_ASSERT_NOT_NULL((jobject = json_tokener_parse(buffer)));
+        ;
+        json_str = json_object_to_json_string_ext(
+                jobject, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
+        pr_info(INFO, "%s: %s\n", msg, json_str);
+        TEST_ASSERT_EQUAL(1, json_object_put(jobject));
+}
+
 void setUp(void)
 {
         unsigned long i;
@@ -85,7 +98,7 @@ void setUp(void)
                 "}",
                 TRACE_REPLAY_PATH, TEST_DISK_PATH, NR_TASKS, TIME, Q_DEPTH,
                 NR_THREAD, PREFIX_CGROUP_NAME, SCHEDULER, task_options);
-        pr_info(INFO, "Current JSON: %s\n", json);
+        print_json_string("Current Config", json);
         TEST_ASSERT_EQUAL(0, runner_init(json)); /**< config 설정 과정 */
         TEST_ASSERT_NOT_NULL(config = runner_get_global_config());
         TEST_ASSERT_EQUAL_STRING(config->driver, "trace-replay");
@@ -123,7 +136,6 @@ void test(void)
                         buffer = runner_get_interval_result(key[i]);
                         TEST_ASSERT_NOT_NULL(buffer);
 
-                        pr_info(INFO, "Current log = %s\n", buffer);
                         object = json_tokener_parse(buffer);
                         TEST_ASSERT_EQUAL(TRUE, json_object_object_get_ex(
                                                         object, "data", &tmp));
@@ -135,14 +147,13 @@ void test(void)
 
                         /**< FIN 명령을 받으면 종료합니다. */
                         if (FIN == type) {
-                                pr_info(INFO, "last message: %s\n", buffer);
+                                print_json_string("Get interval(last)", buffer);
                                 runner_put_result_string(buffer);
                                 json_object_put(object);
                                 flags |= (0x1 << i);
                                 continue;
                         }
-
-                        pr_info(INFO, "interval: %s\n", buffer);
+                        print_json_string("Get interval", buffer);
                         runner_put_result_string(buffer);
                         json_object_put(object);
                 }
@@ -152,7 +163,7 @@ void test(void)
         for (unsigned long i = 0; i < key_len; i++) {
                 buffer = runner_get_total_result(key[i]);
                 TEST_ASSERT_NOT_NULL(buffer);
-                pr_info(INFO, "total: %s\n", buffer);
+                print_json_string("Get total", buffer);
                 runner_put_result_string(buffer);
         }
 }
