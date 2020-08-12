@@ -8,14 +8,11 @@
 #ifndef _RUNNER_H
 #define _RUNNER_H
 
-/**< system header */
 #include <linux/limits.h>
 #include <sys/user.h>
 
-/**< external header */
 #include <json.h>
 
-/**< user header */
 #include <generic.h>
 
 #define INTERVAL_RESULT_STRING_SIZE (PAGE_SIZE) /**< 4KB 예상 */

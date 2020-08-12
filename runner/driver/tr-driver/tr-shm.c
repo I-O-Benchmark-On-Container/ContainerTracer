@@ -6,7 +6,6 @@
  * @date 2020-08-10
  */
 
-/**< system header */
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,9 +16,6 @@
 #include <sys/sem.h>
 #include <fcntl.h>
 
-/**< external header */
-
-/**< user header */
 #include <trace_replay.h>
 #include <log.h>
 #include <driver/tr-driver.h>
@@ -110,7 +106,7 @@ static int __tr_shm_init(const pid_t pid)
         }
         sprintf(shm_path, "%s_%d", SHM_KEY_PATHNAME, pid);
 
-        /**< 파일이 존재하지 않는 경우에 파일을 생성합니다. */
+        /* 파일이 존재하지 않는 경우에 파일을 생성합니다. */
         (void)close(open(shm_path, O_WRONLY | O_CREAT, 0));
 
         if (0 > (shm_key = ftok(shm_path, PROJECT_ID))) {
@@ -155,7 +151,7 @@ static void tr_sem_wait(const struct tr_info *info)
         };
 
         pr_info(INFO, "Going to sleep (pid: %d)\n", info->pid);
-        /**< 1은 연산 갯수를 지칭합니다. */
+        /* 1은 연산 갯수를 지칭합니다. */
         assert(-1 != semop(info->semid, &sop, 1));
 }
 

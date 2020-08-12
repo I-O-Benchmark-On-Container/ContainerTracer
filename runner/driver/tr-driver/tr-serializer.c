@@ -6,15 +6,12 @@
  * @date 2020-08-10
  */
 
-/**< system header */
 #include <stdlib.h>
 #include <assert.h>
 
-/**< external header */
 #include <json.h>
 #include <jemalloc/jemalloc.h>
 
-/**< user header */
 #include <driver/tr-driver.h>
 
 /**
@@ -286,7 +283,7 @@ tr_total_per_trace_serializer(const struct total_results *total,
                         json_object_new_int(
                                 total->results.per_trace[i].issynthetic));
 
-                /**< issynthetic 값이 1인 경우에만 synthetic 정보는 의미가 있습니다. */
+                /* issynthetic 값이 1인 경우에만 synthetic 정보는 의미가 있습니다. */
                 if (1 == total->results.per_trace[i].issynthetic) {
                         synthetic[i] = tr_synthetic_serializer(
                                 &total->results.per_trace[i].synthetic);
@@ -402,7 +399,7 @@ void tr_realtime_serializer(const struct tr_info *info,
  * @brief json으로 구조체에 있는 내용을 변환합니다.
  *
  * @param info 현재 tr_info 구조체의 포인터입니다.
- * @param results 현재 info에 해당하는 전체 내용에 해당합니다.
+ * @param total 현재 직렬화를 원하는 total_results 구조체의 포인터입니다.
  * @param buffer 수행 결과 만들어진 json 내용이 들어가는 부분에 해당합니다.
  *
  * @warning buffer는 반드시 이 함수를 부르기 전에 할당되어야하며, 그 크기는 TOTAL_RESULT_STRING_SIZE 보다 커야 합니다.

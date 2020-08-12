@@ -6,7 +6,6 @@
  * @date 2020-08-05
  */
 
-/**< system header */
 #include <stdlib.h>
 #include <errno.h>
 #include <search.h>
@@ -17,11 +16,9 @@
 #include <sys/wait.h>
 #include <sys/syscall.h>
 
-/**< external header */
 #include <json.h>
 #include <jemalloc/jemalloc.h>
 
-/**< user header */
 #include <generic.h>
 #include <runner.h>
 #include <driver/tr-driver.h>
@@ -70,7 +67,7 @@ static void tr_kill_handle(int signum)
 
 /**
  * @brief 실질적으로 trace-replay 관련 구조체의 동적 할당된 내용을 해제하는 부분에 해당합니다.
- * @ref http://www.ascii-art.de/ascii/def/dr_who.txt
+ * @note http://www.ascii-art.de/ascii/def/dr_who.txt
  */
 static void __tr_free(void)
 {
@@ -79,7 +76,7 @@ static void __tr_free(void)
                 struct tr_info *next = global_info_head->next;
 
                 if (getpid() == current->ppid &&
-                    0 != current->pid) { /**< 자식 프로세스를 죽입니다. */
+                    0 != current->pid) { /* 자식 프로세스를 죽입니다. */
                         int status = 0;
                         /********************************************
                                                  Exterminate!
@@ -103,7 +100,7 @@ static void __tr_free(void)
                                         current->pid, status);
                                 _exit(EXIT_FAILURE);
                         }
-                        /**< IPC 객체를 삭제합니다. */
+                        /* IPC 객체를 삭제합니다. */
                         tr_shm_free(current, TR_IPC_FREE);
                         tr_mq_free(current, TR_IPC_FREE);
                 }
@@ -195,7 +192,7 @@ int tr_init(void *object)
 
         for (i = 0; i < nr_tasks; i++) {
                 current = tr_info_init(setting, i);
-                if (!current) { /**< 할당 실패가 벌어진 경우 */
+                if (!current) { /* 할당 실패가 벌어진 경우 */
                         ret = -ENOMEM;
                         goto exception;
                 }
@@ -205,7 +202,7 @@ int tr_init(void *object)
                         goto exception;
                 }
 
-                if (global_info_head == NULL) { /**< 초기화 과정 */
+                if (global_info_head == NULL) { /* 초기화 과정 */
                         prev = global_info_head = current;
                 } else {
                         prev->next = current;
@@ -231,7 +228,7 @@ static int tr_set_cgroup_state(struct tr_info *current)
         int ret = 0;
         char cmd[PATH_MAX];
 
-        /**< cgroup을 생성하는 과정에 해당합니다. */
+        /* cgroup을 생성하는 과정에 해당합니다. */
         snprintf(cmd, PATH_MAX, "mkdir /sys/fs/cgroup/blkio/%s%d",
                  current->prefix_cgroup_name, current->pid);
         pr_info(INFO, "Do command: \"%s\"\n", cmd);
@@ -242,7 +239,7 @@ static int tr_set_cgroup_state(struct tr_info *current)
         }
 
         ret = strcmp(current->scheduler, tr_valid_scheduler[TR_BFQ_SCHEDULER]);
-        if (ret == 0) { /**< BFQ 스케쥴러이면 weight를 설정해줍니다. */
+        if (ret == 0) { /* BFQ 스케쥴러이면 weight를 설정해줍니다. */
                 snprintf(cmd, PATH_MAX,
                          "echo %d > /sys/fs/cgroup/blkio/%s%d/blkio.%s.weight",
                          current->weight, current->prefix_cgroup_name,
@@ -341,7 +338,7 @@ int tr_runner(void)
         snprintf(cmd, PATH_MAX, "rmdir /sys/fs/cgroup/blkio/%s*",
                  current->prefix_cgroup_name);
         pr_info(INFO, "Do command: \"%s\"\n", cmd);
-        ret = system(cmd); /**< 이 오류는 무시해도 상관없습니다. */
+        ret = system(cmd); /* 이 오류는 무시해도 상관없습니다. */
         if (ret) {
                 pr_info(WARNING, "Deletion sequence ignore: \"%s\"\n", cmd);
         }
@@ -357,14 +354,14 @@ int tr_runner(void)
                 goto exit;
         }
 
-        TELL_WAIT(); /**< 동기화를 준비하는 과정입니다. */
+        TELL_WAIT(); /* 동기화를 준비하는 과정입니다. */
         tr_info_list_traverse(current, global_info_head)
         {
                 if (0 > (pid = fork())) {
                         pr_info(ERROR, "Fork failed. (pid: %d)\n", pid);
                         ret = -EFAULT;
                         goto exit;
-                } else if (0 == pid) { /**< 자식 프로세스 */
+                } else if (0 == pid) { /* 자식 프로세스 */
                         struct sigaction act;
                         memset(&act, 0, sizeof(act));
                         act.sa_handler = tr_kill_handle;
@@ -374,7 +371,7 @@ int tr_runner(void)
                                         "Cannot execute program (errno: %d)\n",
                                         ret);
                                 perror("Execution error detected");
-                                tr_kill_handle(SIGKILL); /**< execute 실패 */
+                                tr_kill_handle(SIGKILL); /* execute 실패 */
                                 _exit(EXIT_FAILURE);
                         }
                         pr_info(WARNING,
@@ -384,11 +381,11 @@ int tr_runner(void)
                         _exit(EXIT_SUCCESS);
                 }
 
-                /**< 부모 프로세스 */
+                /* 부모 프로세스 */
                 current->pid = pid;
                 tr_set_cgroup_state(current);
 
-                /**< IPC 객체를 생성합니다. */
+                /* IPC 객체를 생성합니다. */
                 if (0 > (ret = tr_shm_init(current))) {
                         goto exit;
                 }
@@ -397,7 +394,7 @@ int tr_runner(void)
                 }
         }
 
-        /**< 모든 자식을 깨우도록 합니다. */
+        /* 모든 자식을 깨우도록 합니다. */
         tr_info_list_traverse(current, global_info_head)
         {
                 TELL_CHILD();

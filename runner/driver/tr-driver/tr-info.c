@@ -6,16 +6,13 @@
  * @date 2020-08-10
  */
 
-/**< system header */
 #include <stdlib.h>
 #include <search.h>
 #include <assert.h>
 
-/**< external header */
 #include <json.h>
 #include <jemalloc/jemalloc.h>
 
-/**< user header */
 #include <driver/tr-driver.h>
 
 /**
@@ -253,7 +250,7 @@ struct tr_info *tr_info_init(struct json_object *setting, int index)
         tr_info_int_value_set(setting, "utilization", &info->utilization,
                               TR_PRINT_NONE);
         tr_info_int_value_set(setting, "iosize", &info->iosize, TR_PRINT_NONE);
-        /**< trace_data_path의 검사는 __tr_info_init에서 합니다. */
+        /* trace_data_path의 검사는 __tr_info_init에서 합니다. */
         tr_info_str_value_set(setting, "trace_data_path", info->trace_data_path,
                               TR_PRINT_NONE);
 

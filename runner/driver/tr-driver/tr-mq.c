@@ -6,7 +6,6 @@
  * @date 2020-08-10
  */
 
-/**< system header */
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,9 +15,6 @@
 #include <sys/msg.h>
 #include <fcntl.h>
 
-/**< external header */
-
-/**< user header */
 #include <trace_replay.h>
 #include <log.h>
 #include <driver/tr-driver.h>
@@ -44,7 +40,7 @@ static int __tr_mq_init(const pid_t pid)
         }
         sprintf(mq_path, "%s_%d", MSGQ_KEY_PATHNAME, pid);
 
-        /**< 파일이 존재하지 않는 경우에 파일을 생성합니다. */
+        /* 파일이 존재하지 않는 경우에 파일을 생성합니다. */
         (void)close(open(mq_path, O_WRONLY | O_CREAT, 0));
 
         if (0 > (mq_key = ftok(mq_path, PROJECT_ID))) {

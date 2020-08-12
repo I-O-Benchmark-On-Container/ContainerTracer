@@ -6,7 +6,6 @@
  * @date 2020-08-04
  */
 
-/**< system header */
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -14,11 +13,9 @@
 #include <unistd.h>
 #include <linux/limits.h>
 
-/**< external header */
 #include <jemalloc/jemalloc.h>
 #include <json.h>
 
-/**< user header */
 #include <generic.h>
 #include <runner.h>
 #include <log.h>
@@ -28,6 +25,7 @@ static struct runner_config *global_config = NULL;
 /**
  * @brief global_runner가 가진 멤버 중 동적할당이 되어 있는 데이터를 반환합니다.
  *
+ * @param config 지우고자 하는 config의 포인터에 해당합니다.
  * @param flags global_runner의 멤버 중 지우고 싶은 멤버를 선택할 수 있습니다.
  */
 void runner_config_free(struct runner_config *config, const int flags)

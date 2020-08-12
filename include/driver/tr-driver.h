@@ -8,15 +8,12 @@
 #ifndef _TR_DRIVER_H
 #define _TR_DRIVER_H
 
-/**< system header */
 #include <linux/limits.h>
 #include <unistd.h>
 #include <sys/types.h>
 
-/**< external header */
 #include <json.h>
 
-/**< user header */
 #include <generic.h>
 #include <trace_replay.h>
 
@@ -112,7 +109,7 @@ struct tr_info {
         struct tr_info *next;
 };
 
-/**< tr-driver.c */
+/* tr-driver.c */
 int tr_init(void *object);
 int tr_runner(void);
 int tr_valid_scheduler_test(const char *scheduler);
@@ -120,20 +117,20 @@ int tr_get_interval(const char *key, char *buffer);
 int tr_get_total(const char *key, char *buffer);
 void tr_free(void);
 
-/**< tr-serializer.c */
+/* tr-serializer.c */
 void tr_total_serializer(const struct tr_info *info,
                          const struct total_results *total, char *buffer);
 void tr_realtime_serializer(const struct tr_info *info,
                             const struct realtime_log *log, char *buffer);
-/**< tr-info.c */
+/* tr-info.c */
 struct tr_info *tr_info_init(struct json_object *setting, int index);
 
-/**< tr-shm.c */
+/* tr-shm.c */
 int tr_shm_init(struct tr_info *info);
 int tr_shm_get(const struct tr_info *info, void *buffer);
 void tr_shm_free(struct tr_info *info, int flags);
 
-/**< tr-mq.c */
+/* tr-mq.c */
 int tr_mq_init(struct tr_info *info);
 int tr_mq_get(const struct tr_info *info, void *buffer);
 void tr_mq_free(struct tr_info *info, int flags);

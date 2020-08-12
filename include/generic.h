@@ -10,16 +10,13 @@
 
 #define MAX_DRIVERS 10
 
-/**< system header */
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <linux/limits.h>
 
-/**< external header */
 #include <json.h>
 
-/**< user header */
 #include <log.h>
 
 enum { TRACE_REPLAY_DRIVER = 0,

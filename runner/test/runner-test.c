@@ -1,4 +1,3 @@
-/**< system header */
 #include <stdlib.h>
 #include <unity.h>
 #include <time.h>
@@ -6,11 +5,9 @@
 #include <sys/sysinfo.h>
 #define __s8
 
-/**< external header */
 #include <jemalloc/jemalloc.h>
 #include <json.h>
 
-/**< user header */
 #include <generic.h>
 #include <runner.h>
 #include <trace_replay.h>
@@ -99,12 +96,12 @@ void setUp(void)
                 TRACE_REPLAY_PATH, TEST_DISK_PATH, NR_TASKS, TIME, Q_DEPTH,
                 NR_THREAD, PREFIX_CGROUP_NAME, SCHEDULER, task_options);
         print_json_string("Current Config", json);
-        TEST_ASSERT_EQUAL(0, runner_init(json)); /**< config 설정 과정 */
+        TEST_ASSERT_EQUAL(0, runner_init(json)); /* config 설정 과정 */
         TEST_ASSERT_NOT_NULL(config = runner_get_global_config());
         TEST_ASSERT_EQUAL_STRING(config->driver, "trace-replay");
         TEST_ASSERT_EQUAL(TRACE_REPLAY_DRIVER,
                           get_generic_driver_index(config->driver));
-        TEST_ASSERT_EQUAL(0, runner_run()); /**< trace-replay 실행 시점 */
+        TEST_ASSERT_EQUAL(0, runner_run()); /* trace-replay 실행 시점 */
 }
 
 void tearDown(void)
@@ -125,7 +122,7 @@ void test(void)
                 if (flags == FLAGS_MASK) {
                         break;
                 }
-                /**< 전체 키의 내용을 읽습니다. */
+                /* 전체 키의 내용을 읽습니다. */
                 for (unsigned long i = 0; i < key_len; i++) {
                         struct json_object *object, *tmp;
                         int type;
@@ -145,7 +142,7 @@ void test(void)
                         pr_info(INFO, "Current log.type = %d (target = %d)\n",
                                 type, FIN);
 
-                        /**< FIN 명령을 받으면 종료합니다. */
+                        /* FIN 명령을 받으면 종료합니다. */
                         if (FIN == type) {
                                 print_json_string("Get interval(last)", buffer);
                                 runner_put_result_string(buffer);
@@ -159,7 +156,7 @@ void test(void)
                 }
         }
 
-        /**< 키의 수만큼 실행됩니다. */
+        /* 키의 수만큼 실행됩니다. */
         for (unsigned long i = 0; i < key_len; i++) {
                 buffer = runner_get_total_result(key[i]);
                 TEST_ASSERT_NOT_NULL(buffer);
