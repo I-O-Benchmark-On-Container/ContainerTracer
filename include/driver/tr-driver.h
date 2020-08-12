@@ -20,12 +20,45 @@
 #include <generic.h>
 #include <trace_replay.h>
 
-#define TR_DEBUG
 #define tr_info_list_traverse(ptr, head)                                       \
         for (ptr = head; ptr != NULL; ptr = ptr->next)
 
 #define tr_json_field_traverse(ptr, begin, end)                                \
         for (ptr = begin; ptr != end; ptr++)
+
+#ifdef DEBUG
+#define tr_print_info(info)                                                    \
+        pr_info(INFO,                                                          \
+                "\n"                                                           \
+                "\t\t[[ current %p ]]\n"                                       \
+                "\t\tpid: %d\n"                                                \
+                "\t\ttime: %u\n"                                               \
+                "\t\tq_depth: %u\n"                                            \
+                "\t\tnr_thread: %u\n"                                          \
+                "\t\tweight: %u\n"                                             \
+                "\t\ttrace_repeat: %u\n"                                       \
+                "\t\twss: %u\n"                                                \
+                "\t\tutilization: %u\n"                                        \
+                "\t\tiosize: %u\n"                                             \
+                "\t\tmqid: %d\n"                                               \
+                "\t\tshmid: %d\n"                                              \
+                "\t\tsemid: %d\n"                                              \
+                "\t\tprefix_cgroup_name: %s\n"                                 \
+                "\t\tscheduler: %s\n"                                          \
+                "\t\tname: %s\n"                                               \
+                "\t\ttrace_replay_path: %s\n"                                  \
+                "\t\ttrace_data_path: %s\n"                                    \
+                "\t\tdevice: %s\n"                                             \
+                "\t\tglobal_config: %p\n"                                      \
+                "\t\tnext: %p\n",                                              \
+                info, info->pid, info->time, info->q_depth, info->nr_thread,   \
+                info->weight, info->trace_repeat, info->wss,                   \
+                info->utilization, info->iosize, info->mqid, info->shmid,      \
+                info->semid, info->prefix_cgroup_name, info->scheduler,        \
+                info->cgroup_id, info->trace_replay_path,                      \
+                info->trace_data_path, info->device, info->global_config,      \
+                info->next);
+#endif
 
 enum { TR_IPC_NOT_FREE = 0x0, TR_IPC_FREE = 0x1 };
 enum { TR_NOT_SYNTH = 0, TR_SYNTH = 0x1 };
@@ -104,46 +137,5 @@ void tr_shm_free(struct tr_info *info, int flags);
 int tr_mq_init(struct tr_info *info);
 int tr_mq_get(const struct tr_info *info, void *buffer);
 void tr_mq_free(struct tr_info *info, int flags);
-
-#ifdef TR_DEBUG
-/**
- * @brief 현재 info의 내용을 출력합니다. 
- *
- * @param info 출력하고자 하는 info의 포인터에 해당합니다.
- */
-static inline void tr_debug(const struct tr_info *info)
-{
-        (void)info;
-        pr_info(INFO,
-                "\n"
-                "\t\t[[ current %p ]]\n"
-                "\t\tpid: %d\n"
-                "\t\ttime: %u\n"
-                "\t\tq_depth: %u\n"
-                "\t\tnr_thread: %u\n"
-                "\t\tweight: %u\n"
-                "\t\ttrace_repeat: %u\n"
-                "\t\twss: %u\n"
-                "\t\tutilization: %u\n"
-                "\t\tiosize: %u\n"
-                "\t\tmqid: %d\n"
-                "\t\tshmid: %d\n"
-                "\t\tsemid: %d\n"
-                "\t\tprefix_cgroup_name: %s\n"
-                "\t\tscheduler: %s\n"
-                "\t\tname: %s\n"
-                "\t\ttrace_replay_path: %s\n"
-                "\t\ttrace_data_path: %s\n"
-                "\t\tdevice: %s\n"
-                "\t\tglobal_config: %p\n"
-                "\t\tnext: %p\n",
-                info, info->pid, info->time, info->q_depth, info->nr_thread,
-                info->weight, info->trace_repeat, info->wss, info->utilization,
-                info->iosize, info->mqid, info->shmid, info->semid,
-                info->prefix_cgroup_name, info->scheduler, info->cgroup_id,
-                info->trace_replay_path, info->trace_data_path, info->device,
-                info->global_config, info->next);
-}
-#endif
 
 #endif
