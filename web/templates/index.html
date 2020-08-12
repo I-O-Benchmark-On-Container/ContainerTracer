@@ -37,7 +37,7 @@
                         tmp</a>
                     <ul>
                         <li>
-                            <label>croup 개수</label>
+                            <label>cgroup 개수</label>
                             <select name="setCgroup" id="cgroup" class="form-control form_theme search_theme">
                                 <option value="4">4</option>
                                 <option value="8">8</option>
@@ -57,139 +57,142 @@
                 <div class="body_content bg-light hide" id="optionDisplay">
                     <div class="row">
                         <div class="col">
-
+                            <p></p>
                             <h2 class="text-info">Configure</h2>
-
                         </div>
                     </div>
 
                     <div class="row">
-                        <div class="search_wrap">
-                            <form class="navbar-form" name="searchForm" id="searchForm" method="get" onsubmit="return false;">
+                        <div class="col-sm-12">
+                            <div class="search_wrap">
                                 <input type="hidden" name="task" value="list" autocomplete="off">
-                                
-                                <ul>
-                                    <li>
-                                        <div class="form-group">
-                                            <label>trace_replay_path</label>
-                                            <input type="text" class="form-control form_theme search_theme" name="path" id="path" placeholder="ex: " autocomplete="off" value="./build/release/trace-replay" readonly>
-                                        </div>
-                                    </li>
+                                <form name="setEach" id="setEach">
+                                    <div class="row">
+                                        <h3>
+                                        <small class="text-muted">Setting for Each Cgroup</small>
+                                        </h3>
+                                        <ul id="options">
+                                        </ul>
+                                    </div>
+                                </form>
+                                <form name="setAll" id="setAll">
+                                    <div class="row">
+                                        <h3>
+                                        <small class="text-muted">Setting for All Cgroup</small>
+                                        </h3>
+                                        <ul>
+                                            <li>
+                                                <div class="form-group">
+                                                    <label>trace_replay_path</label>
+                                                    <input type="text" class="form-control form_theme search_theme" name="trace_replay_path" id="trace_replay_path" placeholder="ex: " autocomplete="off" value="./build/release/trace-replay" readonly>
+                                                </div>
+                                            </li>
 
-                                    <li>
-                                        <div class="form-group">
-                                            <label>nr_tasks</label>
-                                            <select name="nr_tasks" id="nr_tasks" class="form-control form_theme search_theme">
-                                                <option value="4">4</option>
-                                                <option value="8">8</option>
-                                                <option value="16">16</option>
-                                                <option value="32">32</option>
-                                            </select>
-                                        </div>
-                                    </li>
+                                            <li>
+                                                <div class="form-group">
+                                                    <label>nr_tasks</label>
+                                                    <select name="nr_tasks" id="nr_tasks" class="form-control form_theme search_theme">
+                                                        <option value="4">4</option>
+                                                        <option value="8">8</option>
+                                                        <option value="16">16</option>
+                                                        <option value="32">32</option>
+                                                    </select>
+                                                </div>
+                                            </li>
 
-                                    <li>
-                                        <div class="form-group">
-                                            <label>time</label>
-                                            <select name="time" id="time" class="form-control form_theme search_theme">
-                                                <option value="60">60</option>
-                                                <option value="120">120</option>
-                                                <option value="180">180</option>
-                                            </select>
-                                        </div>
-                                    </li>
+                                            <li>
+                                                <div class="form-group">
+                                                    <label>time</label>
+                                                    <select name="time" id="time" class="form-control form_theme search_theme">
+                                                        <option value="60">60</option>
+                                                        <option value="120">120</option>
+                                                        <option value="180">180</option>
+                                                    </select>
+                                                </div>
+                                            </li>
 
-                                    <li>
-                                        <div class="form-group">
-                                            <label>q_depth</label>
-                                            <select name="q_depth" id="q_depth" class="form-control form_theme search_theme">
-                                                <option value="32">32</option>
-                                                <option value="64">64</option>
-                                            </select>
-                                        </div>
-                                    </li>
+                                            <li>
+                                                <div class="form-group">
+                                                    <label>q_depth</label>
+                                                    <select name="q_depth" id="q_depth" class="form-control form_theme search_theme">
+                                                        <option value="32">32</option>
+                                                        <option value="64">64</option>
+                                                    </select>
+                                                </div>
+                                            </li>
 
-                                    <li>
-                                        <div class="form-group">
-                                            <label>nr_thread</label>
-                                            <select name="nr_thread" id="nr_thread" class="form-control form_theme search_theme">
-                                                <option value="4">4</option>
-                                                <option value="8">8</option>
-                                                <option value="16">16</option>
-                                                <option value="32">32</option>
-                                            </select>
-                                        </div>
-                                    </li>
+                                            <li>
+                                                <div class="form-group">
+                                                    <label>nr_thread</label>
+                                                    <select name="nr_thread" id="nr_thread" class="form-control form_theme search_theme">
+                                                        <option value="4">4</option>
+                                                        <option value="8">8</option>
+                                                        <option value="16">16</option>
+                                                        <option value="32">32</option>
+                                                    </select>
+                                                </div>
+                                            </li>
 
-                                    <li>
-                                        <div class="form-group">
-                                            <label>prefix_cgroup_name</label>
-                                            <input type="text" class="form-control form_theme search_theme" name="prefix" id="prefix" placeholder="옵션 1" autocomplete="off" value="tester.trace." readonly>
-                                        </div>
-                                    </li>
+                                            <li>
+                                                <div class="form-group">
+                                                    <label>prefix_cgroup_name</label>
+                                                    <input type="text" class="form-control form_theme search_theme" name="prefix_cgroup_name" id="prefix_cgroup_name" placeholder="ex :" autocomplete="off" value="tester.trace." readonly>
+                                                </div>
+                                            </li>
 
-                                    <li>
-                                        <div class="form-group">
-                                            <label>scheduler</label>
-                                            <select name="scheduler" id="scheduler" class="form-control form_theme search_theme">
-                                                <option value="bfq">bfq</option>
-                                                <option value="kyber">kyber</option>
-                                            </select>
-                                        </div>
-                                    </li>
-
-                                    <!-- <li>
-                                        <div class="form-group">
-                                            <label>task_option</label>
-                                            <select name="option3" class="form-control form_theme search_theme">
-                                                <option value="옵션3 선택안한값">옵션3 입력</option>
-                                                <option value="옵션3의 2번째값">선택1 입력</option>
-                                                <option value="옵션3의 2번째값">선택2</option>
-                                            </select>
-                                        </div>
-                                    </li> -->
-                                </ul>
-                                <button class="form-control form_theme search_theme btn_submit" id="btnStartWork">작업 시작</button>
-                            </form>
+                                            <li>
+                                                <div class="form-group">
+                                                    <label>scheduler</label>
+                                                    <select name="scheduler" id="scheduler" class="form-control form_theme search_theme">
+                                                        <option value="bfq">bfq</option>
+                                                        <option value="kyber">kyber</option>
+                                                    </select>
+                                                </div>
+                                            </li>
+                                            <!-- <li>
+                                                <div class="form-group">
+                                                    <label>task_option</label>
+                                                    <select name="option3" class="form-control form_theme search_theme">
+                                                        <option value="옵션3 선택안한값">옵션3 입력</option>
+                                                        <option value="옵션3의 2번째값">선택1 입력</option>
+                                                        <option value="옵션3의 2번째값">선택2</option>
+                                                    </select>
+                                                </div>
+                                            </li> -->
+                                        </ul>
+                                    </div>
+                                    </form>
+                                    <input type="hidden" id="chartState" name="chartState" value ="0">
+                                    <button class="form-control form_theme search_theme btn_submit" id="btnStartWork">작업 시작</button>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="body_content bg-light hide" id="chartDisplay">
                     <div class="row">
                         <div class="col">
-                            
+                            <p></p>
                             <h2 class="text-info">Real Time Result</h2>
-                            
                         </div>
                     </div>
+
                     <div class="row">
-                        <div class="col">
+                        <div class="col-sm-6">
                             <h2 class="text-info">
-                            <small class="text-muted">Latency</small>
+                                <small class="text-muted">Latency</small>
                             </h2>
+                            <input type="hidden" class="chart_option" name="CHART_OPTION" value="Latency">
+                            <canvas class="chart" id="LatencyChart" height="200"></canvas>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-12">
-                            
-                                <input type="hidden" class="chart_option" name="CHART_OPTION" value="Latency">
-                                <canvas class="chart" id="lineChart" height="100"></canvas>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
+                        <div class="col-sm-6">
                             <h2 class="text-info">
-                            <small class="text-muted">Throughput</small>
+                                <small class="text-muted">Throughput</small>
                             </h2>
+                            <input type="hidden" class="chart_option" name="CHART_OPTION" value="Throughput">
+                            <canvas class="chart" id="ThroughputChart" height="200"></canvas>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-12"></div>
-                                <input type="hidden" class="chart_option" name="CHART_OPTION" value="Throughput">
-                                <canvas class="chart" id="lineChart" height="100"></canvas>
                     </div>
                 </div>
-            </div>
             </div>
         </div>
         <div class="row_min_width">

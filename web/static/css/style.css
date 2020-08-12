@@ -47,7 +47,6 @@ ul {
 
 li {
     list-style: none;
-    
 }
 
 /* 좌측 검색쪽 */
@@ -80,6 +79,7 @@ li {
     /* margin: 0 1em; */
     min-width: 20%;
     margin: 0 2em 0 .5em;
+
 }
 
 input.search_theme, select.search_theme, button.search_theme {

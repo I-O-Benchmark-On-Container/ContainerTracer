@@ -13,11 +13,32 @@ user_no = 1
 
 class Config:
     def __init__(self):
-        self.config_data = dict()
+        self.data = dict()
 
-    def store(self, data):
-        for key in data:
-            self.config_data[key] = data[key]
+    def store(self, input_data=dict, set_type=str):
+        each_data = dict()
+        for key, value in input_data.items():
+            if set_type == "driver":
+                self.data[key] = value
+            elif set_type == "set_all":
+                self.data["setting"][key] = value
+            else:
+                if "path" not in key:
+                    each_data["cgroup_id"], each_data["weight"] = key, value
+                else:
+                    each_data["trace_data_path"] = value
+
+                if len(each_data.keys()) == 3:
+                    self.data["setting"]["task_option"].append(each_data)
+                    each_data = dict()
+
+        if set_type == "driver":
+            self.data["setting"] = {}
+        elif set_type == "set_all":
+            self.data["setting"]["task_option"] = []
+
+    def get_config_data(self):
+        return self.data
 
 
 @app.before_request
@@ -53,18 +74,19 @@ def request(message):
 
 @socketio.on("set_driver", namespace="/config")
 def set_driver(message):
-    c.store(message)
+    c.store(message, "driver")
     emit("set_driver_ret", {}, broadcast=True)
 
 
 @socketio.on("set_options", namespace="/config")
-def set_options(message):
-    c.store(message)
-    nr_cgroup = int(c.config_data["nr_cgroup"])
+def set_options(set_each, set_all):
+    c.store(set_all, "set_all")
+    c.store(set_each, "set_each")
+    nr_cgroup = len(c.data["setting"]["task_option"])
     emit("chart_start", nr_cgroup, broadcast=True)
 
     response_data = [0] * nr_cgroup
-    for _ in range(int(c.config_data["time"])):
+    for _ in range(int(c.data["setting"]["time"])):
         for idx in range(nr_cgroup):
             latency, throughput = get_data()
             response_data[idx] = [latency, throughput]
