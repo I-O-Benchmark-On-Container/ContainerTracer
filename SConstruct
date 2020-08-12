@@ -18,6 +18,8 @@ if env.GetOption('clean'):
 	os.system("find ./ -name \"*.o\" -print0 | xargs -0 rm -f ")
 	os.system("find ./ -name \"*.os\" -print0 | xargs -0 rm -f ")
 
+env.Append(CFLAGS=["-O2"])
+
 if env["DEBUG"] == True:
 	env.Append(CFLAGS=["-g", "-pg"])
 	env.Append(CFLAGS=["-DLOG_INFO"])

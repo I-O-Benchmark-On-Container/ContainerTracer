@@ -312,8 +312,8 @@ static int tr_do_exec(struct tr_info *current)
 
         pr_info(INFO, "trace replay save location: \"%s\"\n", filename);
         WAIT_PARENT();
-#ifdef TR_DEBUG
-        tr_debug(&info);
+#ifdef DEBUG
+        tr_print_info(&info);
 #endif
         if (-1 == access(info.trace_replay_path, F_OK)) {
                 pr_info(ERROR, "trace replay doesn't exist: \"%s\"",
@@ -341,7 +341,10 @@ int tr_runner(void)
         snprintf(cmd, PATH_MAX, "rmdir /sys/fs/cgroup/blkio/%s*",
                  current->prefix_cgroup_name);
         pr_info(INFO, "Do command: \"%s\"\n", cmd);
-        system(cmd); /**< 이 오류는 무시해도 상관없습니다. */
+        ret = system(cmd); /**< 이 오류는 무시해도 상관없습니다. */
+        if (ret) {
+                pr_info(WARNING, "Deletion sequence ignore: \"%s\"\n", cmd);
+        }
 
         snprintf(cmd, PATH_MAX, "echo %s >> /sys/block/%s/queue/scheduler",
                  current->scheduler, current->device);
