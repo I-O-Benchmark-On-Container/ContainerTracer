@@ -196,7 +196,7 @@ tr_synthetic_serializer(const struct synthetic *_synthetic)
 /**
  * @brief trace_stat 구조체의 내용을 json_object로 만들어주도록 합니다.
  *
- * @param _stat json으로 변환시킬 trace_stat 형태의 구조체입니다.
+ * @param _stats json으로 변환시킬 trace_stat 형태의 구조체입니다.
  *
  * @return stats trace_stat 구조체의 json 객체가 반환됩니다.
  *
