@@ -293,6 +293,7 @@ static int tr_do_exec(struct tr_info *current)
         char iosize_str[PAGE_SIZE / 4];
 
         assert(NULL != current);
+        memcpy(&info, current, sizeof(struct tr_info));
         if (current) {
                 memcpy(&info, current, sizeof(struct tr_info));
                 assert(NULL != current->global_config);
