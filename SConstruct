@@ -13,16 +13,13 @@ if env["BUILD_UNIT_TEST"] == True:
 		print("[ERROR] `test` mode requires the sudo privileges.", file=sys.stderr)
 		sys.exit()
 
-if env.GetOption('clean'):
-	print("Delete All Object file manually")
-	os.system("find ./ -name \"*.o\" -print0 | xargs -0 rm -f ")
-	os.system("find ./ -name \"*.os\" -print0 | xargs -0 rm -f ")
-
 env.Append(CFLAGS=["-O2"])
+env['CC']=["clang"]
 
 if env["DEBUG"] == True:
 	env.Append(CFLAGS=["-g", "-pg"])
-	env.Append(CFLAGS=["-DLOG_INFO"])
+	env.Append(CFLAGS=["-DLOG_INFO", "-DDEBUG"])
+	env["PROGRAM_LOCATION"] = "#build/debug"
 else:
 	pass
 
@@ -108,4 +105,9 @@ subprocess.call(
 cppcheck_ouput_file.close()
 cppcheck_error_file.close()
 
+if env.GetOption('clean'):
+	print("Delete All Object file manually")
+	os.system("find ./ -name \"*.o\" -print0 | xargs -0 rm -f ")
+	os.system("find ./ -name \"*.os\" -print0 | xargs -0 rm -f ")
+	os.system("rm -rf ./build")
 

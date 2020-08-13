@@ -5,7 +5,7 @@
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
  * @version 0.1
  * @date 2020-08-09
- * @ref Rochkind, M. J. (2004). Advanced UNIX programming. Pearson Education.
+ * @note Rochkind, M. J. (2004). Advanced UNIX programming. Pearson Education.
  */
 
 #ifndef SYNC_H

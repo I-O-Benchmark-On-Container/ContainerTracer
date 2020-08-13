@@ -6,7 +6,6 @@
  * @date 2020-08-10
  */
 
-/**< system header */
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,9 +15,6 @@
 #include <sys/msg.h>
 #include <fcntl.h>
 
-/**< external header */
-
-/**< user header */
 #include <trace_replay.h>
 #include <log.h>
 #include <driver/tr-driver.h>
@@ -28,7 +24,7 @@
  *
  * @param pid 이 메시지 큐를 사용하는 Process의 ID입니다.
  *
- * @return ret 성공적으로 종료된 경우에는 메시지 큐의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 성공적으로 종료된 경우에는 메시지 큐의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
 static int __tr_mq_init(const pid_t pid)
 {
@@ -44,7 +40,7 @@ static int __tr_mq_init(const pid_t pid)
         }
         sprintf(mq_path, "%s_%d", MSGQ_KEY_PATHNAME, pid);
 
-        /**< 파일이 존재하지 않는 경우에 파일을 생성합니다. */
+        /* 파일이 존재하지 않는 경우에 파일을 생성합니다. */
         (void)close(open(mq_path, O_WRONLY | O_CREAT, 0));
 
         if (0 > (mq_key = ftok(mq_path, PROJECT_ID))) {
@@ -79,7 +75,7 @@ exception:
  *
  * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
  *
- * @return ret 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
 int tr_mq_init(struct tr_info *info)
 {

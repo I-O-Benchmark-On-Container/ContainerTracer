@@ -6,7 +6,6 @@
  * @date 2020-08-10
  */
 
-/**< system header */
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,9 +16,6 @@
 #include <sys/sem.h>
 #include <fcntl.h>
 
-/**< external header */
-
-/**< user header */
 #include <trace_replay.h>
 #include <log.h>
 #include <driver/tr-driver.h>
@@ -29,7 +25,7 @@
  *
  * @param pid 이 세마포어를 사용하는 Process의 ID입니다.
  *
- * @return ret 성공적으로 종료된 경우에는 세마포어의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 성공적으로 종료된 경우에는 세마포어의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
 static int __tr_sem_init(const pid_t pid)
 {
@@ -94,7 +90,7 @@ exception:
  *
  * @param pid 이 Shared Memory를 사용하는 Process ID입니다.
  *
- * @return ret 성공적으로 종료된 경우에는 Shared Memory의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 성공적으로 종료된 경우에는 Shared Memory의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
 static int __tr_shm_init(const pid_t pid)
 {
@@ -110,7 +106,7 @@ static int __tr_shm_init(const pid_t pid)
         }
         sprintf(shm_path, "%s_%d", SHM_KEY_PATHNAME, pid);
 
-        /**< 파일이 존재하지 않는 경우에 파일을 생성합니다. */
+        /* 파일이 존재하지 않는 경우에 파일을 생성합니다. */
         (void)close(open(shm_path, O_WRONLY | O_CREAT, 0));
 
         if (0 > (shm_key = ftok(shm_path, PROJECT_ID))) {
@@ -155,7 +151,7 @@ static void tr_sem_wait(const struct tr_info *info)
         };
 
         pr_info(INFO, "Going to sleep (pid: %d)\n", info->pid);
-        /**< 1은 연산 갯수를 지칭합니다. */
+        /* 1은 연산 갯수를 지칭합니다. */
         assert(-1 != semop(info->semid, &sop, 1));
 }
 
@@ -181,7 +177,7 @@ static void tr_sem_post(const struct tr_info *info)
  *
  * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
  *
- * @return ret 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
 int tr_shm_init(struct tr_info *info)
 {
