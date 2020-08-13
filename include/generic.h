@@ -22,11 +22,16 @@
 enum { TRACE_REPLAY_DRIVER = 0,
 };
 
+/**
+ * @brief driver의 명령어 집합을 가지는 구조체입니다.
+ */
 struct generic_driver_op {
-        int (*runner)(void);
-        int (*get_interval)(const char *key, char *buffer);
-        int (*get_total)(const char *key, char *buffer);
-        void (*free)(void);
+        int (*runner)(void); /**< 실제 수행 함수입니다. */
+        int (*get_interval)(const char *key,
+                            char *buffer); /**< 중간 값을 받는 함수입니다. */
+        int (*get_total)(const char *key,
+                         char *buffer); /**< 종료 값을 받는 함수입니다. */
+        void (*free)(void); /**< 자원을 해제하는 함수를 가리키는 포인터입니다. */
 };
 
 int get_generic_driver_index(const char *name);

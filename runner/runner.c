@@ -63,7 +63,7 @@ void runner_config_free(struct runner_config *config, const int flags)
  *
  * @param json_str 설정에 사용되는 JSON 형태의 문자열이 들어오게 됩니다.
  *
- * @return ret 성공한 경우에 0이 반환되고, 실패한 경우에는 에러 번호가 출력됩니다.
+ * @return 성공한 경우에 0이 반환되고, 실패한 경우에는 에러 번호가 출력됩니다.
  *
  * @exception 하나라도 데이터가 적합하게 존재하지 않는 경우에는 관련된 에러 메시지와 함께 에러 번호가 출력됩니다.
  */
@@ -183,7 +183,7 @@ void runner_put_result_string(char *buffer)
  *
  * @param key 출력하고자 하는 대상을 지칭하는 key입니다.
  *
- * @return buffer json 문자열로 구성된 실시간 수행 결과를 담고 있습니다.
+ * @return json 문자열로 구성된 실시간 수행 결과를 담고 있습니다.
  * 만약 할당을 실패한 경우에는 NULL이 반환됩니다.
  *
  * @warning buffer는 동적 할당된 내용이므로 반드시 외부에서
@@ -218,7 +218,7 @@ exception:
  *
  * @param key 출력하고자 하는 대상을 지칭하는 key입니다.
  *
- * @return buffer json 문자열로 구성된 전체 수행 결과를 담고 있습니다.
+ * @return json 문자열로 구성된 전체 수행 결과를 담고 있습니다.
  * 만약 할당을 실패한 경우에는 NULL이 반환됩니다.
  *
  * @warning buffer는 동적 할당된 내용이므로 반드시 외부에서

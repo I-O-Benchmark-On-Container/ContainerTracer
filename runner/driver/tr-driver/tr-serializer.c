@@ -19,7 +19,7 @@
  *
  * @param info json으로 변환시킬 tr_info 형태의 구조체입니다.
  *
- * @return meta tr_info 구조체의 json 객체가 반환됩니다.
+ * @return 구조체의 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
@@ -66,7 +66,7 @@ static struct json_object *tr_info_serializer(const struct tr_info *info)
  *
  * @param log json으로 변환시킬 realtime_log 형태의 구조체입니다.
  *
- * @return data realtime_log 구조체의 json 객체가 반환됩니다.
+ * @return realtime_log 구조체의 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
@@ -100,7 +100,7 @@ tr_realtime_log_serializer(const struct realtime_log *log)
  *
  * @param traces json으로 변환시킬 trace 형태의 구조체입니다.
  *
- * @return _trace trace 구조체의 json 객체가 반환됩니다.
+ * @return trace 구조체의 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
@@ -125,7 +125,7 @@ static struct json_object *tr_total_trace_serializer(const struct trace *traces)
  * @param total json으로 변환시킬 config를 멤버를 가진 total_results 형태의 구조체입니다.
  * @param jobject 동적 할당된 내용이 들어간 tr_total_json_object 형태 구조체입니다.
  *
- * @return config total_results 구조체 config 멤버의 json 객체가 반환됩니다.
+ * @return total_results 구조체 config 멤버의 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
@@ -171,7 +171,7 @@ tr_total_config_serializer(const struct total_results *total,
  *
  * @param _synthetic json으로 변환시킬 synthetic 형태의 구조체입니다.
  *
- * @return synthetic synthetic 구조체의 json 객체가 반환됩니다.
+ * @return synthetic 구조체의 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
@@ -198,7 +198,7 @@ tr_synthetic_serializer(const struct synthetic *_synthetic)
  *
  * @param _stats json으로 변환시킬 trace_stat 형태의 구조체입니다.
  *
- * @return stats trace_stat 구조체의 json 객체가 반환됩니다.
+ * @return trace_stat 구조체의 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
@@ -251,7 +251,7 @@ static struct json_object *tr_stats_serializer(const struct trace_stat *_stats)
  * @param total json으로 변환시킬 per_trace를 멤버를 가진 total_results 형태의 구조체입니다.
  * @param jobject 동적 할당된 내용이 들어간 tr_total_json_object 형태 구조체입니다.
  *
- * @return per_traces total_results 구조체 config 멤버의 json 객체가 반환됩니다.
+ * @return total_results 구조체 config 멤버의 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
@@ -327,7 +327,7 @@ tr_total_aggr_serializer(const struct total_results *total)
  * @param total json으로 변환시킬 total_results 형태의 구조체입니다.
  * @param jobject 동적 할당된 내용이 들어간 tr_total_json_object 형태 구조체입니다.
  *
- * @return results total_results 구조체의 per_trace랑 aggr_results를 가지고 만든 json 객체가 반환됩니다.
+ * @return total_results 구조체의 per_trace랑 aggr_results를 가지고 만든 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
@@ -351,7 +351,7 @@ tr_total_result_serializer(const struct total_results *total,
  * @param total json으로 변환시킬 total_results 형태의 구조체입니다.
  * @param jobject 동적 할당된 내용이 들어간 tr_total_json_object 형태 구조체입니다.
  *
- * @return total_results total_results 구조체 json 객체가 반환됩니다.
+ * @return total_results 구조체 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */

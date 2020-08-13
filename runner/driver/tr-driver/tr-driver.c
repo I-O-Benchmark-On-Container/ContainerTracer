@@ -410,7 +410,7 @@ exit:
  * @param key 임의의 cgroup_id에 해당합니다.
  * @param buffer 값이 반환되는 위치에 해당합니다.
  *
- * @return ret 정상적으로 종료되는 경우에는 log.type 정보가 반환되고, 그렇지 않은 경우 적절한 음수 값이 반환됩니다.
+ * @return 정상적으로 종료되는 경우에는 log.type 정보가 반환되고, 그렇지 않은 경우 적절한 음수 값이 반환됩니다.
  * @note buffer를 재활용을 많이 하기 때문에 buffer의 내용은 반드시 미리 runner에서 할당이 되어 있어야 합니다.
  */
 int tr_get_interval(const char *key, char *buffer)

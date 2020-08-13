@@ -25,7 +25,7 @@
  *
  * @param pid 이 세마포어를 사용하는 Process의 ID입니다.
  *
- * @return ret 성공적으로 종료된 경우에는 세마포어의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 성공적으로 종료된 경우에는 세마포어의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
 static int __tr_sem_init(const pid_t pid)
 {
@@ -90,7 +90,7 @@ exception:
  *
  * @param pid 이 Shared Memory를 사용하는 Process ID입니다.
  *
- * @return ret 성공적으로 종료된 경우에는 Shared Memory의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 성공적으로 종료된 경우에는 Shared Memory의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
 static int __tr_shm_init(const pid_t pid)
 {
@@ -177,7 +177,7 @@ static void tr_sem_post(const struct tr_info *info)
  *
  * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
  *
- * @return ret 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
 int tr_shm_init(struct tr_info *info)
 {

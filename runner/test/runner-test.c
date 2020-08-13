@@ -12,7 +12,11 @@
 #include <runner.h>
 #include <trace_replay.h>
 
+#ifndef DEBUG
 #define TRACE_REPLAY_PATH "./build/release/trace-replay"
+#else
+#define TRACE_REPLAY_PATH "./build/debug/trace-replay"
+#endif
 #define TEST_DISK_PATH "sdb" /**< 대상 device의 이름입니다. /dev/ 포함 금지! */
 #define SCHEDULER "none" /**< "none, bfq" in SCSI; "none, kyber, bfq" in NVMe */
 

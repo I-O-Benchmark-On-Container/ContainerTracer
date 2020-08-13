@@ -22,7 +22,7 @@ static int (*driver_init_tbl[])(void *object) = {
  *
  * @param name 찾고자 하는 driver의 이름에 해당합니다.
  *
- * @return index name에 해당하는 driver의 index가 반환됩니다.
+ * @return name에 해당하는 driver의 index가 반환됩니다.
  * @exception -EINVAL 테이블에서 찾을 수 없는 유효하지 않은 name이 부여되었음을 의미합니다.
  */
 int get_generic_driver_index(const char *name)
