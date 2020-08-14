@@ -20,9 +20,12 @@
 
 #include <stdio.h>
 #include <libaio.h>
-#include "flist.h"
+#include <flist.h>
 
 #define USE_MAINWORKER 0
+
+#define LINUX 0
+#define TEST_OS (LINUX)
 
 #define KB (1024)
 #define MB (1024 * 1024)
@@ -31,7 +34,9 @@
 #define MAX_THREADS 512
 #define STR_SIZE 128
 
+#ifndef PAGE_SIZE
 #define PAGE_SIZE 4096
+#endif
 #define SECTOR_SIZE 512
 #define SPP (PAGE_SIZE / SECTOR_SIZE)
 #define MAX_BYTES (1024 * 1024 * 1024)
@@ -150,7 +155,7 @@ struct io_job {
 #define PROJECT_ID 'M'
 #define PROJECT_PERM 0640
 
-enum realtime_log_type { TIMEOUT, WANTED_IO_COUNT, NONE, FIN };
+enum realtime_log_type { TIMEOUT = 0, WANTED_IO_COUNT, NONE, FIN };
 
 struct realtime_log {
         int type;
@@ -236,7 +241,9 @@ struct total_results {
         struct result results;
 };
 
+#ifndef __s8
 typedef char __s8;
+#endif
 typedef short __s16;
 typedef int __s32;
 

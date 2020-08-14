@@ -15,7 +15,7 @@ matrix:
       - python unit-test.py
 
     - language: c
-      compiler: gcc
+      compiler: clang
       addons:
           apt:
             update: true
@@ -26,7 +26,11 @@ matrix:
               - libaio-dev
               - libjson-c-dev
               - libjemalloc-dev
+              - llvm-6.0
+              - clang-6.0
+              - libclang-6.0-dev
       before_script:
+      - sudo ln -s /usr/bin/clang-6.0 /usr/bin/clang
       - pip3 install scons-compiledb
       - pip3 install scons
       - pip3 install clang-format 
