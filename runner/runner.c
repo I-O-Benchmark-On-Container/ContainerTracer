@@ -91,8 +91,8 @@ int runner_init(const char *json_str)
                 ret = -EACCES;
                 goto exception;
         };
-        strcpy(global_config->driver,
-               json_object_to_json_string_ext(tmp, JSON_C_TO_STRING_PLAIN));
+        snprintf(global_config->driver, sizeof(global_config->driver), "%s",
+                 json_object_to_json_string_ext(tmp, JSON_C_TO_STRING_PLAIN));
         generic_strip_string(global_config->driver, '\"');
         pr_info(INFO, "driver ==> %s\n", global_config->driver);
         if (!json_object_object_get_ex(json_obj, "setting", &tmp)) {
@@ -158,7 +158,7 @@ void runner_free(void)
  */
 static int runner_get_result_string(char **buffer, size_t size)
 {
-        *buffer = (char *)malloc(size * sizeof(char));
+        *buffer = (char *)malloc(size);
         if (!*buffer) {
                 pr_info(WARNING, "Memory allocation failed. (%s)\n", "buffer");
                 return -EINVAL;

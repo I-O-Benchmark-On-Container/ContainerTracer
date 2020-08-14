@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <search.h>
 #include <assert.h>
+#include <sys/stat.h>
 
 #include <json.h>
 #include <jemalloc/jemalloc.h>
@@ -54,12 +55,14 @@ static int tr_info_int_value_set(struct json_object *setting, const char *key,
  * @param setting 탐색을 할 특정 위치를 지칭합니다.
  * @param key json에서 가져오고자 하는 데이터의 key 또는 field에 해당합니다.
  * @param member 실제 값이 삽입되는 위치에 해당합니다.
+ * @param size 메모리의 크기를 나타냅니다.
  * @param is_print 에러를 사용자에게 출력을 할 지 말지를 선택합니다.
  *
  * @return 성공적으로 입력이 되었다면 0이 반환되고, 그렇지 않은 경우에는 -EINVAL이 반환됩니다.
+ * @warning size의 값은 반드시 member의 크기보다 작거나 같아야 합니다.
  */
 static int tr_info_str_value_set(struct json_object *setting, const char *key,
-                                 char *member, int is_print)
+                                 char *member, size_t size, int is_print)
 {
         struct json_object *tmp = NULL;
         if (!json_object_object_get_ex(setting, key, &tmp)) {
@@ -68,7 +71,7 @@ static int tr_info_str_value_set(struct json_object *setting, const char *key,
                 }
                 return -EINVAL;
         }
-        strcpy(member, json_object_get_string(tmp));
+        snprintf(member, size, "%s", json_object_get_string(tmp));
         generic_strip_string(member, '\"');
         return 0;
 }
@@ -104,6 +107,7 @@ static int __tr_info_init(struct json_object *setting, int index,
                           struct tr_info *info)
 {
         struct json_object *tmp;
+        struct stat lstat_info;
         int ret = 0;
 
         ENTRY item; /**< hsearch를 위해서 사용되는 변수입니다. */
@@ -136,11 +140,14 @@ static int __tr_info_init(struct json_object *setting, int index,
                               TR_PRINT_NONE);
         tr_info_int_value_set(tmp, "iosize", &info->iosize, TR_PRINT_NONE);
         tr_info_str_value_set(tmp, "prefix_cgroup_name",
-                              info->prefix_cgroup_name, TR_PRINT_NONE);
-        tr_info_str_value_set(tmp, "scheduler", info->scheduler, TR_PRINT_NONE);
+                              info->prefix_cgroup_name,
+                              sizeof(info->prefix_cgroup_name), TR_PRINT_NONE);
+        tr_info_str_value_set(tmp, "scheduler", info->scheduler,
+                              sizeof(info->scheduler), TR_PRINT_NONE);
         tr_info_str_value_set(tmp, "trace_replay_path", info->trace_replay_path,
+                              sizeof(info->trace_replay_path), TR_PRINT_NONE);
+        tr_info_str_value_set(tmp, "device", info->device, sizeof(info->device),
                               TR_PRINT_NONE);
-        tr_info_str_value_set(tmp, "device", info->device, TR_PRINT_NONE);
         ret = tr_valid_scheduler_test(info->scheduler);
         if (0 != ret) {
                 pr_info(ERROR, "Unsupported scheduler (name: %s)\n",
@@ -155,19 +162,21 @@ static int __tr_info_init(struct json_object *setting, int index,
         }
 
         ret = tr_info_str_value_set(tmp, "trace_data_path",
-                                    info->trace_data_path, TR_ERROR_PRINT);
-        if (0 != ret) {
-                goto exception;
-        }
-
-        ret = tr_info_str_value_set(tmp, "cgroup_id", info->cgroup_id,
+                                    info->trace_data_path,
+                                    sizeof(info->trace_data_path),
                                     TR_ERROR_PRINT);
         if (0 != ret) {
                 goto exception;
         }
 
+        ret = tr_info_str_value_set(tmp, "cgroup_id", info->cgroup_id,
+                                    sizeof(info->cgroup_id), TR_ERROR_PRINT);
+        if (0 != ret) {
+                goto exception;
+        }
+
         if (TR_SYNTH != tr_is_synth_type(info->trace_data_path)) {
-                if (-1 == (ret = access(info->trace_data_path, F_OK))) {
+                if (-1 == (ret = lstat(info->trace_data_path, &lstat_info))) {
                         pr_info(ERROR, "Trace data file not exist: %s\n",
                                 info->trace_data_path);
                         goto exception;
@@ -224,13 +233,17 @@ struct tr_info *tr_info_init(struct json_object *setting, int index)
         ret |= tr_info_int_value_set(setting, "nr_thread", &info->nr_thread,
                                      TR_ERROR_PRINT);
         ret |= tr_info_str_value_set(setting, "prefix_cgroup_name",
-                                     info->prefix_cgroup_name, TR_ERROR_PRINT);
+                                     info->prefix_cgroup_name,
+                                     sizeof(info->prefix_cgroup_name),
+                                     TR_ERROR_PRINT);
         ret |= tr_info_str_value_set(setting, "scheduler", info->scheduler,
-                                     TR_ERROR_PRINT);
+                                     sizeof(info->scheduler), TR_ERROR_PRINT);
         ret |= tr_info_str_value_set(setting, "device", info->device,
-                                     TR_ERROR_PRINT);
+                                     sizeof(info->device), TR_ERROR_PRINT);
         ret |= tr_info_str_value_set(setting, "trace_replay_path",
-                                     info->trace_replay_path, TR_ERROR_PRINT);
+                                     info->trace_replay_path,
+                                     sizeof(info->trace_replay_path),
+                                     TR_ERROR_PRINT);
         if (0 != ret) {
                 pr_info(ERROR, "error detected (errno: %d)\n", ret);
                 goto exception;
@@ -252,7 +265,7 @@ struct tr_info *tr_info_init(struct json_object *setting, int index)
         tr_info_int_value_set(setting, "iosize", &info->iosize, TR_PRINT_NONE);
         /* trace_data_path의 검사는 __tr_info_init에서 합니다. */
         tr_info_str_value_set(setting, "trace_data_path", info->trace_data_path,
-                              TR_PRINT_NONE);
+                              sizeof(info->trace_data_path), TR_PRINT_NONE);
 
         ret = __tr_info_init(setting, index, info);
         if (0 != ret) {

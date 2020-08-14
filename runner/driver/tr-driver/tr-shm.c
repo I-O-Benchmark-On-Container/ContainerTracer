@@ -38,14 +38,15 @@ static int __tr_sem_init(const pid_t pid)
 
         sem_attr.val = 0;
 
-        sem_path = (char *)malloc(BASE_KEY_PATHNAME_LEN * sizeof(char));
+        sem_path = (char *)malloc(BASE_KEY_PATHNAME_LEN);
         if (!sem_path) {
                 pr_info(ERROR, "Memory allocation fail. (\"%s\")", "sem_path");
                 ret = -ENOMEM;
                 goto exception;
         }
 
-        sprintf(sem_path, "%s_%d", SEM_KEY_PATHNAME, pid);
+        snprintf(sem_path, BASE_KEY_PATHNAME_LEN, "%s_%d", SEM_KEY_PATHNAME,
+                 pid);
         (void)close(open(sem_path, O_WRONLY | O_CREAT, 0));
 
         if (0 > (sem_key = ftok(sem_path, PROJECT_ID))) {
@@ -98,13 +99,14 @@ static int __tr_shm_init(const pid_t pid)
         key_t shm_key = 0;
         int shmid = -1, ret = -1;
 
-        shm_path = (char *)malloc(BASE_KEY_PATHNAME_LEN * sizeof(char));
+        shm_path = (char *)malloc(BASE_KEY_PATHNAME_LEN);
         if (!shm_path) {
                 pr_info(ERROR, "Memory allocation fail. (\"%s\")", "shm_path");
                 ret = -ENOMEM;
                 goto exception;
         }
-        sprintf(shm_path, "%s_%d", SHM_KEY_PATHNAME, pid);
+        snprintf(shm_path, BASE_KEY_PATHNAME_LEN, "%s_%d", SHM_KEY_PATHNAME,
+                 pid);
 
         /* 파일이 존재하지 않는 경우에 파일을 생성합니다. */
         (void)close(open(shm_path, O_WRONLY | O_CREAT, 0));

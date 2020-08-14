@@ -13,6 +13,7 @@
 #include <jemalloc/jemalloc.h>
 
 #include <driver/tr-driver.h>
+#include <runner.h>
 
 /**
  * @brief tr_info 구조체의 내용을 json_object로 만들어주도록 합니다.
@@ -390,7 +391,8 @@ void tr_realtime_serializer(const struct tr_info *info,
         json_object_object_add(object, "meta", tr_info_serializer(info));
         json_object_object_add(object, "data", tr_realtime_log_serializer(log));
 
-        strcpy(buffer, json_object_to_json_string(object));
+        snprintf(buffer, INTERVAL_RESULT_STRING_SIZE, "%s",
+                 json_object_to_json_string(object));
 
         json_object_put(object);
 }
@@ -429,7 +431,8 @@ void tr_total_serializer(const struct tr_info *info,
         json_object_object_add(object, "data", total_object);
         pr_info(INFO, "Adds data success %p\n", (void *)total_object);
 
-        strcpy(buffer, json_object_to_json_string(object));
+        snprintf(buffer, TOTAL_RESULT_STRING_SIZE, "%s",
+                 json_object_to_json_string(object));
         json_object_put(object);
         free(jobject);
 }

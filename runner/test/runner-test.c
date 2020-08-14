@@ -58,8 +58,8 @@ void setUp(void)
         unsigned long i;
         const struct runner_config *config = NULL;
 
-        json = (char *)malloc(PAGE_SIZE * sizeof(char));
-        task_options = (char *)malloc(PAGE_SIZE * sizeof(char));
+        json = (char *)malloc(PAGE_SIZE);
+        task_options = (char *)malloc(PAGE_SIZE);
 
         for (i = 0; i < key_len / 2; i++) {
                 char temp[PAGE_SIZE] = { 0 };
