@@ -76,7 +76,7 @@ sudo scons -c
 scons
 ```
 
-드라이버 추가 방법 관련해서는 [링크](https://github.com/I-O-Benchmark-On-Container/ContainerTracer.wiki.git)를
+드라이버 추가 방법 관련해서는 [링크](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/wiki/Runner%EC%97%90-driver%EB%A5%BC-%EC%B6%94%EA%B0%80%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95)를
 확인해주시길 바랍니다.
 
 #### 참고 사항
