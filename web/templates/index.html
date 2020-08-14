@@ -21,7 +21,7 @@
 <body>
     <nav class="navbar navbar-expand-md navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand">
                 <h1 class="text-warning">IOBC</h1>
             </a>
         </div>
@@ -31,10 +31,10 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="left_search_wrap sidebar d-flex flex-column list-group list-group-flush viewport-max ">
-                    <a href="#" class="list-group-item list-group-item-action menu-items active">
+                    <a href="/" class="list-group-item list-group-item-action menu-items active">
                         Dashboard</a>
                     <a href="#" class="list-group-item list-group-item-action menu-items">
-                        tmp</a>
+                        Result</a>
                     <ul>
                         <li>
                             <label>cgroup 개수</label>
@@ -87,7 +87,12 @@
                                                     <input type="text" class="form-control form_theme search_theme" name="trace_replay_path" id="trace_replay_path" placeholder="ex: " autocomplete="off" value="./build/release/trace-replay" readonly>
                                                 </div>
                                             </li>
-
+											<li>
+												<div class="form-group">
+													<label>device</label>
+                                                    <input type="text" class="form-control form_theme search_theme" name="driver" id="driver" placeholder="ex: " autocomplete="off" value="none">
+												</div>
+											</li>
                                             <li>
                                                 <div class="form-group">
                                                     <label>nr_tasks</label>
@@ -235,7 +240,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js" integrity="sha512-v8ng/uGxkge3d1IJuEo6dJP8JViyvms0cly9pnbfRxT6/31c3dRWxIiwGnMSWwZjHKOuY3EVmijs7k1jz/9bLA==" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
     <script src="{{ url_for('static', filename='js/common.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/moment.js') }}"></script>
     <script src="{{ url_for('static', filename='js/result.js') }}"></script>
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 

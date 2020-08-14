@@ -2,7 +2,7 @@ let socket = io.connect("http://" + document.domain + ":" + location.port + "/co
 
 $(document).ready(function(){
     const $optionDisplay = $('#optionDisplay');
-    const $chartDisplay = $('#chartDisplay')
+    const $chartDisplay = $('#chartDisplay');
     const $btnSelectWork = $('#btnSelectWork');
     const $btnStartWork = $('#btnStartWork');
     const $options = $('#options');
@@ -11,14 +11,14 @@ $(document).ready(function(){
     $btnSelectWork.on('click', function(event){
         /* Cgroup의 수를 바로 변경할 경우에...*/
         $options.children().remove();
-        let nr_cgroup = $('#cgroup').val();
+        let nrCgroup = $('#cgroup').val();
         let driver = $('#driver').val();
 
         let data = {
             driver: driver,
         };
 
-        addOptions(nr_cgroup);
+        addOptions(nrCgroup);
         socket.emit("set_driver", data);
     });
 
@@ -33,7 +33,7 @@ $(document).ready(function(){
     });
 
     /* left side button response */
-    socket.on('set_driver_ret', function(msg){
+    socket.on('set_driver_ret', function(){
         $optionDisplay.removeClass('hide');
     });
 
@@ -49,7 +49,7 @@ $(document).ready(function(){
         addDataInChart(result);
     });
 
-    socket.on('chart_end', function(msg){
+    socket.on('chart_end', function(){
         $("#chartState").val("0");
         $btnSelectWork.prop("disabled", false);
         $btnStartWork.prop("disabled", false);
