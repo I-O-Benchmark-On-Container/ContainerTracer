@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/syscall.h>
@@ -277,6 +278,7 @@ static int tr_set_cgroup_state(struct tr_info *current)
 static int tr_do_exec(struct tr_info *current)
 {
         struct tr_info info;
+        struct stat lstat_info;
         char filename[PATH_MAX];
 
         char q_depth_str[PAGE_SIZE / 4];
@@ -295,24 +297,26 @@ static int tr_do_exec(struct tr_info *current)
                 assert(NULL != current->global_config);
                 runner_config_free(current->global_config, RUNNER_FREE_ALL);
         }
-        sprintf(filename, "%s_%d_%d_%s.txt", info.scheduler, info.ppid,
-                info.weight, info.cgroup_id);
-        sprintf(q_depth_str, "%u", info.q_depth);
-        sprintf(nr_thread_str, "%u", info.nr_thread);
-        sprintf(time_str, "%u", info.time);
-        sprintf(device_path, "/dev/%s", info.device);
+        snprintf(filename, sizeof(filename), "%s_%d_%d_%s.txt", info.scheduler,
+                 info.ppid, info.weight, info.cgroup_id);
+        snprintf(q_depth_str, sizeof(q_depth_str), "%u", info.q_depth);
+        snprintf(nr_thread_str, sizeof(nr_thread_str), "%u", info.nr_thread);
+        snprintf(time_str, sizeof(time_str), "%u", info.time);
+        snprintf(device_path, sizeof(device_path), "/dev/%s", info.device);
 
-        sprintf(trace_repeat_str, "%u", info.trace_repeat);
-        sprintf(wss_str, "%u", info.wss);
-        sprintf(utilization_str, "%u", info.utilization);
-        sprintf(iosize_str, "%u", info.iosize);
+        snprintf(trace_repeat_str, sizeof(trace_repeat_str), "%u",
+                 info.trace_repeat);
+        snprintf(wss_str, sizeof(wss_str), "%u", info.wss);
+        snprintf(utilization_str, sizeof(utilization_str), "%u",
+                 info.utilization);
+        snprintf(iosize_str, sizeof(iosize_str), "%u", info.iosize);
 
         pr_info(INFO, "trace replay save location: \"%s\"\n", filename);
         WAIT_PARENT();
 #ifdef DEBUG
         tr_print_info(&info);
 #endif
-        if (-1 == access(info.trace_replay_path, F_OK)) {
+        if (-1 == lstat(info.trace_replay_path, &lstat_info)) {
                 pr_info(ERROR, "trace replay doesn't exist: \"%s\"",
                         info.trace_replay_path);
                 return -EACCES;
@@ -423,7 +427,7 @@ int tr_get_interval(const char *key, char *buffer)
 
         int ret;
 
-        strcpy(buffer, key);
+        snprintf(buffer, INTERVAL_RESULT_STRING_SIZE, "%s", key);
 
         query.key = buffer;
         if (NULL == (result = hsearch(query, FIND))) {
@@ -466,7 +470,7 @@ int tr_get_total(const char *key, char *buffer)
 
         int ret;
 
-        strcpy(buffer, key);
+        snprintf(buffer, TOTAL_RESULT_STRING_SIZE, "%s", key);
 
         query.key = buffer;
         if (NULL == (result = hsearch(query, FIND))) {

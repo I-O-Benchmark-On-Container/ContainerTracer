@@ -32,13 +32,14 @@ static int __tr_mq_init(const pid_t pid)
         key_t mq_key = 0;
         int mqid = -1, ret = -1;
 
-        mq_path = (char *)malloc(BASE_KEY_PATHNAME_LEN * sizeof(char));
+        mq_path = (char *)malloc(BASE_KEY_PATHNAME_LEN);
         if (!mq_path) {
                 pr_info(ERROR, "Memory allocation fail. (\"%s\")", "mq_path");
                 ret = -ENOMEM;
                 goto exception;
         }
-        sprintf(mq_path, "%s_%d", MSGQ_KEY_PATHNAME, pid);
+        snprintf(mq_path, BASE_KEY_PATHNAME_LEN, "%s_%d", MSGQ_KEY_PATHNAME,
+                 pid);
 
         /* 파일이 존재하지 않는 경우에 파일을 생성합니다. */
         (void)close(open(mq_path, O_WRONLY | O_CREAT, 0));
