@@ -118,7 +118,7 @@ int runner_init(const char *json_str)
         global_config->setting = NULL;
         return ret;
 exception:
-        errno = ret;
+        errno = -ret;
         if (NULL != json_obj) {
                 json_object_put(json_obj);
                 json_obj = NULL;
@@ -206,7 +206,7 @@ char *runner_get_interval_result(const char *key)
 
         return buffer;
 exception:
-        errno = ret;
+        errno = -ret;
         perror("Error detected while running");
         runner_put_result_string(buffer);
         buffer = NULL;
@@ -241,7 +241,7 @@ char *runner_get_total_result(const char *key)
 
         return buffer;
 exception:
-        errno = ret;
+        errno = -ret;
         perror("Error detected while running");
         runner_put_result_string(buffer);
         buffer = NULL;
