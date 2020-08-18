@@ -52,8 +52,7 @@ def add_data(nr_cgroup):
             response_data[idx] = [latency, throughput]
         emit("chart_data_result", response_data)
         time.sleep(1)
-    else:
-        emit("chart_end")
+    emit("chart_end")
 
 
 def get_data():
