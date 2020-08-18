@@ -1,4 +1,4 @@
-let socket = io.connect("http://" + document.domain + ":" + location.port + "/config");
+let socket = io.connect("http://" + document.domain + ":" + location.port);
 
 $(document).ready(function(){
     const $optionDisplay = $('#optionDisplay');
@@ -38,10 +38,10 @@ $(document).ready(function(){
     });
 
 
-    socket.on('chart_start', function(nr_cgroup){
+    socket.on('chart_start', function(nrCgroup){
         $chartDisplay.removeClass('hide');
         $("#chartState").val("1");
-        showChart(nr_cgroup);
+        showChart(nrCgroup);
         $optionDisplay.addClass('hide');
     });
 
