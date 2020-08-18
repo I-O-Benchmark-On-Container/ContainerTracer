@@ -1,0 +1,104 @@
+.viewport-max {
+    min-height: 100vh;
+}
+.sidebar {
+    border-right: 1px solid rgba(0, 0, 0, .2);
+}
+
+@media (max-width: 992px) {
+    .row {
+        display:none;
+    }
+}
+
+@media (min-width: 992px) {
+    .row_min_width {
+        display:none;
+    }
+}
+
+.row_min_width .notification_wrapper {
+    text-align: center;
+    position:absolute; 
+    top:50%; left:50%;
+    margin-top:-100px; margin-left:-100px; 
+    /* width:200px; height:200px;  */
+}
+
+.hide {
+    display: none;
+    opacity: 0;
+}
+
+.body_content {
+    padding-left: 300px;
+    width:100%;
+    transition: opacity 1s;
+}
+
+.body_content .row {
+    /* margin-bottom: 40px; */
+    margin: 0 10px 40px 10px;
+}
+
+ul {
+    padding: 0;
+}
+
+li {
+    list-style: none;
+}
+
+/* 좌측 검색쪽 */
+.left_search_wrap {
+    z-index: 10;
+    background: #fff;
+    position: absolute;
+}
+.left_search_wrap ul{
+    padding: 0 10px 0 10px;
+    text-align: center;
+}
+
+.left_search_wrap .btn_submit{
+    margin: 0 10px 0 10px;
+    width: auto;
+}
+
+/* 우측 검색쪽 */
+.search_wrap {
+    position: relative;
+    padding: .25em .75em;
+    background: #fff;
+    border: 1px solid #d1d3e2 !important;
+    width:100%;
+}
+
+.search_wrap li{
+    float: left;
+    /* margin: 0 1em; */
+    min-width: 20%;
+    margin: 0 2em 0 .5em;
+
+}
+
+input.search_theme, select.search_theme, button.search_theme {
+    /* 처음꺼 */
+    /* display: inline-block; 
+    width: auto;*/
+    display: inline-block; 
+    width: 100%;
+}
+
+.btn_submit {
+    background: rgba(38, 49, 64, .7);
+    color: #fff;
+    /* position: absolute; */
+    bottom: .5em;
+    right: 1em;
+    padding: 0.375em 1em;
+    /* background: #324d68; */
+    font-size: 0.875em;
+    /* color: #fff; */
+}
+
