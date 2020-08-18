@@ -2,16 +2,15 @@ import json
 import copy
 
 
+##
+# @brief Class for preprocessing Trace-Replay interval results into front-end chart data form.
+# Show average bandwidth, current bandwidth, latency, cgroup_id.
 class chart:
-    """ Preprocessing trace replay interval result into front-end chart.
-        Show average bandwidth,current bandwidth, latency, cgroup_id.
-    """
-
+    ##
+    # @brief Set attribute for front-end chart with json..
+    #
+    # @param _json json string from trace replay interval result.
     def __init__(self, _json):
-        """ Set attribute for front-end chart with json.
-            Args:
-                _json: json string from trace replay interval result.
-        """
         FIN = 3
         interval_result = json.loads(_json)
 
@@ -24,37 +23,49 @@ class chart:
             self.set_latency(interval_result["data"]["lat"])
             self.set_cgroup_id(interval_result["meta"]["cgroup_id"])
 
+    ##
+    # @brief Setter with avg_bw
+    #
+    # @param avg_bw Average bandwidth
     def set_avg_bw(self, avg_bw):
-        """ Setter with avg_bw.
-        """
         self.chart_result["data"]["avg_bw"] = avg_bw
 
+    ##
+    # @brief Setter with cur_bw
+    #
+    # @param cur_bw Current bandwidth
     def set_cur_bw(self, cur_bw):
-        """ Setter with cur_bw.
-        """
         self.chart_result["data"]["cur_bw"] = cur_bw
 
+    ##
+    # @brief Setter with lat
+    #
+    # @param lat Latency
     def set_latency(self, lat):
-        """ Setter with lat.
-        """
         self.chart_result["data"]["lat"] = lat
 
+    ##
+    # @brief Setter with cgroup_id
+    #
+    # @param cgroup_id Cgroup_id
     def set_cgroup_id(self, cgroup_id):
-        """ Setter with cgroup_id
-        """
         self.chart_result["cgroup_id"] = cgroup_id
 
+    ##
+    # @brief Get datas in front-end chart data form.
+    #
+    # @return datas in front-end chart data form with dictionary.
     def get_chart_result(self):
-        """ Getter with chart data in dictionary.
-        """
         return self.chart_result
 
 
+##
+# @brief User function preprocessing trace replay interval result into front-end chart data.
+#
+# @param raw_json_data Json string with trace replay interval result.
+#
+# @return Trace replay interval result in front-end chart data from.
 def get_chart_result(raw_json_data):
-    """ Preprocessing trace replay interval result into front-end chart data.
-        Args:
-            raw_json_data: json string with trace replay interval result.
-    """
     buf = chart(raw_json_data)
     chart_result = copy.copy(buf.get_chart_result())
     del buf

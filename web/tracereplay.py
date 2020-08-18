@@ -6,32 +6,33 @@ import json
 import os
 
 
+##
+# @brief Runner class for trace replay with multithread.
+# Run trace-replay with config options and return results async.
+# Usage:
+#   Create TraceReplay object with config options.
+#   Call run_all_trace_replay().
 class TraceReplay:
-    """ Runner class for trace replay with multithread.
-        Run trace-replay with config options and return results async.
-        Usage:
-            Create TraceReplay object with config options.
-            Call run_all_trace_replay().
-    """
-
+    FIN = 3  # FInish flag with trace replay.
+    ##
+    # @brief Initializing with config.
+    # Before calling run_all_trace_replay(),
+    # Initialize with create TraceReplay object with config options.
+    #
+    # @param config For configure trace replay. Must be dictionary form.
+    #
+    # @return
     def __init__(self, config):
-        """ Ininitalizing with config.
-            Before calling run_all_trace_replay(),
-            initialize by create TraceReplay object with config options.
-            Args:
-                config: For configure trace replay. Must be dictionary.
-        """
-        self.FIN = 3
         self.nr_tasks = config["setting"]["nr_tasks"]
         self.config_json = json.dumps(config)
         self.libc = ctypes.CDLL("./build/debug/librunner.so")
 
         return
 
+    ##
+    # @brief Run trace replay by initializing and running runner module written in libc.
+    # Called by trace_replay_driver() only.
     def trace_replay_run(self):
-        """ Run trace replay by initializing and running runner module written in libc.
-            Called by trace_replay_driver() only.
-        """
         ret = self.libc.runner_init(str(self.config_json).encode())
         if ret != 0:
             raise Exception(ret)
@@ -41,12 +42,14 @@ class TraceReplay:
             raise Exception
         return
 
+    ##
+    # @brief Get interval results in real time, run async with trace replay.
+    # if no result exist, pend until get the result.
+    #
+    # @param key Want to get specific cgroup.
+    #
+    # @return
     def get_interval_result(self, key):
-        """ Get interval results in real time, run async with trace replay.
-            if no result exist, pend until get the result.
-            Args:
-                key: Want to get specific cgroup.
-        """
         self.libc.runner_get_interval_result.restype = ctypes.POINTER(ctypes.c_char)
         ptr = self.libc.runner_get_interval_result(key.encode())
         if ptr == 0:
@@ -55,6 +58,10 @@ class TraceReplay:
         self.libc.runner_put_result_string(ptr)
         return ret
 
+##
+# @brief 
+#
+# @return 
     def refresh(self):
         """ Refreshing front-end chart until end of jobs.
             Send results via chart object.

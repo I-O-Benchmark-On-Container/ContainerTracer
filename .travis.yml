@@ -11,9 +11,10 @@ matrix:
       - pip3 install flask
       - pip3 install flask_restful
       - pip3 install flask_socketio
-      - cd web
+      - cd web/test
       script:
       - python unit-test.py
+      - python backend-module-test.py
 
     - language: c
       compiler: clang
