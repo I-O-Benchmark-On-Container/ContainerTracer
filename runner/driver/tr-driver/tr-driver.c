@@ -354,8 +354,7 @@ int tr_runner(void)
         if (ret) {
                 pr_info(ERROR, "Scheduler setting failed (scheduler: %s)\n",
                         current->scheduler);
-                ret = -EINVAL;
-                goto exit;
+                return -EINVAL;
         }
 
         TELL_WAIT(); /* 동기화를 준비하는 과정입니다. */
@@ -363,8 +362,7 @@ int tr_runner(void)
         {
                 if (0 > (pid = fork())) {
                         pr_info(ERROR, "Fork failed. (pid: %d)\n", pid);
-                        ret = -EFAULT;
-                        goto exit;
+                        return -EFAULT;
                 } else if (0 == pid) { /* 자식 프로세스 */
                         struct sigaction act;
                         memset(&act, 0, sizeof(act));
@@ -391,10 +389,10 @@ int tr_runner(void)
 
                 /* IPC 객체를 생성합니다. */
                 if (0 > (ret = tr_shm_init(current))) {
-                        goto exit;
+                        return ret;
                 }
                 if (0 > (ret = tr_mq_init(current))) {
-                        goto exit;
+                        return ret;
                 }
         }
 
@@ -404,7 +402,6 @@ int tr_runner(void)
                 TELL_CHILD();
         }
 
-exit:
         return ret;
 }
 
@@ -432,22 +429,19 @@ int tr_get_interval(const char *key, char *buffer)
         query.key = buffer;
         if (NULL == (result = hsearch(query, FIND))) {
                 pr_info(ERROR, "Cannot find item (key: %s)\n", buffer);
-                ret = -EINVAL;
-                goto exit;
+                return -EINVAL;
         }
         info = (struct tr_info *)result->data;
         if (NULL != info) {
                 if (0 > (ret = tr_mq_get(info, (void *)&log))) {
-                        goto exit;
+                        return ret;
                 }
                 tr_realtime_serializer(info, &log, buffer);
         } else {
                 pr_info(ERROR, "`info` doesn't exist: %p\n", info);
-                ret = -EACCES;
-                goto exit;
+                return -EACCES;
         }
 
-exit:
         ret = log.type;
         return ret;
 }
@@ -475,22 +469,19 @@ int tr_get_total(const char *key, char *buffer)
         query.key = buffer;
         if (NULL == (result = hsearch(query, FIND))) {
                 pr_info(ERROR, "Cannot find item (key: %s)\n", buffer);
-                ret = -EINVAL;
-                goto exit;
+                return -EINVAL;
         }
         info = (struct tr_info *)result->data;
         if (NULL != info) {
                 if (0 > (ret = tr_shm_get(info, (void *)&results))) {
-                        goto exit;
+                        return ret;
                 }
                 tr_total_serializer(info, &results, buffer);
         } else {
                 pr_info(ERROR, "`info` doesn't exist: %p\n", info);
-                ret = -EACCES;
-                goto exit;
+                return -EACCES;
         }
 
-exit:
         return ret;
 }
 
