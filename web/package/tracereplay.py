@@ -1,7 +1,7 @@
 import threading
 from flask_socketio import emit
 import ctypes
-from package import chart
+from . import chart
 import copy
 import json
 import os
