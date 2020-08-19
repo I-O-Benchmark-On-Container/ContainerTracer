@@ -10,9 +10,11 @@ matrix:
       before_script:
       - pip3 install flask
       - pip3 install flask_restful
-      - cd web
+      - pip3 install flask_socketio
+      - cd web/test
       script:
       - python unit-test.py
+      - python backend-module-test.py
 
     - language: c
       compiler: clang
