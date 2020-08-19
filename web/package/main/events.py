@@ -46,4 +46,3 @@ def test_set_options(set_each, set_all):
     set_config.store(set_all, "set_all")
     set_config.store(set_each, "set_each")
     emit("save", set_config.get_config_data())
-

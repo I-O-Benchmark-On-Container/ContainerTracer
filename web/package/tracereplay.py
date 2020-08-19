@@ -1,5 +1,4 @@
 import threading
-from flask_socketio import emit
 import ctypes
 from . import chart
 import copy
@@ -28,8 +27,8 @@ class TraceReplay:
         self.libc = ctypes.CDLL("../build/debug/librunner.so")
         return
 
-    def set_config(self, config:dict):
-        if type(config["setting"]["nr_tasks"]) == str:
+    def set_config(self, config: dict):
+        if isinstance(config["setting"]["nr_tasks"], str):
             config["setting"]["nr_tasks"] = int(config["setting"]["nr_tasks"])
         self.nr_tasks = config["setting"]["nr_tasks"]
         self.config_json = json.dumps(config)
@@ -41,7 +40,7 @@ class TraceReplay:
     def trace_replay_run(self):
         ret = self.libc.runner_init(str(self.config_json).encode())
         if ret != 0:
-            raise Exception(ret)
+            raise Exception
 
         ret = self.libc.runner_run()
         if ret != 0:
@@ -64,10 +63,6 @@ class TraceReplay:
         self.libc.runner_put_result_string(ptr)
         return ret
 
-##
-# @brief 
-#
-# @return 
     def refresh(self):
         """ Refreshing front-end chart until end of jobs.
             Send results via chart object.
