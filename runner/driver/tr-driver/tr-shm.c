@@ -193,8 +193,7 @@ int tr_shm_init(struct tr_info *info)
                 pr_info(ERROR,
                         "Semaphore initialization fail. (target pid :%d)\n",
                         info->pid);
-                ret = semid;
-                goto exit;
+                return semid;
         }
         pr_info(INFO, "Semaphore create success. (path: %s_%d)\n",
                 SEM_KEY_PATHNAME, info->pid);
@@ -203,8 +202,7 @@ int tr_shm_init(struct tr_info *info)
                 pr_info(ERROR,
                         "Shared Memory initialization fail. (target pid :%d)\n",
                         info->pid);
-                ret = shmid;
-                goto exit;
+                return shmid;
         }
         pr_info(INFO, "Shared Memory create success. (path: %s_%d)\n",
                 SHM_KEY_PATHNAME, info->pid);
@@ -212,7 +210,6 @@ int tr_shm_init(struct tr_info *info)
         info->semid = semid;
         info->shmid = shmid;
 
-exit:
         return ret;
 }
 
