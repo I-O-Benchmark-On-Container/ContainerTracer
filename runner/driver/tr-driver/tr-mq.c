@@ -90,15 +90,13 @@ int tr_mq_init(struct tr_info *info)
                 pr_info(ERROR,
                         "Message Queue initialization fail. (target pid :%d)\n",
                         info->pid);
-                ret = mqid;
-                goto exit;
+                return mqid;
         }
         pr_info(INFO, "Message Queue create success. (path: %s_%d)\n",
                 SHM_KEY_PATHNAME, info->pid);
 
         info->mqid = mqid;
 
-exit:
         return ret;
 }
 
