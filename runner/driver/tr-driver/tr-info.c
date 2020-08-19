@@ -117,15 +117,13 @@ static int __tr_info_init(struct json_object *setting, int index,
 
         if (!json_object_object_get_ex(setting, "task_option", &tmp)) {
                 pr_info(ERROR, "Not exist error (key: %s)\n", "task_option");
-                ret = -EINVAL;
-                goto exception;
+                return -EINVAL;
         }
 
         tmp = json_object_array_get_idx(tmp, index);
         if (NULL == tmp) {
                 pr_info(ERROR, "Array out-of-bound error (index: %d)\n", index);
-                ret = -EINVAL;
-                goto exception;
+                return -EINVAL;
         }
 
         tr_info_int_value_set(tmp, "time", &info->time, TR_PRINT_NONE);
@@ -152,13 +150,13 @@ static int __tr_info_init(struct json_object *setting, int index,
         if (0 != ret) {
                 pr_info(ERROR, "Unsupported scheduler (name: %s)\n",
                         info->scheduler);
-                goto exception;
+                return ret;
         }
 
         ret = tr_info_int_value_set(tmp, "weight", &info->weight,
                                     TR_ERROR_PRINT);
         if (0 != ret) {
-                goto exception;
+                return ret;
         }
 
         ret = tr_info_str_value_set(tmp, "trace_data_path",
@@ -166,20 +164,20 @@ static int __tr_info_init(struct json_object *setting, int index,
                                     sizeof(info->trace_data_path),
                                     TR_ERROR_PRINT);
         if (0 != ret) {
-                goto exception;
+                return ret;
         }
 
         ret = tr_info_str_value_set(tmp, "cgroup_id", info->cgroup_id,
                                     sizeof(info->cgroup_id), TR_ERROR_PRINT);
         if (0 != ret) {
-                goto exception;
+                return ret;
         }
 
         if (TR_SYNTH != tr_is_synth_type(info->trace_data_path)) {
                 if (-1 == (ret = lstat(info->trace_data_path, &lstat_info))) {
                         pr_info(ERROR, "Trace data file not exist: %s\n",
                                 info->trace_data_path);
-                        goto exception;
+                        return ret;
                 } else {
                         pr_info(INFO, "Trace data file exist: %s\n",
                                 info->trace_data_path);
@@ -191,15 +189,13 @@ static int __tr_info_init(struct json_object *setting, int index,
         if (NULL != (result = hsearch(item, FIND))) {
                 pr_info(ERROR, "Duplicate c-group name detected (name: %s)\n",
                         result->key);
-                ret = -EINVAL;
-                goto exception;
+                return -EINVAL;
         }
 
         item.key = info->cgroup_id;
         item.data = info;
         hsearch(item, ENTER);
 
-exception:
         return ret;
 }
 
