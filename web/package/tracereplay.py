@@ -1,6 +1,7 @@
 import threading
+from flask_socketio import emit
 import ctypes
-import chart
+from package import chart
 import copy
 import json
 import os
@@ -22,11 +23,16 @@ class TraceReplay:
     # @param config For configure trace replay. Must be dictionary form.
     #
     # @return
-    def __init__(self, config):
+    def __init__(self, socketio):
+        self.socketio = socketio
+        self.libc = ctypes.CDLL("../build/debug/librunner.so")
+        return
+
+    def set_config(self, config:dict):
+        if type(config["setting"]["nr_tasks"]) == str:
+            config["setting"]["nr_tasks"] = int(config["setting"]["nr_tasks"])
         self.nr_tasks = config["setting"]["nr_tasks"]
         self.config_json = json.dumps(config)
-        self.libc = ctypes.CDLL("./build/debug/librunner.so")
-
         return
 
     ##
@@ -81,10 +87,16 @@ class TraceReplay:
 
                 interval_results.append(chart_result)
 
-            update_interval_result(interval_results)
+            self.update_interval_results(interval_results)
 
         self.libc.runner_free()
         return
+
+    def update_interval_results(self, interval_results):
+        if interval_results:
+            self.socketio.emit("chart_data_result", interval_results)
+        else:
+            self.socketio.emit("chart_end")
 
     def trace_replay_driver(self):
         """ Driver for running trace replay and refresh async with threads.

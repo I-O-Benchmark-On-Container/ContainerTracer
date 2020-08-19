@@ -1,12 +1,13 @@
 from flask import Flask
 from flask_socketio import SocketIO
+from . import tracereplay
 
 socketio = SocketIO()
-
 
 class Config:
     def __init__(self):
         self.data = dict()
+        self.trace_replay = tracereplay.TraceReplay(socketio)
 
     def store(self, input_data=dict, set_type=str):
         each_data = dict()

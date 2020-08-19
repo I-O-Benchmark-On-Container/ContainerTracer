@@ -32,9 +32,13 @@ def set_driver(driver):
 def set_options(set_each, set_all):
     set_config.store(set_all, "set_all")
     set_config.store(set_each, "set_each")
+    json_config = set_config.get_config_data()
+    trace_replay = set_config.trace_replay
+    trace_replay.set_config(json_config)
+    trace_replay.run_all_trace_replay()
+
     nr_cgroup = len(set_config.data["setting"]["task_option"])
     emit("chart_start", nr_cgroup)
-    add_data(nr_cgroup)
 
 
 @socketio.on("test_set_options")
@@ -43,17 +47,3 @@ def test_set_options(set_each, set_all):
     set_config.store(set_each, "set_each")
     emit("save", set_config.get_config_data())
 
-
-def add_data(nr_cgroup):
-    response_data = [0] * nr_cgroup
-    for _ in range(int(set_config.data["setting"]["time"])):
-        for idx in range(nr_cgroup):
-            latency, throughput = get_data()
-            response_data[idx] = [latency, throughput]
-        emit("chart_data_result", response_data)
-        time.sleep(1)
-    emit("chart_end")
-
-
-def get_data():
-    return int(random.random() * 100), int(random.random() * 100)

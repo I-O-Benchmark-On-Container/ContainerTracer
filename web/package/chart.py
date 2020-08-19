@@ -10,8 +10,10 @@ class chart:
     # @brief Set attribute for front-end chart with json..
     #
     # @param _json json string from trace replay interval result.
-    def __init__(self, _json):
+    def __init__(self):
         FIN = 3
+
+    def set_config(_json):
         interval_result = json.loads(_json)
 
         if interval_result["data"]["type"] == FIN:
@@ -66,7 +68,8 @@ class chart:
 #
 # @return Trace replay interval result in front-end chart data from.
 def get_chart_result(raw_json_data):
-    buf = chart(raw_json_data)
+    buf = chart()
+    buf.set_config(raw_json_data)
     chart_result = copy.copy(buf.get_chart_result())
     del buf
     return chart_result
