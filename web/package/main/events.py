@@ -1,6 +1,4 @@
 import os
-import time
-import random
 from flask import session
 from flask_socketio import emit
 from .. import socketio
