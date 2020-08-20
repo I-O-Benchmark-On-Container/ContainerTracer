@@ -36,11 +36,11 @@ class TraceReplay:
     def trace_replay_run(self):
         ret = self.libc.runner_init(str(self.config_json).encode())
         if ret != 0:
-            raise Exception
+            raise OSError(ret, os.strerror(ret))
 
         ret = self.libc.runner_run()
         if ret != 0:
-            raise Exception
+            raise OSError(ret, os.strerror(ret))
 
     ##
     # @brief Get interval results in real time, run async with trace replay.
@@ -53,7 +53,7 @@ class TraceReplay:
         self.libc.runner_get_interval_result.restype = ctypes.POINTER(ctypes.c_char)
         ptr = self.libc.runner_get_interval_result(key.encode())
         if ptr == 0:
-            raise Exception
+            raise Exception("Memory Allocation 실패")
         ret = ctypes.cast(ptr, ctypes.c_char_p).value
         self.libc.runner_put_result_string(ptr)
         return ret
@@ -102,7 +102,6 @@ class TraceReplay:
             Must be called by super user.
         """
         if os.getuid() != 0:
-            print("Execute by SuperUser!!!")
-            raise Exception
+            raise Exception("Execute by SuperUser!!!")
         driver = threading.Thread(target=self.trace_replay_driver)
         driver.start()
