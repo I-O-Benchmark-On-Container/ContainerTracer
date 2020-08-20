@@ -71,12 +71,20 @@ sudo scons test DEBUG=True
 
 배포판을 만드는 경우에는 아래와 같은 방법으로 진행해주시길 바랍니다. 결과물은 `./build/release`에 저장됩니다.
 
-```
+```bash
 sudo scons -c
 scons
 ```
 
-드라이버 추가 방법 관련해서는 [링크](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/wiki/Runner%EC%97%90-driver%EB%A5%BC-%EC%B6%94%EA%B0%80%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95)를
+그리고 빌드된 내용을 설치하기 위해서 release 모드의 경우에는 아래와 같이 진행하면 설치를 할 수 있습니다.
+만약에 디버깅 모드로 설치하고 싶으신 경우에는 `sudo scons DEBUG=True install`로 해주시면 됩니다.
+
+```bash
+sudo scons install
+sudo ldconfig
+```
+
+추가적으로 드라이버 제작 방법 관련해서는 [링크](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/wiki/Runner%EC%97%90-driver%EB%A5%BC-%EC%B6%94%EA%B0%80%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95)를
 확인해주시길 바랍니다.
 
 #### 참고 사항
