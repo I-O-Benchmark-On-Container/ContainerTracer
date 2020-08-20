@@ -13,10 +13,8 @@ class Config:
         unit_test_mode = "" if unit_test_mode == None else unit_test_mode
         unit_test_mode = unit_test_mode.lower() == "true"
         if unit_test_mode == False:
-            print("trace-replay")
             self.trace_replay = tracereplay.TraceReplay(socketio)
         else:
-            print("trace-replay-test")
             self.trace_replay = tracereplay.TraceReplayTest(socketio)
 
     def store(self, input_data=dict, set_type=str):
