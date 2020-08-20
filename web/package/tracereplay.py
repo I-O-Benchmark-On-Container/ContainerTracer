@@ -6,6 +6,35 @@ import json
 import os
 
 
+class TraceReplayTest:
+    def __init__(self, socketio):
+        pass
+    
+    def set_config(self, config:dict):
+        pass
+    
+    def trace_replay_free(self):
+        pass
+
+    def trace_replay_run(self):
+        pass
+    
+    def get_interval_result(self, key):
+        pass
+
+    def refresh(self):
+        pass
+
+    def update_interval_results(self, interval_results):
+        pass
+
+    def trace_replay_driver(self):
+        pass
+
+    def run_all_trace_replay(self):
+        pass
+
+
 ##
 # @brief Runner class for trace replay with multithread.
 # Run trace-replay with config options and return results async.

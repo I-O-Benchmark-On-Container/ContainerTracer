@@ -4,8 +4,9 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-from package import create_app, socketio
+from package import create_app, socketio, unit_test_mode
 
+unit_test_mode = True
 app = create_app()
 
 
