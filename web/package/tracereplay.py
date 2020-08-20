@@ -30,6 +30,10 @@ class TraceReplay:
         self.nr_tasks = config["setting"]["nr_tasks"]
         self.config_json = json.dumps(config)
 
+    def trace_replay_free(self):
+        self.driver.join()
+        self.libc.runner_free()
+
     ##
     # @brief Run trace replay by initializing and running runner module written in libc.
     # Called by trace_replay_driver() only.
@@ -79,8 +83,6 @@ class TraceReplay:
 
             self.update_interval_results(interval_results)
 
-        self.libc.runner_free()
-
     def update_interval_results(self, interval_results):
         if interval_results:
             self.socketio.emit("chart_data_result", interval_results)
@@ -96,6 +98,9 @@ class TraceReplay:
         trace_replay_proc.start()
         refresh_proc.start()
 
+        trace_replay_proc.join()
+        refresh_proc.join()
+
     def run_all_trace_replay(self):
         """ Run trace replay module.
             Must be called after createing TraceReplay object
@@ -103,5 +108,5 @@ class TraceReplay:
         """
         if os.getuid() != 0:
             raise Exception("Execute by SuperUser!!!")
-        driver = threading.Thread(target=self.trace_replay_driver)
-        driver.start()
+        self.driver = threading.Thread(target=self.trace_replay_driver)
+        self.driver.start()
