@@ -20,19 +20,15 @@ class TraceReplay:
     # Initialize with create TraceReplay object with config options.
     #
     # @param config For configure trace replay. Must be dictionary form.
-    #
-    # @return
     def __init__(self, socketio):
         self.socketio = socketio
-        self.libc = ctypes.CDLL("../build/debug/librunner.so")
-        return
+        self.libc = ctypes.CDLL("librunner.so")
 
     def set_config(self, config: dict):
         if isinstance(config["setting"]["nr_tasks"], str):
             config["setting"]["nr_tasks"] = int(config["setting"]["nr_tasks"])
         self.nr_tasks = config["setting"]["nr_tasks"]
         self.config_json = json.dumps(config)
-        return
 
     ##
     # @brief Run trace replay by initializing and running runner module written in libc.
@@ -45,7 +41,6 @@ class TraceReplay:
         ret = self.libc.runner_run()
         if ret != 0:
             raise Exception
-        return
 
     ##
     # @brief Get interval results in real time, run async with trace replay.
@@ -85,7 +80,6 @@ class TraceReplay:
             self.update_interval_results(interval_results)
 
         self.libc.runner_free()
-        return
 
     def update_interval_results(self, interval_results):
         if interval_results:
@@ -101,7 +95,6 @@ class TraceReplay:
 
         trace_replay_proc.start()
         refresh_proc.start()
-        return
 
     def run_all_trace_replay(self):
         """ Run trace replay module.
@@ -113,4 +106,3 @@ class TraceReplay:
             raise Exception
         driver = threading.Thread(target=self.trace_replay_driver)
         driver.start()
-        return
