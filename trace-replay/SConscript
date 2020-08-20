@@ -24,6 +24,9 @@ share = shared_env.SharedLibrary(
     target=env["PROGRAM_LOCATION"] + "/" + CURRENT_PROJECT + ".so", source=Glob("*.c")
 )
 
+current_env.Install('/usr/bin', program)
+current_env.Alias('install', '/usr/bin')
+
 if current_env["BUILD_UNIT_TEST"] == True:
 	tester = SConscript("test/SConscript")
 	test_alias = Alias("test", [tester, share, program], tester[0].path)
