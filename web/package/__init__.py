@@ -1,12 +1,20 @@
 from flask import Flask
 from flask_socketio import SocketIO
+from . import tracereplay
+import os
 
 socketio = SocketIO()
-
 
 class Config:
     def __init__(self):
         self.data = dict()
+        unit_test_mode = os.environ.get("PYTHON_UNIT_TEST")
+        unit_test_mode = "" if unit_test_mode == None else unit_test_mode
+        unit_test_mode = unit_test_mode.lower() == "true"
+        if unit_test_mode == False:
+            self.trace_replay = tracereplay.TraceReplay(socketio)
+        else:
+            self.trace_replay = tracereplay.TraceReplayTest(socketio)
 
     def store(self, input_data=dict, set_type=str):
         each_data = dict()
