@@ -8,7 +8,6 @@ socketio = SocketIO()
 class Config:
     def __init__(self):
         self.data = dict()
-        
         unit_test_mode = os.environ.get("PYTHON_UNIT_TEST")
         unit_test_mode = "" if unit_test_mode == None else unit_test_mode
         unit_test_mode = unit_test_mode.lower() == "true"
