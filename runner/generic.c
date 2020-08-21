@@ -4,16 +4,11 @@
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
  * @version 0.1
  * @date 2020-08-05
- * @ref https://github.com/mit-pdos/xv6-public/blob/master/syscall.c
+ * @note 참고 자료: https://github.com/mit-pdos/xv6-public/blob/master/syscall.c
  */
 
-/**< system header */
-
-/**< external header */
-
-/**< user header */
 #include <generic.h>
-#include <tr-driver.h>
+#include <driver/tr-driver.h>
 
 const char *driver_name_tbl[] = { [TRACE_REPLAY_DRIVER] = "trace-replay",
                                   NULL };
@@ -27,8 +22,8 @@ static int (*driver_init_tbl[])(void *object) = {
  *
  * @param name 찾고자 하는 driver의 이름에 해당합니다.
  *
- * @return index name에 해당하는 driver의 index가 반환됩니다.
- * @except -EINVAL 테이블에서 찾을 수 없는 유효하지 않은 name이 부여되었음을 의미합니다.
+ * @return name에 해당하는 driver의 index가 반환됩니다.
+ * @exception -EINVAL 테이블에서 찾을 수 없는 유효하지 않은 name이 부여되었음을 의미합니다.
  */
 int get_generic_driver_index(const char *name)
 {
@@ -49,7 +44,7 @@ int get_generic_driver_index(const char *name)
  * @param object 초기화하는 driver의 init에 들어가는 object의 주소를 가집니다.
  *
  * @return 성공적으로 초기화를 한 경우에 0을 반환하고, 그렇지 않은 경우에 0 이하의 값을 반홥니다.
- * @except -EINVAL 존재하지 않는 name을 조회한 경우에 반환을 하는 역할을 합니다.
+ * @exception -EINVAL 존재하지 않는 name을 조회한 경우에 반환을 하는 역할을 합니다.
  */
 int generic_driver_init(const char *name, void *object)
 {

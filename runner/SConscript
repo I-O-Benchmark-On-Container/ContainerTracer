@@ -7,7 +7,16 @@ CURRENT_PROJECT = "runner"
 current_env = env.Clone()
 current_env.Append(CPPPATH=[env["INCLUDE_LOCATION"]])
 current_env.Append(LIBS=["json-c", "jemalloc"])
-current_env.Append(CFLAGS=["-I/usr/include/json-c/"])
+
+TRACE_REPLAY_CFLAGS = ["-D_LARGEFILE_SOURCE", "-D_FILE_OFFSET_BITS=64", "-D_GNU_SOURCE"]
+RUNNER_CFLAGS = ["-I/usr/include/json-c/"]
+if env["DEBUG"] == True:
+	DEBUG_CFLAGS = ["-g", "-pg"]
+else:
+	DEBUG_CFLAGS = []
+
+current_env.Append(CFLAGS= TRACE_REPLAY_CFLAGS + RUNNER_CFLAGS + DEBUG_CFLAGS)
+
 current_env.Append(
     CCFLAGS=[
         "-std=c11",
@@ -29,18 +38,24 @@ current_env.Append(
     ]
 )
 
-current_env.Program(
-    target=env["PROGRAM_LOCATION"] + "/" + CURRENT_PROJECT, source=Glob("*.c")
-)
+#current_env.Program(
+#    target=env["PROGRAM_LOCATION"] + "/" + CURRENT_PROJECT, source=Glob("*.c") + Glob("driver/*/*.c")
+#)
 
 exclude_files = [str(Dir(env["RUNNER_LOCATION"])) + os.sep + "main.c"]
 except_main = [
     x for x in Glob(env["RUNNER_LOCATION"] + "/*.c") if not str(x) in exclude_files
 ]
+except_main += Glob("driver/*/*.c")
 
-current_env.SharedLibrary(
+share = current_env.SharedLibrary(
     target=env["PROGRAM_LOCATION"] + "/" + CURRENT_PROJECT + ".so", source=except_main
 )
 
+current_env.Install('/usr/local/lib', share)
+current_env.Alias('install', '/usr/local/lib')
+
 if current_env["BUILD_UNIT_TEST"] == True:
-    SConscript("test/SConscript")
+	tester = SConscript("test/SConscript")
+	test_alias = Alias("test", [tester, share], tester[0].path)
+	AlwaysBuild(test_alias)

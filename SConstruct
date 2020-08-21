@@ -8,6 +8,22 @@ SConscript('setting/SConscript')
 Import('env')
 scons_compiledb.enable(env)
 
+if env["BUILD_UNIT_TEST"] == True:
+	if os.getuid() != 0:
+		print("[ERROR] `test` mode requires the sudo privileges.", file=sys.stderr)
+		sys.exit()
+
+env.Append(CFLAGS=["-O2"])
+env['CC']=["clang"]
+
+if env["DEBUG"] == True:
+	env.Append(CFLAGS=["-g", "-pg"])
+	env.Append(CFLAGS=["-DLOG_INFO", "-DDEBUG"])
+	env["PROGRAM_LOCATION"] = "#build/debug"
+else:
+	pass
+
+
 if env["BUILD_UNIT_TEST"]:
 	SConscript("unity/SConscript")
 SConscript("include/SConscript")
@@ -89,4 +105,9 @@ subprocess.call(
 cppcheck_ouput_file.close()
 cppcheck_error_file.close()
 
+if env.GetOption('clean'):
+	print("Delete All Object file manually")
+	os.system("find ./ -name \"*.o\" -print0 | xargs -0 rm -f ")
+	os.system("find ./ -name \"*.os\" -print0 | xargs -0 rm -f ")
+	os.system("rm -rf ./build")
 
