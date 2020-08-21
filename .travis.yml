@@ -13,8 +13,8 @@ matrix:
       - pip3 install flask_socketio
       - cd web/test
       script:
-      - python unit-test.py
-      - python backend-module-test.py
+      - PYTHON_UNIT_TEST=true python unit-test.py
+      - PYTHON_UNIT_TEST=true python backend-module-test.py
 
     - language: c
       compiler: clang
