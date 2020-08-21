@@ -12,6 +12,8 @@
 #include <runner.h>
 #include <trace_replay.h>
 
+#define TEST_TARGET_DRIVER "trace-replay"
+
 #ifndef DEBUG
 #define TRACE_REPLAY_PATH "./build/release/trace-replay"
 #else
@@ -24,23 +26,23 @@
 #define Q_DEPTH (get_nprocs()) /**< CPU의 갯수 만큼 Q_DEPTH를 설정합니다. */
 #define PREFIX_CGROUP_NAME "tester.trace." /**< cgroup 폴더 생성 규칙입니다. */
 
-const char *key[] = { "cgroup-1", "cgroup-2", "cgroup-3",
-                      "cgroup-4", "cgroup-5", "cgroup-6" };
-const int weight[] = { 100, 250, 500, 1000, 2000, 4000 };
-const char *test_path[] = {
+static const char *key[] = { "cgroup-1", "cgroup-2", "cgroup-3",
+                             "cgroup-4", "cgroup-5", "cgroup-6" };
+static const int weight[] = { 100, 250, 500, 1000, 2000, 4000 };
+static const char *test_path[] = {
         "./sample/sample1.dat", "./sample/sample2.dat",
         "./sample/sample1.dat", "rand_read",
         "rand_mixed",           "seq_mixed",
 };
-const unsigned long key_len = sizeof(key) / sizeof(char *);
+static const unsigned long key_len = sizeof(key) / sizeof(char *);
 
 #define NR_TASKS (key_len)
 #define NR_THREAD ((int)(Q_DEPTH / NR_TASKS))
 
 #define FLAGS_MASK (0x3F)
 
-char *json, *task_options;
-struct json_object *jobject;
+static char *json, *task_options;
+static struct json_object *jobject;
 
 static void print_json_string(const char *msg, const char *buffer)
 {
@@ -59,7 +61,12 @@ void setUp(void)
         const struct runner_config *config = NULL;
 
         json = (char *)malloc(PAGE_SIZE);
+        TEST_ASSERT_NOT_NULL(json);
         task_options = (char *)malloc(PAGE_SIZE);
+        TEST_ASSERT_NOT_NULL(task_options);
+
+        /* strcat에서 문제가 발생할 수 있으므로 이를 반드시 수행해줘야 합니다. */
+        json[0] = task_options[0] = '\0';
 
         for (i = 0; i < key_len / 2; i++) {
                 char temp[PAGE_SIZE] = { 0 };
@@ -80,8 +87,10 @@ void setUp(void)
                 strcat(task_options, temp);
         }
 
+        pr_info(INFO, "%s\n", task_options);
+
         sprintf(json,
-                "{\"driver\":\"trace-replay\","
+                "{\"driver\": \"%s\","
                 "\"setting\": {"
                 "\"trace_replay_path\":\"%s\","
                 "\"device\": \"%s\","
@@ -97,13 +106,14 @@ void setUp(void)
                 "],"
                 "}"
                 "}",
-                TRACE_REPLAY_PATH, TEST_DISK_PATH, NR_TASKS, TIME, Q_DEPTH,
-                NR_THREAD, PREFIX_CGROUP_NAME, SCHEDULER, task_options);
+                TEST_TARGET_DRIVER, TRACE_REPLAY_PATH, TEST_DISK_PATH, NR_TASKS,
+                TIME, Q_DEPTH, NR_THREAD, PREFIX_CGROUP_NAME, SCHEDULER,
+                task_options);
         print_json_string("Current Config", json);
         TEST_ASSERT_EQUAL(0, runner_init(json)); /* config 설정 과정 */
         TEST_ASSERT_NOT_NULL(config = runner_get_global_config());
-        TEST_ASSERT_EQUAL_STRING(config->driver, "trace-replay");
-        TEST_ASSERT_EQUAL(TRACE_REPLAY_DRIVER,
+        TEST_ASSERT_EQUAL_STRING(config->driver, TEST_TARGET_DRIVER);
+        TEST_ASSERT_EQUAL(get_generic_driver_index(TEST_TARGET_DRIVER),
                           get_generic_driver_index(config->driver));
         TEST_ASSERT_EQUAL(0, runner_run()); /* trace-replay 실행 시점 */
 }
@@ -114,6 +124,8 @@ void tearDown(void)
 
         free(json);
         free(task_options);
+        json_object_put(jobject);
+        jobject = NULL;
         json = task_options = NULL;
 }
 
