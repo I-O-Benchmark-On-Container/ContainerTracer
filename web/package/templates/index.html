@@ -84,7 +84,7 @@
                                             <li>
                                                 <div class="form-group">
                                                     <label>trace_replay_path</label>
-                                                    <input type="text" class="form-control form_theme search_theme" name="trace_replay_path" id="trace_replay_path" placeholder="ex: " autocomplete="off" value="./build/release/trace-replay" readonly>
+                                                    <input type="text" class="form-control form_theme search_theme" name="trace_replay_path" id="trace_replay_path" placeholder="ex: " autocomplete="off" value="trace-replay" readonly>
                                                 </div>
                                             </li>
 											<li>
@@ -182,19 +182,26 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-sm-6">
+                        <div class="col-sm-4">
                             <h2 class="text-info">
                                 <small class="text-muted">Latency</small>
                             </h2>
                             <input type="hidden" class="chart_option" name="CHART_OPTION" value="Latency">
                             <canvas class="chart" id="LatencyChart" height="200"></canvas>
                         </div>
-                        <div class="col-sm-6">
+                        <div class="col-sm-4">
                             <h2 class="text-info">
-                                <small class="text-muted">Throughput</small>
+                                <small class="text-muted">Current BW</small>
                             </h2>
-                            <input type="hidden" class="chart_option" name="CHART_OPTION" value="Throughput">
-                            <canvas class="chart" id="ThroughputChart" height="200"></canvas>
+                            <input type="hidden" class="chart_option" name="CHART_OPTION" value="CurBandwidth">
+                            <canvas class="chart" id="curBandWidthChart" height="200"></canvas>
+                        </div>
+                        <div class="col-sm-4">
+                            <h2 class="text-info">
+                                <small class="text-muted">Average BW</small>
+                            </h2>
+                            <input type="hidden" class="chart_option" name="CHART_OPTION" value="AvgBandwidth">
+                            <canvas class="chart" id="avgBandWidthChart" height="200"></canvas>
                         </div>
                     </div>
                 </div>

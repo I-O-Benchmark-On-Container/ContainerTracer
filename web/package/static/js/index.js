@@ -10,6 +10,7 @@ $(document).ready(function(){
     /* driver, croup 선택 */
     $btnSelectWork.on('click', function(event){
         /* Cgroup의 수를 바로 변경할 경우에...*/
+        $chartDisplay.addClass('hide');
         $options.children().remove();
         let nrCgroup = $('#cgroup').val();
         let driver = $('#driver').val();
@@ -50,6 +51,8 @@ $(document).ready(function(){
     });
 
     socket.on('chart_end', function(){
+        socket.emit("reset");
+        alert("결과가 저장 되었습니다.");
         $("#chartState").val("0");
         $btnSelectWork.prop("disabled", false);
         $btnStartWork.prop("disabled", false);
