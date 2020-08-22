@@ -1,4 +1,4 @@
-<p align="center"><img src="https://user-images.githubusercontent.com/16631264/90947085-177fac00-e46e-11ea-8ccc-3f14e214d39a.png" width=65%/></p>
+<p align="center"><img src="https://user-images.githubusercontent.com/16631264/90947085-177fac00-e46e-11ea-8ccc-3f14e214d39a.png"/></p>
 
 <p align="center">
   <a href="https://www.codacy.com/gh/I-O-Benchmark-On-Container/ContainerTracer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=I-O-Benchmark-On-Container/ContainerTracer&amp;utm_campaign=Badge_Grade"><img src="https://app.codacy.com/project/badge/Grade/4994a1d576a54a9a9a7b2e0f0619e8f0"/></a>
