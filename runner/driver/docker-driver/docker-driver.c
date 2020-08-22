@@ -229,11 +229,12 @@ exception:
 static int docker_set_cgroup_state(struct docker_info *current)
 {
         int ret = 0;
-        char cmd[PATH_MAX];
 
         ret = strcmp(current->scheduler,
                      docker_valid_scheduler[DOCKER_BFQ_SCHEDULER]);
         if (ret == 0) { /* BFQ 스케쥴러이면 weight를 설정해줍니다. */
+                char cmd[PATH_MAX];
+
                 snprintf(
                         cmd, PATH_MAX,
                         "echo %d > /sys/fs/cgroup/blkio/docker/%s/blkio.%s.weight",
