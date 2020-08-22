@@ -1,4 +1,21 @@
 /**
+ * @copyright "Container Tracer" which executes the container performance mesurements
+ * Copyright (C) 2020 SuhoSon
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
  * @file docker-driver.c
  * @brief trace-replay를 동작시키는 driver 구현부에 해당합니다.
  * @author SuhoSon (ngeol564@gmail.com)
@@ -72,6 +89,8 @@ static void docker_kill_handle(int signum)
  */
 static void __docker_free(void)
 {
+        int ret = 0;
+
         while (global_info_head != NULL) {
                 struct docker_info *current = global_info_head;
                 struct docker_info *next = global_info_head->next;
@@ -95,23 +114,33 @@ static void __docker_free(void)
                          ********************************************/
 
                         sprintf(cmd, "docker rm -f %s", current->cgroup_id);
-                        system(cmd);
+
+                        ret = system(cmd);
+                        if (ret) {
+                                pr_info(ERROR, "Cannot execute command: %s\n",
+                                        cmd);
+                        }
 
                         /* IPC 객체를 삭제합니다. */
                         docker_shm_free(current, DOCKER_IPC_FREE);
                         docker_mq_free(current, DOCKER_IPC_FREE);
 
                         sprintf(cmd, "rm -rf /tmp/%s", current->cgroup_id);
-                        system(cmd);
+
+                        ret = system(cmd);
+                        if (ret) {
+                                pr_info(ERROR, "Cannot execute command: %s\n",
+                                        cmd);
+                        }
+
+                        pr_info(INFO, "Delete target %p\n", current);
+                        free(current);
+
+                        global_info_head = next;
                 }
-
-                pr_info(INFO, "Delete target %p\n", current);
-                free(current);
-
-                global_info_head = next;
+                pr_info(INFO, "Do trace-replay free success ==> %p\n",
+                        global_info_head);
         }
-        pr_info(INFO, "Do trace-replay free success ==> %p\n",
-                global_info_head);
 }
 
 /**
@@ -211,7 +240,13 @@ int docker_init(void *object)
         }
 
         /* Trace replay가 포함된 ubuntu 16.04 이미지 다운로드 */
-        system("docker pull suhoson/trace_replay:latest");
+        ret = system("docker pull suhoson/trace_replay:latest");
+
+        if (ret) {
+                pr_info(ERROR,
+                        "Cannot pull image: suhoson/trace_replay:latest\n");
+                goto exception;
+        }
 
         return ret;
 exception:
@@ -244,7 +279,7 @@ static int docker_set_cgroup_state(struct docker_info *current)
                 ret = system(cmd);
                 if (ret) {
                         pr_info(ERROR, "Cannot set weight: \"%s\"\n", cmd);
-                        return -EINVAL;
+                        return ret;
                 }
         }
 
@@ -266,6 +301,7 @@ static int docker_do_exec(struct docker_info *current)
         FILE *fp;
         char filename[PATH_MAX];
         char cmd[1000];
+        int ret = 0;
 
         /* Docker container 생성 */
         snprintf(filename, sizeof(filename), "%s_%u_%s.txt", current->scheduler,
@@ -283,25 +319,45 @@ static int docker_do_exec(struct docker_info *current)
                 pr_info(ERROR, "Getting pid failed (name: %s)\n",
                         current->cgroup_id);
                 pclose(fp);
-                return -EINVAL;
+                return -EFAULT;
         }
 
         if (fgets(current->container_id, DOCKER_ID_LEN, fp) == NULL) {
                 pclose(fp);
-                return -EINVAL;
+                return -EFAULT;
         }
 
         sprintf(cmd, "mkdir /tmp/%s", current->cgroup_id);
-        system(cmd);
+        ret = system(cmd);
+        if (ret) {
+                pr_info(ERROR, "Cannot execute command: %s\n", cmd);
+                pclose(fp);
+                return ret;
+        }
 
         sprintf(cmd, "mkdir /tmp/%s/tmp", current->cgroup_id);
-        system(cmd);
+        ret = system(cmd);
+        if (ret) {
+                pr_info(ERROR, "Cannot execute command: %s\n", cmd);
+                pclose(fp);
+                return ret;
+        }
 
         sprintf(cmd, "docker start %s", current->cgroup_id);
-        system(cmd);
+        ret = system(cmd);
+        if (ret) {
+                pr_info(ERROR, "Cannot execute command: %s\n", cmd);
+                pclose(fp);
+                return ret;
+        }
 
         sprintf(cmd, "docker pause %s", current->cgroup_id);
-        system(cmd);
+        ret = system(cmd);
+        if (ret) {
+                pr_info(ERROR, "Cannot execute command: %s\n", cmd);
+                pclose(fp);
+                return ret;
+        }
 
         pclose(fp);
 
@@ -329,8 +385,7 @@ int docker_runner(void)
         if (ret) {
                 pr_info(ERROR, "Scheduler setting failed (scheduler: %s)\n",
                         current->scheduler);
-                ret = -EINVAL;
-                goto exit;
+                return ret;
         }
 
         TELL_WAIT(); /* 동기화를 준비하는 과정입니다. */
@@ -338,8 +393,7 @@ int docker_runner(void)
         {
                 if (0 > (pid = fork())) {
                         pr_info(ERROR, "Fork failed. (pid: %d)\n", pid);
-                        ret = -EFAULT;
-                        goto exit;
+                        return -EFAULT;
                 } else if (0 == pid) { /* 자식 프로세스 */
                         struct sigaction act;
                         memset(&act, 0, sizeof(act));
@@ -369,17 +423,19 @@ int docker_runner(void)
 
                 /* IPC 객체를 생성합니다. */
                 if (0 > (ret = docker_shm_init(current))) {
-                        goto exit;
+                        return ret;
                 }
                 if (0 > (ret = docker_mq_init(current))) {
-                        goto exit;
+                        return ret;
                 }
 
                 sprintf(cmd, "docker unpause %s", current->cgroup_id);
-                system(cmd);
+                ret = system(cmd);
+                if (ret)
+                        pr_info(ERROR, "Cannot unpause container: %s\n",
+                                current->cgroup_id);
         }
 
-exit:
         return ret;
 }
 
@@ -400,29 +456,26 @@ int docker_get_interval(const char *key, char *buffer)
         struct docker_info *info = NULL;
         struct realtime_log log = { 0 };
 
-        int ret;
+        int ret = 0;
 
         snprintf(buffer, INTERVAL_RESULT_STRING_SIZE, "%s", key);
 
         query.key = buffer;
         if (NULL == (result = hsearch(query, FIND))) {
                 pr_info(ERROR, "Cannot find item (key: %s)\n", buffer);
-                ret = -EINVAL;
-                goto exit;
+                return -EINVAL;
         }
         info = (struct docker_info *)result->data;
         if (NULL != info) {
                 if (0 > (ret = docker_mq_get(info, (void *)&log))) {
-                        goto exit;
+                        return ret;
                 }
                 docker_realtime_serializer(info, &log, buffer);
         } else {
                 pr_info(ERROR, "`info` doesn't exist: %p\n", info);
-                ret = -EACCES;
-                goto exit;
+                return -EACCES;
         }
 
-exit:
         ret = log.type;
         return ret;
 }
@@ -443,29 +496,26 @@ int docker_get_total(const char *key, char *buffer)
         struct docker_info *info = NULL;
         struct total_results results = { 0 };
 
-        int ret;
+        int ret = 0;
 
         snprintf(buffer, TOTAL_RESULT_STRING_SIZE, "%s", key);
 
         query.key = buffer;
         if (NULL == (result = hsearch(query, FIND))) {
                 pr_info(ERROR, "Cannot find item (key: %s)\n", buffer);
-                ret = -EINVAL;
-                goto exit;
+                return -EINVAL;
         }
         info = (struct docker_info *)result->data;
         if (NULL != info) {
                 if (0 > (ret = docker_shm_get(info, (void *)&results))) {
-                        goto exit;
+                        return ret;
                 }
                 docker_total_serializer(info, &results, buffer);
         } else {
                 pr_info(ERROR, "`info` doesn't exist: %p\n", info);
-                ret = -EACCES;
-                goto exit;
+                return -EACCES;
         }
 
-exit:
         return ret;
 }
 

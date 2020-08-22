@@ -1,4 +1,21 @@
 /**
+ * @copyright "Container Tracer" which executes the container performance mesurements
+ * Copyright (C) 2020 SuhoSon
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
  * @file docker-info.c
  * @brief info 구조체를 초기화하는 역할을 합니다.
  * @author SuhoSon (ngeol564@gmail.com)
@@ -62,9 +79,9 @@ static int docker_info_int_value_set(struct json_object *setting,
  * @return 성공적으로 입력이 되었다면 0이 반환되고, 그렇지 않은 경우에는 -EINVAL이 반환됩니다.
  * @warning size의 값은 반드시 member의 크기보다 작거나 같아야 합니다.
  */
-static int docker_info_sdocker_value_set(struct json_object *setting,
-                                         const char *key, char *member,
-                                         size_t size, int is_print)
+static int docker_info_docker_value_set(struct json_object *setting,
+                                        const char *key, char *member,
+                                        size_t size, int is_print)
 {
         struct json_object *tmp = NULL;
         if (!json_object_object_get_ex(setting, key, &tmp)) {
@@ -144,19 +161,19 @@ static int __docker_info_init(struct json_object *setting, int index,
                                   DOCKER_PRINT_NONE);
         docker_info_int_value_set(tmp, "iosize", &info->iosize,
                                   DOCKER_PRINT_NONE);
-        docker_info_sdocker_value_set(tmp, "prefix_cgroup_name",
-                                      info->prefix_cgroup_name,
-                                      sizeof(info->prefix_cgroup_name),
-                                      DOCKER_PRINT_NONE);
-        docker_info_sdocker_value_set(tmp, "scheduler", info->scheduler,
-                                      sizeof(info->scheduler),
-                                      DOCKER_PRINT_NONE);
-        docker_info_sdocker_value_set(tmp, "trace_replay_path",
-                                      info->trace_replay_path,
-                                      sizeof(info->trace_replay_path),
-                                      DOCKER_PRINT_NONE);
-        docker_info_sdocker_value_set(tmp, "device", info->device,
-                                      sizeof(info->device), DOCKER_PRINT_NONE);
+        docker_info_docker_value_set(tmp, "prefix_cgroup_name",
+                                     info->prefix_cgroup_name,
+                                     sizeof(info->prefix_cgroup_name),
+                                     DOCKER_PRINT_NONE);
+        docker_info_docker_value_set(tmp, "scheduler", info->scheduler,
+                                     sizeof(info->scheduler),
+                                     DOCKER_PRINT_NONE);
+        docker_info_docker_value_set(tmp, "trace_replay_path",
+                                     info->trace_replay_path,
+                                     sizeof(info->trace_replay_path),
+                                     DOCKER_PRINT_NONE);
+        docker_info_docker_value_set(tmp, "device", info->device,
+                                     sizeof(info->device), DOCKER_PRINT_NONE);
         ret = docker_valid_scheduler_test(info->scheduler);
         if (0 != ret) {
                 pr_info(ERROR, "Unsupported scheduler (name: %s)\n",
@@ -170,17 +187,17 @@ static int __docker_info_init(struct json_object *setting, int index,
                 goto exception;
         }
 
-        ret = docker_info_sdocker_value_set(tmp, "trace_data_path",
-                                            info->trace_data_path,
-                                            sizeof(info->trace_data_path),
-                                            DOCKER_ERROR_PRINT);
+        ret = docker_info_docker_value_set(tmp, "trace_data_path",
+                                           info->trace_data_path,
+                                           sizeof(info->trace_data_path),
+                                           DOCKER_ERROR_PRINT);
         if (0 != ret) {
                 goto exception;
         }
 
-        ret = docker_info_sdocker_value_set(tmp, "cgroup_id", info->cgroup_id,
-                                            sizeof(info->cgroup_id),
-                                            DOCKER_ERROR_PRINT);
+        ret = docker_info_docker_value_set(tmp, "cgroup_id", info->cgroup_id,
+                                           sizeof(info->cgroup_id),
+                                           DOCKER_ERROR_PRINT);
         if (0 != ret) {
                 goto exception;
         }
@@ -242,21 +259,21 @@ struct docker_info *docker_info_init(struct json_object *setting, int index)
                                          DOCKER_ERROR_PRINT);
         ret |= docker_info_int_value_set(setting, "nr_thread", &info->nr_thread,
                                          DOCKER_ERROR_PRINT);
-        ret |= docker_info_sdocker_value_set(setting, "prefix_cgroup_name",
-                                             info->prefix_cgroup_name,
-                                             sizeof(info->prefix_cgroup_name),
-                                             DOCKER_ERROR_PRINT);
-        ret |= docker_info_sdocker_value_set(setting, "scheduler",
-                                             info->scheduler,
-                                             sizeof(info->scheduler),
-                                             DOCKER_ERROR_PRINT);
-        ret |= docker_info_sdocker_value_set(setting, "device", info->device,
-                                             sizeof(info->device),
-                                             DOCKER_ERROR_PRINT);
-        ret |= docker_info_sdocker_value_set(setting, "trace_replay_path",
-                                             info->trace_replay_path,
-                                             sizeof(info->trace_replay_path),
-                                             DOCKER_ERROR_PRINT);
+        ret |= docker_info_docker_value_set(setting, "prefix_cgroup_name",
+                                            info->prefix_cgroup_name,
+                                            sizeof(info->prefix_cgroup_name),
+                                            DOCKER_ERROR_PRINT);
+        ret |= docker_info_docker_value_set(setting, "scheduler",
+                                            info->scheduler,
+                                            sizeof(info->scheduler),
+                                            DOCKER_ERROR_PRINT);
+        ret |= docker_info_docker_value_set(setting, "device", info->device,
+                                            sizeof(info->device),
+                                            DOCKER_ERROR_PRINT);
+        ret |= docker_info_docker_value_set(setting, "trace_replay_path",
+                                            info->trace_replay_path,
+                                            sizeof(info->trace_replay_path),
+                                            DOCKER_ERROR_PRINT);
         if (0 != ret) {
                 pr_info(ERROR, "error detected (errno: %d)\n", ret);
                 goto exception;
@@ -280,10 +297,10 @@ struct docker_info *docker_info_init(struct json_object *setting, int index)
         docker_info_int_value_set(setting, "iosize", &info->iosize,
                                   DOCKER_PRINT_NONE);
         /* trace_data_path의 검사는 __docker_info_init에서 합니다. */
-        docker_info_sdocker_value_set(setting, "trace_data_path",
-                                      info->trace_data_path,
-                                      sizeof(info->trace_data_path),
-                                      DOCKER_PRINT_NONE);
+        docker_info_docker_value_set(setting, "trace_data_path",
+                                     info->trace_data_path,
+                                     sizeof(info->trace_data_path),
+                                     DOCKER_PRINT_NONE);
 
         ret = __docker_info_init(setting, index, info);
         if (0 != ret) {
