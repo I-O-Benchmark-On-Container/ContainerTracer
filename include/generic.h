@@ -20,6 +20,7 @@
 #include <log.h>
 
 enum { TRACE_REPLAY_DRIVER = 0,
+       DOCKER_DRIVER = 1,
 };
 
 /**

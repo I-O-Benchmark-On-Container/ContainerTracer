@@ -9,12 +9,15 @@
 
 #include <generic.h>
 #include <driver/tr-driver.h>
+#include <driver/docker-driver.h>
 
 const char *driver_name_tbl[] = { [TRACE_REPLAY_DRIVER] = "trace-replay",
+                                  [DOCKER_DRIVER] = "docker",
                                   NULL };
 
 static int (*driver_init_tbl[])(void *object) = {
-        [TRACE_REPLAY_DRIVER] = tr_init
+        [TRACE_REPLAY_DRIVER] = tr_init,
+        [DOCKER_DRIVER] = docker_init,
 };
 
 /**

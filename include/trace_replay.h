@@ -148,7 +148,7 @@ struct io_job {
         char *buf;
 };
 
-#define BASE_KEY_PATHNAME_LEN 33
+#define BASE_KEY_PATHNAME_LEN PATH_MAX
 #define MSGQ_KEY_PATHNAME "/tmp/trace_replay_msgq"
 #define SHM_KEY_PATHNAME "/tmp/trace_replay_shm"
 #define SEM_KEY_PATHNAME "/tmp/trace_replay_sem"
