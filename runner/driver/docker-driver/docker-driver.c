@@ -376,7 +376,7 @@ int docker_runner(void)
 
         docker_info_list_traverse(current, global_info_head)
         {
-                // 기존의 cgroup을 지우도록 합니다.
+                // 기존의 container를 지우도록 합니다.
                 sprintf(cmd, "docker rm %s", current->cgroup_id);
                 (void)system(cmd);
 
