@@ -89,8 +89,6 @@ static void docker_kill_handle(int signum)
  */
 static void __docker_free(void)
 {
-        int ret = 0;
-
         while (global_info_head != NULL) {
                 struct docker_info *current = global_info_head;
                 struct docker_info *next = global_info_head->next;
@@ -115,8 +113,7 @@ static void __docker_free(void)
 
                         sprintf(cmd, "docker rm -f %s", current->cgroup_id);
 
-                        ret = system(cmd);
-                        if (ret) {
+                        if (system(cmd)) {
                                 pr_info(ERROR, "Cannot execute command: %s\n",
                                         cmd);
                         }
@@ -127,8 +124,7 @@ static void __docker_free(void)
 
                         sprintf(cmd, "rm -rf /tmp/%s", current->cgroup_id);
 
-                        ret = system(cmd);
-                        if (ret) {
+                        if (system(cmd)) {
                                 pr_info(ERROR, "Cannot execute command: %s\n",
                                         cmd);
                         }
