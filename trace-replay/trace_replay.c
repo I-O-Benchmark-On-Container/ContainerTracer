@@ -562,7 +562,7 @@ Timeout:
         return NULL;
 }
 
-int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
+void print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
 {
         struct io_stat_t total_stat;
         struct realtime_msg rmsg;
@@ -1204,7 +1204,7 @@ void synthetic_gen(struct trace_info_t *trace)
         synthetic_mix(trace);
 }
 
-int destroy(pthread_t *threads, int qdepth)
+void destroy(pthread_t *threads, int qdepth)
 {
         int t, i;
 
