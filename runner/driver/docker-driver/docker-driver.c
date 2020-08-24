@@ -28,7 +28,6 @@
 #include <search.h>
 #include <assert.h>
 #include <unistd.h>
-#include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -41,7 +40,6 @@
 #include <runner.h>
 #include <driver/docker-driver.h>
 #include <log.h>
-#include <sync.h>
 #include <trace_replay.h>
 
 enum { DOCKER_NONE_SCHEDULER = 0,
@@ -63,24 +61,24 @@ static const char *docker_valid_scheduler[] = {
 static struct docker_info *global_info_head =
         NULL; /**< trace-replay의 각각을 실행시킬 때 필요한 정보를 담고있는 구조체 리스트의 헤드입니다. */
 
-/**
- * @brief 자식이 생성되자마자 부모가 자식을 죽이는 명령을 보낸 경우에 각종 자식이 가진 자원을 정리합니다.
- *
- * @param signum 현재 받은 시그널에 해당합니다.
- * @note 이 함수는 SIGTEM을 캡쳐합니다. (SIGKILL은 캡처되지 않으므로 사용해서는 안됩니다!)
-	 */
-static void docker_kill_handle(int signum)
+static void __docker_rm_container(struct docker_info *info)
 {
-        struct docker_info *current = global_info_head;
+        char cmd[1000];
 
-        (void)signum;
-        pr_info(INFO, "TERMINATE SEQUENCE DETECTED(signum: %d, pid: %d)\n",
-                signum, getpid());
-        if (current) {
-                assert(NULL != current->global_config);
-                runner_config_free(current->global_config, RUNNER_FREE_ALL);
+        sprintf(cmd, "docker rm -f %s > /dev/null 2>&1",
+                info->cgroup_id); /* Error는 무시 */
+
+        if (system(cmd) ==
+            -1) { /* Container가 존재하지 않을 경우 0이 아닌 값이 리턴 됨 */
+                pr_info(ERROR, "Cannot execute command: %s\n", cmd);
         }
-        _exit(EXIT_SUCCESS);
+
+        sprintf(cmd, "rm -rf /tmp/%s", info->cgroup_id);
+
+        if (system(cmd) ==
+            -1) { /* Container가 존재하지 않을 경우 0이 아닌 값이 리턴 됨 */
+                pr_info(ERROR, "Cannot execute command: %s\n", cmd);
+        }
 }
 
 /**
@@ -94,7 +92,6 @@ static void __docker_free(void)
                 struct docker_info *next = global_info_head->next;
 
                 if (getpid() == current->ppid && 0 != current->pid) {
-                        char cmd[1000];
                         /********************************************
                                                  Exterminate!
                                                 /
@@ -111,31 +108,18 @@ static void __docker_free(void)
                                      [_____________]
                          ********************************************/
 
-                        sprintf(cmd, "docker rm -f %s", current->cgroup_id);
-
-                        if (system(cmd)) {
-                                pr_info(ERROR, "Cannot execute command: %s\n",
-                                        cmd);
-                        }
+                        __docker_rm_container(current);
 
                         /* IPC 객체를 삭제합니다. */
                         docker_shm_free(current, DOCKER_IPC_FREE);
                         docker_mq_free(current, DOCKER_IPC_FREE);
-
-                        sprintf(cmd, "rm -rf /tmp/%s", current->cgroup_id);
-
-                        if (system(cmd)) {
-                                pr_info(ERROR, "Cannot execute command: %s\n",
-                                        cmd);
-                        }
 
                         pr_info(INFO, "Delete target %p\n", current);
                         free(current);
 
                         global_info_head = next;
                 }
-                pr_info(INFO, "Do trace-replay free success ==> %p\n",
-                        global_info_head);
+                pr_info(INFO, "Do trace-replay free success ==> %p\n", current);
         }
 }
 
@@ -236,8 +220,8 @@ int docker_init(void *object)
         }
 
         /* Trace replay가 포함된 ubuntu 16.04 이미지 다운로드 */
-        ret = system("docker pull suhoson/trace_replay:latest");
-
+        ret = system(
+                "docker pull suhoson/trace_replay:latest > /dev/null 2>&1");
         if (ret) {
                 pr_info(ERROR,
                         "Cannot pull image: suhoson/trace_replay:latest\n");
@@ -292,12 +276,11 @@ static int docker_set_cgroup_state(struct docker_info *current)
  *
  * @return 성공한 경우에는 0, 그렇지 않은 경우 음수 값이 들어갑니다.
  */
-static int docker_do_exec(struct docker_info *current)
+static int docker_create_container(struct docker_info *current)
 {
         FILE *fp;
         char filename[PATH_MAX];
         char cmd[1000];
-        int ret = 0;
 
         /* Docker container 생성 */
         snprintf(filename, sizeof(filename), "%s_%u_%s.txt", current->scheduler,
@@ -312,9 +295,8 @@ static int docker_do_exec(struct docker_info *current)
 
         fp = popen(cmd, "r");
         if (fp == NULL) {
-                pr_info(ERROR, "Getting pid failed (name: %s)\n",
+                pr_info(ERROR, "Getting container id failed (name: %s)\n",
                         current->cgroup_id);
-                pclose(fp);
                 return -EFAULT;
         }
 
@@ -323,41 +305,7 @@ static int docker_do_exec(struct docker_info *current)
                 return -EFAULT;
         }
 
-        sprintf(cmd, "mkdir /tmp/%s", current->cgroup_id);
-        ret = system(cmd);
-        if (ret) {
-                pr_info(ERROR, "Cannot execute command: %s\n", cmd);
-                pclose(fp);
-                return ret;
-        }
-
-        sprintf(cmd, "mkdir /tmp/%s/tmp", current->cgroup_id);
-        ret = system(cmd);
-        if (ret) {
-                pr_info(ERROR, "Cannot execute command: %s\n", cmd);
-                pclose(fp);
-                return ret;
-        }
-
-        sprintf(cmd, "docker start %s", current->cgroup_id);
-        ret = system(cmd);
-        if (ret) {
-                pr_info(ERROR, "Cannot execute command: %s\n", cmd);
-                pclose(fp);
-                return ret;
-        }
-
-        sprintf(cmd, "docker pause %s", current->cgroup_id);
-        ret = system(cmd);
-        if (ret) {
-                pr_info(ERROR, "Cannot execute command: %s\n", cmd);
-                pclose(fp);
-                return ret;
-        }
-
         pclose(fp);
-
-        TELL_PARENT();
 
         return 0;
 }
@@ -372,7 +320,12 @@ int docker_runner(void)
         int ret = 0;
         struct docker_info *current = global_info_head;
         char cmd[PATH_MAX];
-        pid_t pid;
+
+        docker_info_list_traverse(current, global_info_head)
+        {
+                // 기존의 container를 지우도록 합니다.
+                __docker_rm_container(current);
+        }
 
         docker_info_list_traverse(current, global_info_head)
         {
@@ -395,52 +348,56 @@ int docker_runner(void)
                 return ret;
         }
 
-        TELL_WAIT(); /* 동기화를 준비하는 과정입니다. */
         docker_info_list_traverse(current, global_info_head)
         {
-                if (0 > (pid = fork())) {
-                        pr_info(ERROR, "Fork failed. (pid: %d)\n", pid);
-                        return -EFAULT;
-                } else if (0 == pid) { /* 자식 프로세스 */
-                        struct sigaction act;
-                        memset(&act, 0, sizeof(act));
-                        act.sa_handler = docker_kill_handle;
-                        sigaction(SIGTERM, &act, NULL);
-                        if (0 != (ret = docker_do_exec(current))) {
-                                pr_info(ERROR,
-                                        "Cannot execute program (errno: %d)\n",
-                                        ret);
-                                perror("Execution error detected");
-                                docker_kill_handle(SIGKILL); /* execute 실패 */
-                                _exit(EXIT_FAILURE);
-                        }
-                        _exit(EXIT_SUCCESS);
+                current->pid = 1; /* Container 안에서 pid입니다. */
+
+                /* IPC 통신 key값 저장을 위한 tmp directory를 생성합니다. */
+                sprintf(cmd, "mkdir -p /tmp/%s/tmp", current->cgroup_id);
+                if (0 != (ret = system(cmd))) {
+                        pr_info(ERROR, "Cannot make directory: %s\n", cmd);
+                        return ret;
                 }
-        }
 
-        docker_info_list_traverse(current, global_info_head)
-        {
-                WAIT_CHILD();
-        }
-
-        docker_info_list_traverse(current, global_info_head)
-        {
-                current->pid = 1; /* Container 안에서 pid */
-                docker_set_cgroup_state(current);
+                /* Container를 생성합니다. */
+                if (0 != (ret = docker_create_container(current))) {
+                        pr_info(ERROR, "Cannot execute program (errno: %d)\n",
+                                ret);
+                        __docker_rm_container(current);
+                        return ret;
+                }
 
                 /* IPC 객체를 생성합니다. */
                 if (0 > (ret = docker_shm_init(current))) {
+                        pr_info(ERROR,
+                                "Shared memory init failed.(errno: %d)\n", ret);
+                        __docker_rm_container(current);
+                        docker_shm_free(current, DOCKER_IPC_FREE);
                         return ret;
                 }
                 if (0 > (ret = docker_mq_init(current))) {
+                        pr_info(ERROR,
+                                "Message Queue init failed.(errno: %d)\n", ret);
+                        __docker_rm_container(current);
+                        docker_shm_free(current, DOCKER_IPC_FREE);
+                        docker_mq_free(current, DOCKER_IPC_FREE);
                         return ret;
                 }
+        }
 
-                sprintf(cmd, "docker unpause %s", current->cgroup_id);
-                ret = system(cmd);
-                if (ret)
-                        pr_info(ERROR, "Cannot unpause container: %s\n",
+        docker_info_list_traverse(current, global_info_head)
+        {
+                /* cgroup weight를 설정하고 실행합니다. */
+                docker_set_cgroup_state(current);
+
+                sprintf(cmd, "docker start %s > /dev/null", current->cgroup_id);
+                if (0 != (ret = system(cmd))) {
+                        pr_info(ERROR, "Cannot start container: %s\n",
                                 current->cgroup_id);
+                        __docker_rm_container(current);
+                        docker_shm_free(current, DOCKER_IPC_FREE);
+                        docker_mq_free(current, DOCKER_IPC_FREE);
+                }
         }
 
         return ret;
