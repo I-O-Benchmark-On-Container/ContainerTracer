@@ -27,6 +27,8 @@ function addOptions(nrCgroup) {
                                 '<div class="row">' +
                                 "<label>Weight</label>" +
                                 '<input type="text" class="form-control form_theme search_theme" name="cgroup-' + idx + '" id="cgroup' + idx + '" placeholder="input weight" autocomplete="off" value="1000">' +
+                                "</div>" +
+                                '<div class="row">' +
                                 "<label>trace_data_path</label>" +
                                 '<input type="text" class="form-control form_theme search_theme" name="cgroup-' + idx + '-path" id="cgroup' + idx + '-path" placeholder="ex: " autocomplete="off" value="./sample/sample1.dat">' +
                                 "</div>" +
@@ -53,3 +55,23 @@ function noRefresh()
 }
 
 document.onkeydown = noRefresh ;
+
+
+/* toastr */
+toastr.options = {
+    "closeButton": false,
+    "debug": false,
+    "newestOnTop": false,
+    "progressBar": false,
+    "positionClass": "toast-bottom-right",
+    "preventDuplicates": false,
+    "onclick": null,
+    "showDuration": "300",
+    "hideDuration": "1000",
+    "timeOut": "5000",
+    "extendedTimeOut": "1000",
+    "showEasing": "swing",
+    "hideEasing": "linear",
+    "showMethod": "fadeIn",
+    "hideMethod": "fadeOut"
+  };

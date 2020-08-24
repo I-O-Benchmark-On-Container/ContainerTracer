@@ -38,10 +38,11 @@ $(document).ready(function(){
         $optionDisplay.removeClass('hide');
     });
 
-
     socket.on('chart_start', function(nrCgroup){
         $chartDisplay.removeClass('hide');
         $("#chartState").val("1");
+        toastr.info("작업이 완료되는 동안 새로고침, 페이지 이동을 하지마세요.", "성능 평가 진행 중 입니다.",
+                    {timeOut: 0, extendedTimeOut: 0, tapToDismiss: false});
         showChart(nrCgroup);
         $optionDisplay.addClass('hide');
     });
@@ -51,11 +52,13 @@ $(document).ready(function(){
     });
 
     socket.on('chart_end', function(){
+        toastr.clear();
         socket.emit("reset");
-        alert("결과가 저장 되었습니다.");
+        toastr.success("결과가 저장 되었습니다.", "작업이 완료되었습니다.");
         $("#chartState").val("0");
         $btnSelectWork.prop("disabled", false);
         $btnStartWork.prop("disabled", false);
         $options.children().remove();
     });
 });
+
