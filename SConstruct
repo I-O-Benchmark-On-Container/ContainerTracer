@@ -14,7 +14,7 @@ if env["BUILD_UNIT_TEST"] == True:
 		sys.exit()
 
 env.Append(CFLAGS=["-O2"])
-env['CC']=["clang"]
+env['CC']=["gcc"]
 
 if env["DEBUG"] == True:
 	env.Append(CFLAGS=["-g", "-pg"])
