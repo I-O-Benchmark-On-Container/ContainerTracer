@@ -19,8 +19,7 @@
 #else
 #define TRACE_REPLAY_PATH "./build/debug/trace-replay"
 #endif
-#define TEST_DISK_PATH                                                         \
-        "nvme0n1" /**< 대상 device의 이름입니다. /dev/ 포함 금지! */
+#define TEST_DISK_PATH "sdb" /**< 대상 device의 이름입니다. /dev/ 포함 금지! */
 #define SCHEDULER "none" /**< "none, bfq" in SCSI; "none, kyber, bfq" in NVMe */
 
 #define TIME (5) /**< seconds */
@@ -125,8 +124,6 @@ void tearDown(void)
 
         free(json);
         free(task_options);
-        json_object_put(jobject);
-        jobject = NULL;
         json = task_options = NULL;
 }
 
