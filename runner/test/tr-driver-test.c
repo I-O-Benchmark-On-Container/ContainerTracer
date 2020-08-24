@@ -1,3 +1,27 @@
+/**
+ * @copyright "Container Tracer" which executes the container performance mesurements
+ * Copyright (C) 2020 BlaCkinkGJ
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * @file tr-driver-test.c
+ * @brief tr-driver의 올바른 동작 여부를 확인하는 테스터입니다.
+ * @author BlaCkinkGJ (ss5kijun@gmail.com)
+ * @version 0.1
+ * @date 2020-08-05
+ */
 #include <stdlib.h>
 #include <unity.h>
 #include <time.h>
@@ -39,7 +63,7 @@ static const unsigned long key_len = sizeof(key) / sizeof(char *);
 #define NR_TASKS (key_len)
 #define NR_THREAD ((int)(Q_DEPTH / NR_TASKS))
 
-#define FLAGS_MASK (0x3F)
+#define FLAGS_MASK (0x3F) /**< 0b0011 1111 */
 
 static char *json, *task_options;
 static struct json_object *jobject;
