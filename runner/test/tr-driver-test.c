@@ -77,6 +77,7 @@ static void print_json_string(const char *msg, const char *buffer)
                 jobject, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
         pr_info(INFO, "%s: %s\n", msg, json_str);
         TEST_ASSERT_EQUAL(1, json_object_put(jobject));
+        jobject = NULL;
 }
 
 void setUp(void)
@@ -148,8 +149,6 @@ void tearDown(void)
 
         free(json);
         free(task_options);
-        json_object_put(jobject);
-        jobject = NULL;
         json = task_options = NULL;
 }
 

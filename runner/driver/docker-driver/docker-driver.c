@@ -327,6 +327,17 @@ int docker_runner(void)
                 __docker_rm_container(current);
         }
 
+        docker_info_list_traverse(current, global_info_head)
+        {
+                // 기존의 container를 지우도록 합니다.
+                sprintf(cmd, "docker rm -f %s", current->cgroup_id);
+                (void)system(cmd);
+
+                // 기존의 디렉터리를 삭제하도록 합니다.
+                sprintf(cmd, "rm -rf /tmp/%s", current->cgroup_id);
+                (void)system(cmd);
+        }
+
         snprintf(cmd, PATH_MAX, "echo %s >> /sys/block/%s/queue/scheduler",
                  global_info_head->scheduler, global_info_head->device);
         pr_info(INFO, "Do command: \"%s\"\n", cmd);
