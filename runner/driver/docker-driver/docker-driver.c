@@ -347,16 +347,14 @@ int docker_runner(void)
 
         docker_info_list_traverse(current, global_info_head)
         {
-                int ignore_ret = 0;
+                __attribute__((unused)) int ignore_ret = 0;
                 // 기존의 container를 지우도록 합니다.
                 sprintf(cmd, "docker rm -f %s", current->cgroup_id);
                 ignore_ret = system(cmd);
-                pr_info(INFO, "ignore command %s(ret: %d)", cmd, ignore_ret);
 
                 // 기존의 디렉터리를 삭제하도록 합니다.
                 sprintf(cmd, "rm -rf /tmp/%s", current->cgroup_id);
                 ignore_ret = system(cmd);
-                pr_info(INFO, "ignore command %s(ret: %d)", cmd, ignore_ret);
         }
 
         snprintf(cmd, PATH_MAX, "echo %s >> /sys/block/%s/queue/scheduler",
