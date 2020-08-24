@@ -7,6 +7,7 @@
 
 #include <jemalloc/jemalloc.h>
 #include <json.h>
+#include <assert.h>
 
 #include <generic.h>
 #include <runner.h>
@@ -185,7 +186,7 @@ int main(void)
         printf("Performing this test can completely erase\n"
                "the contents of your /dev/" TEST_DISK_PATH "/ disk.\n"
                "Nevertheless, will you proceed?(y/n)");
-        scanf("%c", &ch);
+        assert(0 < scanf("%c", &ch));
         if (ch == 'y') {
                 UNITY_BEGIN();
 
