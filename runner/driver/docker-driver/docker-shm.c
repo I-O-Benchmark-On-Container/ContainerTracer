@@ -1,6 +1,6 @@
 /**
  * @copyright "Container Tracer" which executes the container performance mesurements
- * Copyright (C) 2020 BlaCkinkGJ
+ * Copyright (C) 2020 SuhoSon
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,11 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * @file tr-shm.c
+ * @file docker-shm.c
  * @brief Shared Memory를 생성 및 사용하는 방식이 구현되어 있습니다.
- * @author BlaCkinkGJ (ss5kijun@gmail.com)
+ * @author SuhoSon (ngeol564@gmail.com)
  * @version 0.1
- * @date 2020-08-10
+ * @date 2020-08-19
  */
 
 #include <assert.h>
@@ -35,16 +35,16 @@
 
 #include <trace_replay.h>
 #include <log.h>
-#include <driver/tr-driver.h>
+#include <driver/docker-driver.h>
 
 /**
  * @brief 세마포어만을 초기화하는 함수입니다.
  *
- * @param pid 이 세마포어를 사용하는 Process의 ID입니다.
+ * @param info 세마포어 획득 대상 정보를 가진 구조체 포인터입니다.
  *
  * @return 성공적으로 종료된 경우에는 세마포어의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
-static int __tr_sem_init(const pid_t pid)
+static int __docker_sem_init(struct docker_info *info)
 {
         char *sem_path = NULL;
         key_t sem_key = 0;
@@ -62,8 +62,8 @@ static int __tr_sem_init(const pid_t pid)
                 goto exception;
         }
 
-        snprintf(sem_path, BASE_KEY_PATHNAME_LEN, "%s_%d", SEM_KEY_PATHNAME,
-                 pid);
+        snprintf(sem_path, BASE_KEY_PATHNAME_LEN, "/tmp/%s%s_%d",
+                 info->cgroup_id, SEM_KEY_PATHNAME, info->pid);
         (void)close(open(sem_path, O_WRONLY | O_CREAT, 0));
 
         if (0 > (sem_key = ftok(sem_path, PROJECT_ID))) {
@@ -106,11 +106,11 @@ exception:
 /**
  * @brief Shared Memory만을 초기화하는 함수입니다.
  *
- * @param pid 이 Shared Memory를 사용하는 Process ID입니다.
+ * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
  *
  * @return 성공적으로 종료된 경우에는 Shared Memory의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
-static int __tr_shm_init(const pid_t pid)
+static int __docker_shm_init(struct docker_info *info)
 {
         char *shm_path;
         key_t shm_key = 0;
@@ -122,8 +122,8 @@ static int __tr_shm_init(const pid_t pid)
                 ret = -ENOMEM;
                 goto exception;
         }
-        snprintf(shm_path, BASE_KEY_PATHNAME_LEN, "%s_%d", SHM_KEY_PATHNAME,
-                 pid);
+        snprintf(shm_path, BASE_KEY_PATHNAME_LEN, "/tmp/%s%s_%d",
+                 info->cgroup_id, SHM_KEY_PATHNAME, info->pid);
 
         /* 파일이 존재하지 않는 경우에 파일을 생성합니다. */
         (void)close(open(shm_path, O_WRONLY | O_CREAT, 0));
@@ -161,7 +161,7 @@ exception:
  *
  * @param info 세마포어 획득 대상 정보를 가진 구조체 포인터입니다.
  */
-static void tr_sem_wait(const struct tr_info *info)
+static void docker_sem_wait(const struct docker_info *info)
 {
         struct sembuf sop = {
                 .sem_num = 0,
@@ -179,7 +179,7 @@ static void tr_sem_wait(const struct tr_info *info)
  *
  * @param info 세마포어 반환 대상 정보를 가진 구조체 포인터입니다.
  */
-static void tr_sem_post(const struct tr_info *info)
+static void docker_sem_post(const struct docker_info *info)
 {
         struct sembuf sop = {
                 .sem_num = 0,
@@ -198,7 +198,7 @@ static void tr_sem_post(const struct tr_info *info)
  *
  * @return 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
-int tr_shm_init(struct tr_info *info)
+int docker_shm_init(struct docker_info *info)
 {
         int shmid = -1, semid = -1;
         int ret = 0;
@@ -206,27 +206,30 @@ int tr_shm_init(struct tr_info *info)
         assert(NULL != info);
         assert(0 != info->pid);
 
-        if (0 > (semid = __tr_sem_init(info->pid))) {
+        if (0 > (semid = __docker_sem_init(info))) {
                 pr_info(ERROR,
                         "Semaphore initialization fail. (target pid :%d)\n",
                         info->pid);
-                return semid;
+                ret = semid;
+                goto exit;
         }
-        pr_info(INFO, "Semaphore create success. (path: %s_%d)\n",
-                SEM_KEY_PATHNAME, info->pid);
+        pr_info(INFO, "Semaphore create success. (path: /tmp/%s%s_%d)\n",
+                info->cgroup_id, SEM_KEY_PATHNAME, info->pid);
 
-        if (0 > (shmid = __tr_shm_init(info->pid))) {
+        if (0 > (shmid = __docker_shm_init(info))) {
                 pr_info(ERROR,
                         "Shared Memory initialization fail. (target pid :%d)\n",
                         info->pid);
-                return shmid;
+                ret = shmid;
+                goto exit;
         }
-        pr_info(INFO, "Shared Memory create success. (path: %s_%d)\n",
-                SHM_KEY_PATHNAME, info->pid);
+        pr_info(INFO, "Shared Memory create success. (path: /tmp/%s%s_%d)\n",
+                info->cgroup_id, SHM_KEY_PATHNAME, info->pid);
 
         info->semid = semid;
         info->shmid = shmid;
 
+exit:
         return ret;
 }
 
@@ -238,7 +241,7 @@ int tr_shm_init(struct tr_info *info)
  *
  * @return 정상 종료가 된 경우에는 0, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
-int tr_shm_get(const struct tr_info *info, void *buffer)
+int docker_shm_get(const struct docker_info *info, void *buffer)
 {
         struct total_results *shm;
 
@@ -246,24 +249,24 @@ int tr_shm_get(const struct tr_info *info, void *buffer)
         assert(NULL != info);
         assert(-1 != info->shmid);
 
-        tr_sem_wait(info);
+        docker_sem_wait(info);
         shm = (struct total_results *)shmat(info->shmid, NULL, 0);
         if ((size_t)(-1) == (size_t)shm) {
                 pr_info(ERROR, "Cannot get shared memory (errno: %p)\n", shm);
                 return -EFAULT;
         }
         memcpy(buffer, shm, sizeof(struct total_results));
-        tr_sem_post(info);
+        docker_sem_post(info);
         return 0;
 }
 
 /**
  * @brief Shared Memory의 할당된 내용을 해제하도록 합니다.
  *
- * @param info 할당 해제를 진행할 tr_info에 해당합니다.
+ * @param info 할당 해제를 진행할 docker_info에 해당합니다.
  * @param flags 해제의 정도를 설정하는 flag에 해당합니다.
  */
-void tr_shm_free(struct tr_info *info, int flags)
+void docker_shm_free(struct docker_info *info, int flags)
 {
         int semid;
         int shmid;
@@ -279,11 +282,11 @@ void tr_shm_free(struct tr_info *info, int flags)
 
         sem_attr.val = 0;
 
-        if ((TR_IPC_FREE & flags) && 0 <= semid) {
+        if ((DOCKER_IPC_FREE & flags) && 0 <= semid) {
                 semctl(semid, 0, IPC_RMID, sem_attr);
         }
 
-        if ((TR_IPC_FREE & flags) && 0 <= shmid) {
+        if ((DOCKER_IPC_FREE & flags) && 0 <= shmid) {
                 shmctl(shmid, IPC_RMID, NULL);
         }
         info->shmid = info->semid = -1;

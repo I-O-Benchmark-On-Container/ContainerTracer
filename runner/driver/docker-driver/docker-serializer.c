@@ -1,6 +1,6 @@
 /**
  * @copyright "Container Tracer" which executes the container performance mesurements
- * Copyright (C) 2020 BlaCkinkGJ
+ * Copyright (C) 2020 SuhoSon
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,11 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * @file tr-serializer.c
+ * @file docker-serializer.c
  * @brief 임의의 구조체를 json화 시키는 방식이 구현된 소스입니다.
- * @author BlaCkinkGJ (ss5kijun@gmail.com)
+ * @author SuhoSon (ngeol564@gmail.com)
  * @version 0.1
- * @date 2020-08-10
+ * @date 2020-08-19
  */
 
 #include <stdlib.h>
@@ -29,19 +29,20 @@
 #include <json.h>
 #include <jemalloc/jemalloc.h>
 
-#include <driver/tr-driver.h>
+#include <driver/docker-driver.h>
 #include <runner.h>
 
 /**
- * @brief tr_info 구조체의 내용을 json_object로 만들어주도록 합니다.
+ * @brief docker_info 구조체의 내용을 json_object로 만들어주도록 합니다.
  *
- * @param info json으로 변환시킬 tr_info 형태의 구조체입니다.
+ * @param info json으로 변환시킬 docker_info 형태의 구조체입니다.
  *
  * @return 구조체의 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
-static struct json_object *tr_info_serializer(const struct tr_info *info)
+static struct json_object *
+docker_info_serializer(const struct docker_info *info)
 {
         struct json_object *meta;
 
@@ -89,7 +90,7 @@ static struct json_object *tr_info_serializer(const struct tr_info *info)
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
 static struct json_object *
-tr_realtime_log_serializer(const struct realtime_log *log)
+docker_realtime_log_serializer(const struct realtime_log *log)
 {
         struct json_object *data;
 
@@ -122,7 +123,8 @@ tr_realtime_log_serializer(const struct realtime_log *log)
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
-static struct json_object *tr_total_trace_serializer(const struct trace *traces)
+static struct json_object *
+docker_total_trace_serializer(const struct trace *traces)
 {
         struct json_object *_trace;
         _trace = json_object_new_object();
@@ -141,15 +143,15 @@ static struct json_object *tr_total_trace_serializer(const struct trace *traces)
  * @brief total_results 구조체 config 멤버의 내용을 json_object로 만들어주도록 합니다.
  *
  * @param total json으로 변환시킬 config를 멤버를 가진 total_results 형태의 구조체입니다.
- * @param jobject 동적 할당된 내용이 들어간 tr_total_json_object 형태 구조체입니다.
+ * @param jobject 동적 할당된 내용이 들어간 docker_total_json_object 형태 구조체입니다.
  *
  * @return total_results 구조체 config 멤버의 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
 static struct json_object *
-tr_total_config_serializer(const struct total_results *total,
-                           struct tr_total_json_object *jobject)
+docker_total_config_serializer(const struct total_results *total,
+                               struct docker_total_json_object *jobject)
 {
         struct json_object *config;
         struct json_object *traces;
@@ -177,7 +179,8 @@ tr_total_config_serializer(const struct total_results *total,
         traces = json_object_new_array();
 
         for (i = 0; i < total->config.nr_trace; i++) {
-                trace[i] = tr_total_trace_serializer(&total->config.traces[i]);
+                trace[i] =
+                        docker_total_trace_serializer(&total->config.traces[i]);
                 json_object_array_add(traces, trace[i]);
         }
         json_object_object_add(config, "traces", traces);
@@ -194,7 +197,7 @@ tr_total_config_serializer(const struct total_results *total,
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
 static struct json_object *
-tr_synthetic_serializer(const struct synthetic *_synthetic)
+docker_synthetic_serializer(const struct synthetic *_synthetic)
 {
         struct json_object *synthetic;
         synthetic = json_object_new_object();
@@ -220,12 +223,13 @@ tr_synthetic_serializer(const struct synthetic *_synthetic)
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
-static struct json_object *tr_stats_serializer(const struct trace_stat *_stats)
+static struct json_object *
+docker_stats_serializer(const struct trace_stat *_stats)
 {
         struct json_object *stats;
-        struct tr_json_field *field = NULL;
-        struct tr_json_field *begin, *end;
-        struct tr_json_field fields[] = {
+        struct docker_json_field *field = NULL;
+        struct docker_json_field *begin, *end;
+        struct docker_json_field fields[] = {
                 { "exec_time", &_stats->exec_time },
                 { "avg_lat", &_stats->avg_lat },
                 { "avg_lat_var", &_stats->avg_lat_var },
@@ -246,8 +250,8 @@ static struct json_object *tr_stats_serializer(const struct trace_stat *_stats)
 
         stats = json_object_new_object();
         begin = &fields[0];
-        end = &fields[sizeof(fields) / sizeof(struct tr_json_field)];
-        tr_json_field_traverse(field, begin, end)
+        end = &fields[sizeof(fields) / sizeof(struct docker_json_field)];
+        docker_json_field_traverse(field, begin, end)
         {
                 struct json_object *current;
                 double value;
@@ -267,15 +271,15 @@ static struct json_object *tr_stats_serializer(const struct trace_stat *_stats)
  * @brief total_results 구조체 per_trace 멤버의 내용을 json_object로 만들어주도록 합니다.
  *
  * @param total json으로 변환시킬 per_trace를 멤버를 가진 total_results 형태의 구조체입니다.
- * @param jobject 동적 할당된 내용이 들어간 tr_total_json_object 형태 구조체입니다.
+ * @param jobject 동적 할당된 내용이 들어간 docker_total_json_object 형태 구조체입니다.
  *
  * @return total_results 구조체 config 멤버의 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
 static struct json_object *
-tr_total_per_trace_serializer(const struct total_results *total,
-                              struct tr_total_json_object *jobject)
+docker_total_per_trace_serializer(const struct total_results *total,
+                                  struct docker_total_json_object *jobject)
 {
         struct json_object *per_traces;
         struct json_object **synthetic = jobject->synthetic;
@@ -303,14 +307,14 @@ tr_total_per_trace_serializer(const struct total_results *total,
 
                 /* issynthetic 값이 1인 경우에만 synthetic 정보는 의미가 있습니다. */
                 if (1 == total->results.per_trace[i].issynthetic) {
-                        synthetic[i] = tr_synthetic_serializer(
+                        synthetic[i] = docker_synthetic_serializer(
                                 &total->results.per_trace[i].synthetic);
                         json_object_object_add(_per_trace, "synthetic",
                                                synthetic[i]);
                 }
 
-                stats[i] =
-                        tr_stats_serializer(&total->results.per_trace[i].stats);
+                stats[i] = docker_stats_serializer(
+                        &total->results.per_trace[i].stats);
                 json_object_object_add(_per_trace, "stats", stats[i]);
 
                 json_object_object_add(
@@ -334,32 +338,33 @@ tr_total_per_trace_serializer(const struct total_results *total,
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
 static struct json_object *
-tr_total_aggr_serializer(const struct total_results *total)
+docker_total_aggr_serializer(const struct total_results *total)
 {
-        return tr_stats_serializer(&total->results.aggr_result.stats);
+        return docker_stats_serializer(&total->results.aggr_result.stats);
 }
 
 /**
  * @brief total_results 구조체 내용 중 per_trace랑 aggr_results를 json_object로 만들어주도록 합니다.
  *
  * @param total json으로 변환시킬 total_results 형태의 구조체입니다.
- * @param jobject 동적 할당된 내용이 들어간 tr_total_json_object 형태 구조체입니다.
+ * @param jobject 동적 할당된 내용이 들어간 docker_total_json_object 형태 구조체입니다.
  *
  * @return total_results 구조체의 per_trace랑 aggr_results를 가지고 만든 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
 static struct json_object *
-tr_total_result_serializer(const struct total_results *total,
-                           struct tr_total_json_object *jobject)
+docker_total_result_serializer(const struct total_results *total,
+                               struct docker_total_json_object *jobject)
 {
         struct json_object *results;
         results = json_object_new_object();
         json_object_object_add(results, "per_trace",
-                               tr_total_per_trace_serializer(total, jobject));
+                               docker_total_per_trace_serializer(total,
+                                                                 jobject));
 
         json_object_object_add(results, "aggr_result",
-                               tr_total_aggr_serializer(total));
+                               docker_total_aggr_serializer(total));
         return results;
 }
 
@@ -367,36 +372,36 @@ tr_total_result_serializer(const struct total_results *total,
  * @brief total_results 구조체 내용을 json_object로 만들어주도록 합니다.
  *
  * @param total json으로 변환시킬 total_results 형태의 구조체입니다.
- * @param jobject 동적 할당된 내용이 들어간 tr_total_json_object 형태 구조체입니다.
+ * @param jobject 동적 할당된 내용이 들어간 docker_total_json_object 형태 구조체입니다.
  *
  * @return total_results 구조체 json 객체가 반환됩니다.
  *
  * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
  */
 static struct json_object *
-tr_total_results_serializer(const struct total_results *total,
-                            struct tr_total_json_object *jobject)
+docker_total_results_serializer(const struct total_results *total,
+                                struct docker_total_json_object *jobject)
 {
         struct json_object *total_results;
         total_results = json_object_new_object();
         json_object_object_add(total_results, "config",
-                               tr_total_config_serializer(total, jobject));
+                               docker_total_config_serializer(total, jobject));
         json_object_object_add(total_results, "results",
-                               tr_total_result_serializer(total, jobject));
+                               docker_total_result_serializer(total, jobject));
         return total_results;
 }
 
 /**
  * @brief json으로 구조체에 있는 내용을 변환합니다.
  *
- * @param info 현재 tr_info 구조체의 포인터입니다.
+ * @param info 현재 docker_info 구조체의 포인터입니다.
  * @param log 현재 출력 로그에 해당합니다.
  * @param buffer 수행 결과 만들어진 json 내용이 들어가는 부분에 해당합니다.
  *
  * @warning buffer는 반드시 이 함수를 부르기 전에 할당되어야하며, 그 크기는 INTERVAL_RESULT_STRING_SIZE 보다 커야 합니다.
  */
-void tr_realtime_serializer(const struct tr_info *info,
-                            const struct realtime_log *log, char *buffer)
+void docker_realtime_serializer(const struct docker_info *info,
+                                const struct realtime_log *log, char *buffer)
 {
         struct json_object *object;
 
@@ -405,8 +410,9 @@ void tr_realtime_serializer(const struct tr_info *info,
         assert(NULL != buffer);
 
         object = json_object_new_object();
-        json_object_object_add(object, "meta", tr_info_serializer(info));
-        json_object_object_add(object, "data", tr_realtime_log_serializer(log));
+        json_object_object_add(object, "meta", docker_info_serializer(info));
+        json_object_object_add(object, "data",
+                               docker_realtime_log_serializer(log));
 
         snprintf(buffer, INTERVAL_RESULT_STRING_SIZE, "%s",
                  json_object_to_json_string(object));
@@ -417,30 +423,30 @@ void tr_realtime_serializer(const struct tr_info *info,
 /**
  * @brief json으로 구조체에 있는 내용을 변환합니다.
  *
- * @param info 현재 tr_info 구조체의 포인터입니다.
+ * @param info 현재 docker_info 구조체의 포인터입니다.
  * @param total 현재 직렬화를 원하는 total_results 구조체의 포인터입니다.
  * @param buffer 수행 결과 만들어진 json 내용이 들어가는 부분에 해당합니다.
  *
  * @warning buffer는 반드시 이 함수를 부르기 전에 할당되어야하며, 그 크기는 TOTAL_RESULT_STRING_SIZE 보다 커야 합니다.
  */
-void tr_total_serializer(const struct tr_info *info,
-                         const struct total_results *total, char *buffer)
+void docker_total_serializer(const struct docker_info *info,
+                             const struct total_results *total, char *buffer)
 {
         struct json_object *object;
         struct json_object *info_object, *total_object;
-        struct tr_total_json_object *jobject;
+        struct docker_total_json_object *jobject;
 
         assert(NULL != info);
         assert(NULL != total);
 
-        jobject = (struct tr_total_json_object *)malloc(
-                sizeof(struct tr_total_json_object));
+        jobject = (struct docker_total_json_object *)malloc(
+                sizeof(struct docker_total_json_object));
         assert(NULL != jobject);
 
         object = json_object_new_object();
 
-        info_object = tr_info_serializer(info);
-        total_object = tr_total_results_serializer(total, jobject);
+        info_object = docker_info_serializer(info);
+        total_object = docker_total_results_serializer(total, jobject);
 
         json_object_object_add(object, "meta", info_object);
         pr_info(INFO, "Adds meta success %p\n", (void *)info_object);

@@ -1,6 +1,6 @@
 /**
  * @copyright "Container Tracer" which executes the container performance mesurements
- * Copyright (C) 2020 BlaCkinkGJ
+ * Copyright (C) 2020 SuhoSon
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,11 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * @file tr-mq.c
+ * @file docker-mq.c
  * @brief Message Queue를 생성 및 사용하는 방식이 구현되어 있습니다.
- * @author BlaCkinkGJ (ss5kijun@gmail.com)
+ * @author SuhoSon (ngeol564@gmail.com)
  * @version 0.1
- * @date 2020-08-10
+ * @date 2020-08-19
  */
 
 #include <assert.h>
@@ -34,16 +34,16 @@
 
 #include <trace_replay.h>
 #include <log.h>
-#include <driver/tr-driver.h>
+#include <driver/docker-driver.h>
 
 /**
  * @brief Message Queue를 초기화하는 함수입니다.
  *
- * @param pid 이 메시지 큐를 사용하는 Process의 ID입니다.
+ * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
  *
  * @return 성공적으로 종료된 경우에는 메시지 큐의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
-static int __tr_mq_init(const pid_t pid)
+static int __docker_mq_init(struct docker_info *info)
 {
         char *mq_path;
         key_t mq_key = 0;
@@ -55,8 +55,8 @@ static int __tr_mq_init(const pid_t pid)
                 ret = -ENOMEM;
                 goto exception;
         }
-        snprintf(mq_path, BASE_KEY_PATHNAME_LEN, "%s_%d", MSGQ_KEY_PATHNAME,
-                 pid);
+        snprintf(mq_path, BASE_KEY_PATHNAME_LEN, "/tmp/%s%s_%d",
+                 info->cgroup_id, MSGQ_KEY_PATHNAME, info->pid);
 
         /* 파일이 존재하지 않는 경우에 파일을 생성합니다. */
         (void)close(open(mq_path, O_WRONLY | O_CREAT, 0));
@@ -95,7 +95,7 @@ exception:
  *
  * @return 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
-int tr_mq_init(struct tr_info *info)
+int docker_mq_init(struct docker_info *info)
 {
         int mqid = -1;
         int ret = 0;
@@ -103,17 +103,19 @@ int tr_mq_init(struct tr_info *info)
         assert(NULL != info);
         assert(0 != info->pid);
 
-        if (0 > (mqid = __tr_mq_init(info->pid))) {
+        if (0 > (mqid = __docker_mq_init(info))) {
                 pr_info(ERROR,
                         "Message Queue initialization fail. (target pid :%d)\n",
                         info->pid);
-                return mqid;
+                ret = mqid;
+                goto exit;
         }
-        pr_info(INFO, "Message Queue create success. (path: %s_%d)\n",
-                SHM_KEY_PATHNAME, info->pid);
+        pr_info(INFO, "Message Queue create success. (path: /tmp/%s%s_%d)\n",
+                info->cgroup_id, SHM_KEY_PATHNAME, info->pid);
 
         info->mqid = mqid;
 
+exit:
         return ret;
 }
 
@@ -125,7 +127,7 @@ int tr_mq_init(struct tr_info *info)
  *
  * @return 정상 종료가 된 경우에는 0, 그렇지 않은 경우에는 음수 값이 반환됩니다.
  */
-int tr_mq_get(const struct tr_info *info, void *buffer)
+int docker_mq_get(const struct docker_info *info, void *buffer)
 {
         struct realtime_msg rmsg;
 
@@ -145,10 +147,10 @@ int tr_mq_get(const struct tr_info *info, void *buffer)
 /**
  * @brief Message Queue의 할당된 내용을 해제하도록 합니다.
  *
- * @param info 할당 해제를 진행할 tr_info에 해당합니다.
+ * @param info 할당 해제를 진행할 docker_info에 해당합니다.
  * @param flags 해제의 정도를 설정하는 flag에 해당합니다.
  */
-void tr_mq_free(struct tr_info *info, int flags)
+void docker_mq_free(struct docker_info *info, int flags)
 {
         int mqid;
 
@@ -156,7 +158,7 @@ void tr_mq_free(struct tr_info *info, int flags)
 
         mqid = info->mqid;
 
-        if ((TR_IPC_FREE & flags) && 0 <= mqid) {
+        if ((DOCKER_IPC_FREE & flags) && 0 <= mqid) {
                 msgctl(mqid, IPC_RMID, NULL);
         }
 

@@ -1,7 +1,12 @@
-# Container Tracer
+<p align="center"><img src="https://user-images.githubusercontent.com/16631264/90947085-177fac00-e46e-11ea-8ccc-3f14e214d39a.png"/></p>
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/4994a1d576a54a9a9a7b2e0f0619e8f0)](https://www.codacy.com/gh/I-O-Benchmark-On-Container/ContainerTracer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=I-O-Benchmark-On-Container/ContainerTracer&amp;utm_campaign=Badge_Grade)
-[![Build Status](https://travis-ci.org/I-O-Benchmark-On-Container/ContainerTracer.svg?branch=master)](https://travis-ci.org/I-O-Benchmark-On-Container/ContainerTracer)
+<p align="center">
+  <a href="https://www.codacy.com/gh/I-O-Benchmark-On-Container/ContainerTracer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=I-O-Benchmark-On-Container/ContainerTracer&amp;utm_campaign=Badge_Grade"><img src="https://app.codacy.com/project/badge/Grade/4994a1d576a54a9a9a7b2e0f0619e8f0"/></a>
+  <a href="https://travis-ci.org/I-O-Benchmark-On-Container/ContainerTracer"><img src="https://travis-ci.org/I-O-Benchmark-On-Container/ContainerTracer.svg?branch=master"/></a>
+</p>
+
+
+## 소개
 
 Container Tracer는 컨테이너 별 I/O 성능을 측정하는 도구로 기존의 fio나 filebench의
 부족한 cgroup 별 I/O 성능 측정 기능을 보완하는 프로그램입니다.
@@ -71,12 +76,20 @@ sudo scons test DEBUG=True
 
 배포판을 만드는 경우에는 아래와 같은 방법으로 진행해주시길 바랍니다. 결과물은 `./build/release`에 저장됩니다.
 
-```
+```bash
 sudo scons -c
 scons
 ```
 
-드라이버 추가 방법 관련해서는 [링크](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/wiki/Runner%EC%97%90-driver%EB%A5%BC-%EC%B6%94%EA%B0%80%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95)를
+그리고 빌드된 내용을 설치하기 위해서 release 모드의 경우에는 아래와 같이 진행하면 설치를 할 수 있습니다.
+만약에 디버깅 모드로 설치하고 싶으신 경우에는 `sudo scons DEBUG=True install`로 해주시면 됩니다.
+
+```bash
+sudo scons install
+sudo ldconfig
+```
+
+추가적으로 드라이버 제작 방법 관련해서는 [링크](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/wiki/Runner%EC%97%90-driver%EB%A5%BC-%EC%B6%94%EA%B0%80%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95)를
 확인해주시길 바랍니다.
 
 #### 참고 사항
@@ -104,30 +117,4 @@ scons
 
 ## 코드 기여 규칙
 
-trace-replay를 제외한 모든 코드는 [Doxygen](https://www.doxygen.nl/index.html)으로
-문서화를 진행하셔야 합니다.
-
-### web 코드 기여 규칙
-
-가능하면 모듈에 대해서 테스트 파일을 만들어서 `web/test` 위치에 넣어주시길 바라며,
-반드시 해당 테스트 파일은 **`pytest` 규격으로 작성**하셔서 테스트를 진행해주시길 바랍니다.
-
-black 포맷팅을 진행한 후에 flake8 검사를 실시한 후에 문제가 없는 경우 PR을 진행합니다.
-기본적으로, `pre-commit`으로 등록되어 있기 때문에 별도로 처리할 필요는 없습니다.
-만약, 동작하지 않는 경우에는 아래의 조치를 수행해주시길 바랍니다.
-
-1. `pip3 install pre-commit`을 수행해줍니다.
-2. `pre-commit install`을 수행해주시길 바랍니다.
-
-### trace-replay나 runner의 코드 기여 규칙
-
-trace-replay나 runner의 경우에 반드시 아래 절차를 확인한 후에 PR을 진행해야 합니다.
-
-1. `sudo scons test`를 반드시 수행한 후에 `build/log` 또는 출력에서 발생하는 모든 치명적인 오류는 반드시 수정되어야 합니다.
-2. 프로젝트 최상위 폴더에서 `sudo valgrind --leak-check=full --show-leak-kinds=all ./build/(debug|release)/<PROGRAM>`를
-   수행하여 메모리 누수를 확인하셔야 합니다.
-3. 되도록 비교 구문 작성 시에는 `if (상수 == 변수)`의 형태로 작성해주시길 바랍니다.
-
-[clang-format](https://clang.llvm.org/docs/ClangFormat.html)은 `pip install clang-format`으로
-설치할 수 있고, [cppcheck](http://cppcheck.sourceforge.net/)의 경우에는
-`sudo apt install cppcheck`를 통해 설치 가능합니다.
+기여 규칙은 [관련 링크](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/blob/master/CONTRIBUTING.md)를 확인해주시길 바랍니다.

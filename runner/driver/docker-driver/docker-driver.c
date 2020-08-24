@@ -1,6 +1,6 @@
 /**
  * @copyright "Container Tracer" which executes the container performance mesurements
- * Copyright (C) 2020 BlaCkinkGJ
+ * Copyright (C) 2020 SuhoSon
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,11 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * @file tr-driver.c
+ * @file docker-driver.c
  * @brief trace-replay를 동작시키는 driver 구현부에 해당합니다.
- * @author BlaCkinkGJ (ss5kijun@gmail.com)
+ * @author SuhoSon (ngeol564@gmail.com)
  * @version 0.1
- * @date 2020-08-05
+ * @date 2020-08-19
  */
 
 #include <stdlib.h>
@@ -28,7 +28,6 @@
 #include <search.h>
 #include <assert.h>
 #include <unistd.h>
-#include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -39,63 +38,60 @@
 
 #include <generic.h>
 #include <runner.h>
-#include <driver/tr-driver.h>
+#include <driver/docker-driver.h>
 #include <log.h>
-#include <sync.h>
 #include <trace_replay.h>
 
-enum { TR_NONE_SCHEDULER = 0,
-       TR_KYBER_SCHEDULER,
-       TR_BFQ_SCHEDULER,
+enum { DOCKER_NONE_SCHEDULER = 0,
+       DOCKER_KYBER_SCHEDULER,
+       DOCKER_BFQ_SCHEDULER,
 };
 
 /**
  * @brief 현재 tr-driver에서 지원하는 I/O 스케줄러가 들어가게 됩니다.
  * @warning kyber는 SCSI를 지원하지 않음을 유의해주시길 바랍니다.
  */
-static const char *tr_valid_scheduler[] = {
-        [TR_NONE_SCHEDULER] = "none",
-        [TR_KYBER_SCHEDULER] = "kyber",
-        [TR_BFQ_SCHEDULER] = "bfq",
+static const char *docker_valid_scheduler[] = {
+        [DOCKER_NONE_SCHEDULER] = "none",
+        [DOCKER_KYBER_SCHEDULER] = "kyber",
+        [DOCKER_BFQ_SCHEDULER] = "bfq",
         NULL,
 };
 
-static struct tr_info *global_info_head =
+static struct docker_info *global_info_head =
         NULL; /**< trace-replay의 각각을 실행시킬 때 필요한 정보를 담고있는 구조체 리스트의 헤드입니다. */
 
-/**
- * @brief 자식이 생성되자마자 부모가 자식을 죽이는 명령을 보낸 경우에 각종 자식이 가진 자원을 정리합니다.
- *
- * @param signum 현재 받은 시그널에 해당합니다.
- * @note 이 함수는 SIGTEM을 캡쳐합니다. (SIGKILL은 캡처되지 않으므로 사용해서는 안됩니다!)
-	 */
-static void tr_kill_handle(int signum)
+static void __docker_rm_container(struct docker_info *info)
 {
-        struct tr_info *current = global_info_head;
+        char cmd[1000];
 
-        (void)signum;
-        pr_info(INFO, "TERMINATE SEQUENCE DETECTED(signum: %d, pid: %d)\n",
-                signum, getpid());
-        if (current) {
-                assert(NULL != current->global_config);
-                runner_config_free(current->global_config, RUNNER_FREE_ALL);
+        sprintf(cmd, "docker rm -f %s > /dev/null 2>&1",
+                info->cgroup_id); /* Error는 무시 */
+
+        if (system(cmd) ==
+            -1) { /* Container가 존재하지 않을 경우 0이 아닌 값이 리턴 됨 */
+                pr_info(ERROR, "Cannot execute command: %s\n", cmd);
         }
-        _exit(EXIT_SUCCESS);
+
+        sprintf(cmd, "rm -rf /tmp/%s", info->cgroup_id);
+
+        if (system(cmd) ==
+            -1) { /* Container가 존재하지 않을 경우 0이 아닌 값이 리턴 됨 */
+                pr_info(ERROR, "Cannot execute command: %s\n", cmd);
+        }
 }
 
 /**
  * @brief 실질적으로 trace-replay 관련 구조체의 동적 할당된 내용을 해제하는 부분에 해당합니다.
  * @note http://www.ascii-art.de/ascii/def/dr_who.txt
  */
-static void __tr_free(void)
+static void __docker_free(void)
 {
         while (global_info_head != NULL) {
-                struct tr_info *current = global_info_head;
-                struct tr_info *next = global_info_head->next;
+                struct docker_info *current = global_info_head;
+                struct docker_info *next = global_info_head->next;
 
-                if (getpid() == current->ppid &&
-                    0 != current->pid) { /* 자식 프로세스를 죽입니다. */
-                        int status = 0;
+                if (getpid() == current->ppid && 0 != current->pid) {
                         /********************************************
                                                  Exterminate!
                                                 /
@@ -111,25 +107,20 @@ static void __tr_free(void)
                                       C__O__O__O__D
                                      [_____________]
                          ********************************************/
-                        kill(current->pid, SIGTERM);
-                        if (waitpid(current->pid, &status, 0) < 0) {
-                                pr_info(WARNING,
-                                        "waitpid error (pid: %d, status: 0x%X)\n",
-                                        current->pid, status);
-                                _exit(EXIT_FAILURE);
-                        }
+
+                        __docker_rm_container(current);
+
                         /* IPC 객체를 삭제합니다. */
-                        tr_shm_free(current, TR_IPC_FREE);
-                        tr_mq_free(current, TR_IPC_FREE);
+                        docker_shm_free(current, DOCKER_IPC_FREE);
+                        docker_mq_free(current, DOCKER_IPC_FREE);
+
+                        pr_info(INFO, "Delete target %p\n", current);
+                        free(current);
+
+                        global_info_head = next;
                 }
-
-                pr_info(INFO, "Delete target %p\n", current);
-                free(current);
-
-                global_info_head = next;
+                pr_info(INFO, "Do trace-replay free success ==> %p\n", current);
         }
-        pr_info(INFO, "Do trace-replay free success ==> %p\n",
-                global_info_head);
 }
 
 /**
@@ -139,9 +130,9 @@ static void __tr_free(void)
  *
  * @return 가지고 있는 경우 0이 반환되고, 그렇지 않은 경우 -EINVAL이 반환됩니다.
  */
-int tr_valid_scheduler_test(const char *scheduler)
+int docker_valid_scheduler_test(const char *scheduler)
 {
-        const char *index = tr_valid_scheduler[0];
+        const char *index = docker_valid_scheduler[0];
         while (index != NULL) {
                 if (strcmp(scheduler, index) == 0) {
                         return 0;
@@ -159,21 +150,21 @@ int tr_valid_scheduler_test(const char *scheduler)
  * @return 정상적으로 초기화가 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
  * @warning 자식 프로세스에서 이 함수가 절대로 실행되서는 안됩니다.
  */
-int tr_init(void *object)
+int docker_init(void *object)
 {
         struct runner_config *config = (struct runner_config *)object;
         struct generic_driver_op *op = &config->op;
         struct json_object *setting = config->setting;
         struct json_object *tmp = NULL;
-        struct tr_info *current = NULL, *prev = NULL;
+        struct docker_info *current = NULL, *prev = NULL;
 
         int ret = 0, i = 0;
         int nr_tasks = -1;
 
-        op->runner = tr_runner;
-        op->get_interval = tr_get_interval;
-        op->get_total = tr_get_total;
-        op->free = tr_free;
+        op->runner = docker_runner;
+        op->get_interval = docker_get_interval;
+        op->get_total = docker_get_total;
+        op->free = docker_free;
 
         assert(NULL != op->runner);
         assert(NULL != op->get_interval);
@@ -209,7 +200,7 @@ int tr_init(void *object)
         }
 
         for (i = 0; i < nr_tasks; i++) {
-                current = tr_info_init(setting, i);
+                current = docker_info_init(setting, i);
                 if (!current) { /* 할당 실패가 벌어진 경우 */
                         ret = -ENOMEM;
                         goto exception;
@@ -228,9 +219,18 @@ int tr_init(void *object)
                 }
         }
 
+        /* Trace replay가 포함된 ubuntu 16.04 이미지 다운로드 */
+        ret = system(
+                "docker pull suhoson/trace_replay:latest > /dev/null 2>&1");
+        if (ret) {
+                pr_info(ERROR,
+                        "Cannot pull image: suhoson/trace_replay:latest\n");
+                goto exception;
+        }
+
         return ret;
 exception:
-        __tr_free();
+        __docker_free();
         return ret;
 }
 
@@ -241,46 +241,30 @@ exception:
  *
  * @return 정상 종료한 경우에는 0 그 이외에는 적절한 errno이 반환됩니다.
  */
-static int tr_set_cgroup_state(struct tr_info *current)
+static int docker_set_cgroup_state(struct docker_info *current)
 {
         int ret = 0;
-        char cmd[PATH_MAX];
 
-        /* cgroup을 생성하는 과정에 해당합니다. */
-        snprintf(cmd, PATH_MAX, "mkdir /sys/fs/cgroup/blkio/%s%d",
-                 current->prefix_cgroup_name, current->pid);
-        pr_info(INFO, "Do command: \"%s\"\n", cmd);
-        ret = system(cmd);
-        if (ret) {
-                pr_info(ERROR, "Cannot create the directory: \"%s\"\n", cmd);
-                return -EINVAL;
-        }
-
-        ret = strcmp(current->scheduler, tr_valid_scheduler[TR_BFQ_SCHEDULER]);
+        ret = strcmp(current->scheduler,
+                     docker_valid_scheduler[DOCKER_BFQ_SCHEDULER]);
         if (ret == 0) { /* BFQ 스케쥴러이면 weight를 설정해줍니다. */
-                snprintf(cmd, PATH_MAX,
-                         "echo %d > /sys/fs/cgroup/blkio/%s%d/blkio.%s.weight",
-                         current->weight, current->prefix_cgroup_name,
-                         current->pid, current->scheduler);
+                char cmd[PATH_MAX];
+
+                snprintf(
+                        cmd, PATH_MAX,
+                        "echo %d > /sys/fs/cgroup/blkio/docker/%s/blkio.%s.weight",
+                        current->weight, current->container_id,
+                        current->scheduler);
                 pr_info(INFO, "Do command: \"%s\"\n", cmd);
                 ret = system(cmd);
                 if (ret) {
                         pr_info(ERROR, "Cannot set weight: \"%s\"\n", cmd);
-                        return -EINVAL;
+                        return ret;
                 }
         }
 
-        snprintf(cmd, PATH_MAX, "echo %d > /sys/fs/cgroup/blkio/%s%d/tasks",
-                 current->pid, current->prefix_cgroup_name, current->pid);
-        pr_info(INFO, "Do command: \"%s\"\n", cmd);
-        ret = system(cmd);
-        if (ret) {
-                pr_info(ERROR, "Cannot hang (pid: %d) to control group: %s\n",
-                        current->pid, cmd);
-                return -EINVAL;
-        }
-
-        pr_info(INFO, "CGROUP READY (PID: %d)\n", current->pid);
+        pr_info(INFO, "CGROUP READY (CONTAINER ID: %s)\n",
+                current->container_id);
 
         return 0;
 }
@@ -292,56 +276,38 @@ static int tr_set_cgroup_state(struct tr_info *current)
  *
  * @return 성공한 경우에는 0, 그렇지 않은 경우 음수 값이 들어갑니다.
  */
-static int tr_do_exec(struct tr_info *current)
+static int docker_create_container(struct docker_info *current)
 {
-        struct tr_info info;
-        struct stat lstat_info;
+        FILE *fp;
         char filename[PATH_MAX];
+        char cmd[1000];
 
-        char q_depth_str[PAGE_SIZE / 4];
-        char nr_thread_str[PAGE_SIZE / 4];
-        char time_str[PAGE_SIZE / 4];
-        char device_path[PAGE_SIZE / 4];
+        /* Docker container 생성 */
+        snprintf(filename, sizeof(filename), "%s_%u_%s.txt", current->scheduler,
+                 current->weight, current->cgroup_id);
+        sprintf(cmd,
+                "docker container create --name %s --ipc=host -v /tmp/%s/tmp:/tmp --device /dev/%s suhoson/trace_replay:latest /usr/local/bin/trace-replay %u %u %s %u %u /dev/%s %s %u %u %u",
+                current->cgroup_id, current->cgroup_id, current->device,
+                current->q_depth, current->nr_thread, filename, current->time,
+                current->trace_repeat, current->device,
+                current->trace_data_path, current->wss, current->utilization,
+                current->iosize);
 
-        char trace_repeat_str[PAGE_SIZE / 4];
-        char wss_str[PAGE_SIZE / 4];
-        char utilization_str[PAGE_SIZE / 4];
-        char iosize_str[PAGE_SIZE / 4];
-
-        assert(NULL != current);
-        if (current) {
-                memcpy(&info, current, sizeof(struct tr_info));
-                assert(NULL != current->global_config);
-                runner_config_free(current->global_config, RUNNER_FREE_ALL);
+        fp = popen(cmd, "r");
+        if (fp == NULL) {
+                pr_info(ERROR, "Getting container id failed (name: %s)\n",
+                        current->cgroup_id);
+                return -EFAULT;
         }
-        snprintf(filename, sizeof(filename), "%s_%d_%d_%s.txt", info.scheduler,
-                 info.ppid, info.weight, info.cgroup_id);
-        snprintf(q_depth_str, sizeof(q_depth_str), "%u", info.q_depth);
-        snprintf(nr_thread_str, sizeof(nr_thread_str), "%u", info.nr_thread);
-        snprintf(time_str, sizeof(time_str), "%u", info.time);
-        snprintf(device_path, sizeof(device_path), "/dev/%s", info.device);
 
-        snprintf(trace_repeat_str, sizeof(trace_repeat_str), "%u",
-                 info.trace_repeat);
-        snprintf(wss_str, sizeof(wss_str), "%u", info.wss);
-        snprintf(utilization_str, sizeof(utilization_str), "%u",
-                 info.utilization);
-        snprintf(iosize_str, sizeof(iosize_str), "%u", info.iosize);
-
-        pr_info(INFO, "trace replay save location: \"%s\"\n", filename);
-        WAIT_PARENT();
-#ifdef DEBUG
-        tr_print_info(&info);
-#endif
-        if (-1 == lstat(info.trace_replay_path, &lstat_info)) {
-                pr_info(ERROR, "trace replay doesn't exist: \"%s\"",
-                        info.trace_replay_path);
-                return -EACCES;
+        if (fgets(current->container_id, DOCKER_ID_LEN, fp) == NULL) {
+                pclose(fp);
+                return -EFAULT;
         }
-        return execlp(info.trace_replay_path, info.trace_replay_path,
-                      q_depth_str, nr_thread_str, filename, time_str,
-                      trace_repeat_str, device_path, info.trace_data_path,
-                      wss_str, utilization_str, iosize_str, (char *)0);
+
+        pclose(fp);
+
+        return 0;
 }
 
 /**
@@ -349,74 +315,89 @@ static int tr_do_exec(struct tr_info *current)
  *
  * @return 정상적으로 동작이 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
  */
-int tr_runner(void)
+int docker_runner(void)
 {
         int ret = 0;
-        struct tr_info *current = global_info_head;
+        struct docker_info *current = global_info_head;
         char cmd[PATH_MAX];
-        pid_t pid;
 
-        snprintf(cmd, PATH_MAX, "rmdir /sys/fs/cgroup/blkio/%s*",
-                 current->prefix_cgroup_name);
-        pr_info(INFO, "Do command: \"%s\"\n", cmd);
-        ret = system(cmd); /* 이 오류는 무시해도 상관없습니다. */
-        if (ret) {
-                pr_info(WARNING, "Deletion sequence ignore: \"%s\"\n", cmd);
+        docker_info_list_traverse(current, global_info_head)
+        {
+                // 기존의 container를 지우도록 합니다.
+                __docker_rm_container(current);
+        }
+
+        docker_info_list_traverse(current, global_info_head)
+        {
+                // 기존의 container를 지우도록 합니다.
+                sprintf(cmd, "docker rm -f %s", current->cgroup_id);
+                (void)system(cmd);
+
+                // 기존의 디렉터리를 삭제하도록 합니다.
+                sprintf(cmd, "rm -rf /tmp/%s", current->cgroup_id);
+                (void)system(cmd);
         }
 
         snprintf(cmd, PATH_MAX, "echo %s >> /sys/block/%s/queue/scheduler",
-                 current->scheduler, current->device);
+                 global_info_head->scheduler, global_info_head->device);
         pr_info(INFO, "Do command: \"%s\"\n", cmd);
         ret = system(cmd);
         if (ret) {
                 pr_info(ERROR, "Scheduler setting failed (scheduler: %s)\n",
                         current->scheduler);
-                return -EINVAL;
+                return ret;
         }
 
-        TELL_WAIT(); /* 동기화를 준비하는 과정입니다. */
-        tr_info_list_traverse(current, global_info_head)
+        docker_info_list_traverse(current, global_info_head)
         {
-                if (0 > (pid = fork())) {
-                        pr_info(ERROR, "Fork failed. (pid: %d)\n", pid);
-                        return -EFAULT;
-                } else if (0 == pid) { /* 자식 프로세스 */
-                        struct sigaction act;
-                        memset(&act, 0, sizeof(act));
-                        act.sa_handler = tr_kill_handle;
-                        sigaction(SIGTERM, &act, NULL);
-                        if (0 != (ret = tr_do_exec(current))) {
-                                pr_info(ERROR,
-                                        "Cannot execute program (errno: %d)\n",
-                                        ret);
-                                perror("Execution error detected");
-                                tr_kill_handle(SIGKILL); /* execute 실패 */
-                                _exit(EXIT_FAILURE);
-                        }
-                        pr_info(WARNING,
-                                "Child process reaches the restriction area. (pid: %d)\n",
-                                getpid());
-                        tr_kill_handle(SIGTERM);
-                        _exit(EXIT_SUCCESS);
+                current->pid = 1; /* Container 안에서 pid입니다. */
+
+                /* IPC 통신 key값 저장을 위한 tmp directory를 생성합니다. */
+                sprintf(cmd, "mkdir -p /tmp/%s/tmp", current->cgroup_id);
+                if (0 != (ret = system(cmd))) {
+                        pr_info(ERROR, "Cannot make directory: %s\n", cmd);
+                        return ret;
                 }
 
-                /* 부모 프로세스 */
-                current->pid = pid;
-                tr_set_cgroup_state(current);
+                /* Container를 생성합니다. */
+                if (0 != (ret = docker_create_container(current))) {
+                        pr_info(ERROR, "Cannot execute program (errno: %d)\n",
+                                ret);
+                        __docker_rm_container(current);
+                        return ret;
+                }
 
                 /* IPC 객체를 생성합니다. */
-                if (0 > (ret = tr_shm_init(current))) {
+                if (0 > (ret = docker_shm_init(current))) {
+                        pr_info(ERROR,
+                                "Shared memory init failed.(errno: %d)\n", ret);
+                        __docker_rm_container(current);
+                        docker_shm_free(current, DOCKER_IPC_FREE);
                         return ret;
                 }
-                if (0 > (ret = tr_mq_init(current))) {
+                if (0 > (ret = docker_mq_init(current))) {
+                        pr_info(ERROR,
+                                "Message Queue init failed.(errno: %d)\n", ret);
+                        __docker_rm_container(current);
+                        docker_shm_free(current, DOCKER_IPC_FREE);
+                        docker_mq_free(current, DOCKER_IPC_FREE);
                         return ret;
                 }
         }
 
-        /* 모든 자식을 깨우도록 합니다. */
-        tr_info_list_traverse(current, global_info_head)
+        docker_info_list_traverse(current, global_info_head)
         {
-                TELL_CHILD();
+                /* cgroup weight를 설정하고 실행합니다. */
+                docker_set_cgroup_state(current);
+
+                sprintf(cmd, "docker start %s > /dev/null", current->cgroup_id);
+                if (0 != (ret = system(cmd))) {
+                        pr_info(ERROR, "Cannot start container: %s\n",
+                                current->cgroup_id);
+                        __docker_rm_container(current);
+                        docker_shm_free(current, DOCKER_IPC_FREE);
+                        docker_mq_free(current, DOCKER_IPC_FREE);
+                }
         }
 
         return ret;
@@ -431,15 +412,15 @@ int tr_runner(void)
  * @return 정상적으로 종료되는 경우에는 log.type 정보가 반환되고, 그렇지 않은 경우 적절한 음수 값이 반환됩니다.
  * @note buffer를 재활용을 많이 하기 때문에 buffer의 내용은 반드시 미리 runner에서 할당이 되어 있어야 합니다.
  */
-int tr_get_interval(const char *key, char *buffer)
+int docker_get_interval(const char *key, char *buffer)
 {
         ENTRY query = { .key = NULL, .data = NULL };
         ENTRY *result = NULL;
 
-        struct tr_info *info = NULL;
+        struct docker_info *info = NULL;
         struct realtime_log log = { 0 };
 
-        int ret;
+        int ret = 0;
 
         snprintf(buffer, INTERVAL_RESULT_STRING_SIZE, "%s", key);
 
@@ -448,12 +429,12 @@ int tr_get_interval(const char *key, char *buffer)
                 pr_info(ERROR, "Cannot find item (key: %s)\n", buffer);
                 return -EINVAL;
         }
-        info = (struct tr_info *)result->data;
+        info = (struct docker_info *)result->data;
         if (NULL != info) {
-                if (0 > (ret = tr_mq_get(info, (void *)&log))) {
+                if (0 > (ret = docker_mq_get(info, (void *)&log))) {
                         return ret;
                 }
-                tr_realtime_serializer(info, &log, buffer);
+                docker_realtime_serializer(info, &log, buffer);
         } else {
                 pr_info(ERROR, "`info` doesn't exist: %p\n", info);
                 return -EACCES;
@@ -471,15 +452,15 @@ int tr_get_interval(const char *key, char *buffer)
  *
  * @return 정상적으로 동작이 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
  */
-int tr_get_total(const char *key, char *buffer)
+int docker_get_total(const char *key, char *buffer)
 {
         ENTRY query = { .key = NULL, .data = NULL };
         ENTRY *result = NULL;
 
-        struct tr_info *info = NULL;
+        struct docker_info *info = NULL;
         struct total_results results = { 0 };
 
-        int ret;
+        int ret = 0;
 
         snprintf(buffer, TOTAL_RESULT_STRING_SIZE, "%s", key);
 
@@ -488,12 +469,12 @@ int tr_get_total(const char *key, char *buffer)
                 pr_info(ERROR, "Cannot find item (key: %s)\n", buffer);
                 return -EINVAL;
         }
-        info = (struct tr_info *)result->data;
+        info = (struct docker_info *)result->data;
         if (NULL != info) {
-                if (0 > (ret = tr_shm_get(info, (void *)&results))) {
+                if (0 > (ret = docker_shm_get(info, (void *)&results))) {
                         return ret;
                 }
-                tr_total_serializer(info, &results, buffer);
+                docker_total_serializer(info, &results, buffer);
         } else {
                 pr_info(ERROR, "`info` doesn't exist: %p\n", info);
                 return -EACCES;
@@ -505,8 +486,8 @@ int tr_get_total(const char *key, char *buffer)
 /**
  * @brief trace-replay 관련 동적 할당 정보를 해제합니다.
  */
-void tr_free(void)
+void docker_free(void)
 {
-        __tr_free();
+        __docker_free();
         hdestroy();
 }

@@ -1,4 +1,21 @@
 /**
+ * @copyright "Container Tracer" which executes the container performance mesurements
+ * Copyright (C) 2020 BlaCkinkGJ
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
  * @file sync.h
  * @brief 파이프를 활용한 동기화 도구입니다.
  * @details 파이프 크기는 Linux의 경우에는 약 4KB 입니다. 동기화 방식은 read, write의 Blocking 특성을 활용하여 개발되었습니다.
@@ -23,7 +40,7 @@ static int pfd1[2], pfd2[2];
  *
  * @return 성공한 경우에는 0 실패한 경우에는 -EPIPE를 반환합니다.
  */
-int TELL_WAIT(void)
+static inline int TELL_WAIT(void)
 {
         if (pipe(pfd1) < 0 || pipe(pfd2) < 0) {
                 fprintf(stderr, "[%s] pipe error...\n", __func__);
@@ -38,7 +55,7 @@ int TELL_WAIT(void)
  * @return 성공한 경우에는 0 실패한 경우에는 -EIO를 반환합니다.
  * @warning 특정 부모가 아닌 임의의 부모를 호출합니다.
  */
-int TELL_PARENT(void)
+static inline int TELL_PARENT(void)
 {
         if (write(pfd2[1], "c", 1) != 1) {
                 fprintf(stderr, "[%s] write error...\n", __func__);
@@ -52,7 +69,7 @@ int TELL_PARENT(void)
  *
  * @return 성공한 경우에는 0 실패한 경우에는 -EIO를 반환합니다.
  */
-int WAIT_PARENT(void)
+static inline int WAIT_PARENT(void)
 {
         char recv;
 
@@ -75,7 +92,7 @@ int WAIT_PARENT(void)
  * @return 성공한 경우에는 0 실패한 경우에는 -EIO를 반환합니다.
  * @warning 특정 자식이 아닌 임의의 자식을 호출합니다.
  */
-int TELL_CHILD(void)
+static inline int TELL_CHILD(void)
 {
         if (write(pfd1[1], "p", 1) != 1) {
                 fprintf(stderr, "[%s] write error...\n", __func__);
@@ -89,7 +106,7 @@ int TELL_CHILD(void)
  *
  * @return 성공한 경우에는 0 실패한 경우에는 -EIO를 반환합니다.
  */
-int WAIT_CHILD(void)
+static inline int WAIT_CHILD(void)
 {
         char recv;
 

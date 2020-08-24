@@ -1,29 +1,12 @@
 /**
- * @copyright "Container Tracer" which executes the container performance mesurements
- * Copyright (C) 2020 BlaCkinkGJ
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * @file tr-driver.h
- * @brief trace-replay를 동작시키는 driver의 선언부에 해당합니다.
- * @author BlaCkinkGJ (ss5kijun@gmail.com)
+ * @file docker-driver.h
+ * @brief docker와 함께 trace-replay를 동작시키는 driver의 선언부에 해당합니다.
+ * @author SuhoSon (ngeol564@gmail.com)
  * @version 0.1
- * @date 2020-08-05
+ * @date 2020-08-19
  */
-#ifndef _TR_DRIVER_H
-#define _TR_DRIVER_H
+#ifndef _DOCKER_DRIVER_H
+#define _DOCKER_DRIVER_H
 
 #include <linux/limits.h>
 #include <unistd.h>
@@ -34,28 +17,30 @@
 #include <generic.h>
 #include <trace_replay.h>
 
+#define DOCKER_ID_LEN 65
+
 /**
- * @brief tr_info 구조체를 순회하는 range-based for 구문에 해당합니다.
+ * @brief docker_info 구조체를 순회하는 range-based for 구문에 해당합니다.
  *
  * @param ptr 순회하면서 만나는 포인터가 담기는 곳입니다.
  * @param head 순회의 시작 위치에 해당합니다.
  *
  */
-#define tr_info_list_traverse(ptr, head)                                       \
+#define docker_info_list_traverse(ptr, head)                                   \
         for (ptr = head; ptr != NULL; ptr = ptr->next)
 
 /**
- * @brief tr_json_field 구조체를 순회하는 range-based for 구문에 해당합니다.
+ * @brief docker_json_field 구조체를 순회하는 range-based for 구문에 해당합니다.
  *
  * @param ptr 순회하면서 만나는 포인터가 담기는 곳입니다.
  * @param begin 순회의 시작 위치에 해당합니다.
  * @param end 순회의 끝에 해당합니다.
  */
-#define tr_json_field_traverse(ptr, begin, end)                                \
+#define docker_json_field_traverse(ptr, begin, end)                            \
         for (ptr = begin; ptr != end; ptr++)
 
 #ifdef DEBUG
-#define tr_print_info(info)                                                    \
+#define docker_print_info(info)                                                \
         pr_info(INFO,                                                          \
                 "\n"                                                           \
                 "\t\t[[ current %p ]]\n"                                       \
@@ -89,23 +74,23 @@
                 (info)->global_config, (info)->next);
 #endif
 
-enum { TR_IPC_NOT_FREE = 0x0, /**< IPC 객체를 제거하지 않도록 합니다. */
-       TR_IPC_FREE = 0x1,
+enum { DOCKER_IPC_NOT_FREE = 0x0, /**< IPC 객체를 제거하지 않도록 합니다. */
+       DOCKER_IPC_FREE = 0x1,
        /* IPC 객체를 제거합니다. */ };
 
-enum { TR_NOT_SYNTH = 0, /**< 해당 값이 synthetic이 아님을 이이기 합니다. */
-       TR_SYNTH = 0x1,
+enum { DOCKER_NOT_SYNTH = 0, /**< 해당 값이 synthetic이 아님을 이이기 합니다. */
+       DOCKER_SYNTH = 0x1,
        /**< 해당 값이 synthetic임을 의미합니다.  */ };
 
-enum { TR_ERROR_PRINT, /**< json의 에러를 사용자에게 노출되도록 합니다.*/
-       TR_PRINT_NONE, /**< json의 에러를 사용자에게 노출되지 않도록 합니다. */
+enum { DOCKER_ERROR_PRINT, /**< json의 에러를 사용자에게 노출되도록 합니다.*/
+       DOCKER_PRINT_NONE, /**< json의 에러를 사용자에게 노출되지 않도록 합니다. */
 };
 
 /**
- * @brief `tr_stats_serializer`의 필드가 너무 많은 것을 해결하는 것에
+ * @brief `docker_stats_serializer`의 필드가 너무 많은 것을 해결하는 것에
  * 도움을 주는 함수에 해당합니다.
  */
-struct tr_json_field {
+struct docker_json_field {
         const char *name; /**< json의 키에 대응되는 내용입니다. */
         const void *member; /**< 키에 따른 값이 들어가는 곳에 해당합니다. */
 };
@@ -114,7 +99,7 @@ struct tr_json_field {
  * @brief total_results(include/trace_replay.h 참조)의 경우 하위로 들어가는 내용이 많으므로
  * 해당 내용을 받을 수 있도록 동적 할당을 진행할 수 있는 구조체에 해당합니다.
  */
-struct tr_total_json_object {
+struct docker_total_json_object {
         struct json_object *trace[MAX_THREADS]; /**< trace 정보를 담슴니다. */
         struct json_object
                 *per_trace[MAX_THREADS]; /**< per_trace 정보를 담슴니다. */
@@ -126,7 +111,7 @@ struct tr_total_json_object {
 /**
  * @brief 실제 각각의 프로세스에 대한 정보가 들어가는 구조체에 해당합니다.
  */
-struct tr_info {
+struct docker_info {
         pid_t ppid; /**< 부모의 pid가 들어갑니다. 부모 프로세스는 0을 가집니다. */
         pid_t pid; /**< fork로 자식 프로세스에서 trace-replay를 수행했을 때 해당 자식의 pid에 해당합니다.  자식 프로세스는 0 값을 가집니다. */
 
@@ -160,33 +145,35 @@ struct tr_info {
                 [PATH_MAX]; /**< trace replay에서 수행할 데이터의 위치를 가리킵니다. 여기에는 synthetic 내용도 들어갈 수 있습니다. */
 
         void *global_config; /**< runner_config에 대한 전역 정보가 들어가게 됩니다. */
-        struct tr_info *next; /**< 다음 tr_info의 위치가 들어가게 됩니다. */
+        struct docker_info
+                *next; /**< 다음 docker_info의 위치가 들어가게 됩니다. */
+        char container_id[DOCKER_ID_LEN]; /**< container id가 저장됩니다. **/
 };
 
-/* tr-driver.c */
-int tr_init(void *object);
-int tr_runner(void);
-int tr_valid_scheduler_test(const char *scheduler);
-int tr_get_interval(const char *key, char *buffer);
-int tr_get_total(const char *key, char *buffer);
-void tr_free(void);
+/* docker-driver.c */
+int docker_init(void *object);
+int docker_runner(void);
+int docker_valid_scheduler_test(const char *scheduler);
+int docker_get_interval(const char *key, char *buffer);
+int docker_get_total(const char *key, char *buffer);
+void docker_free(void);
 
-/* tr-serializer.c */
-void tr_total_serializer(const struct tr_info *info,
-                         const struct total_results *total, char *buffer);
-void tr_realtime_serializer(const struct tr_info *info,
-                            const struct realtime_log *log, char *buffer);
-/* tr-info.c */
-struct tr_info *tr_info_init(struct json_object *setting, int index);
+/* docker-serializer.c */
+void docker_total_serializer(const struct docker_info *info,
+                             const struct total_results *total, char *buffer);
+void docker_realtime_serializer(const struct docker_info *info,
+                                const struct realtime_log *log, char *buffer);
+/* docker-info.c */
+struct docker_info *docker_info_init(struct json_object *setting, int index);
 
-/* tr-shm.c */
-int tr_shm_init(struct tr_info *info);
-int tr_shm_get(const struct tr_info *info, void *buffer);
-void tr_shm_free(struct tr_info *info, int flags);
+/* docker-shm.c */
+int docker_shm_init(struct docker_info *info);
+int docker_shm_get(const struct docker_info *info, void *buffer);
+void docker_shm_free(struct docker_info *info, int flags);
 
-/* tr-mq.c */
-int tr_mq_init(struct tr_info *info);
-int tr_mq_get(const struct tr_info *info, void *buffer);
-void tr_mq_free(struct tr_info *info, int flags);
+/* docker-mq.c */
+int docker_mq_init(struct docker_info *info);
+int docker_mq_get(const struct docker_info *info, void *buffer);
+void docker_mq_free(struct docker_info *info, int flags);
 
 #endif
