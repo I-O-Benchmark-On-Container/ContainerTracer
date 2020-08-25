@@ -5,6 +5,10 @@
   <a href="https://travis-ci.org/I-O-Benchmark-On-Container/ContainerTracer"><img src="https://travis-ci.org/I-O-Benchmark-On-Container/ContainerTracer.svg?branch=master"/></a>
 </p>
 
+<p align="center">
+  <a href="./documentation/README-KOR.md">한국어 링크</a>
+</p>
+
 # Introduction
 
 Container Tracer is a tool that measures I/O performance per container.
