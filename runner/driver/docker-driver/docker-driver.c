@@ -278,9 +278,16 @@ static int docker_set_cgroup_state(struct docker_info *current)
  */
 static int docker_create_container(struct docker_info *current)
 {
-        FILE *fp;
+        FILE *fp = NULL;
         char filename[PATH_MAX];
-        char cmd[1000];
+        char *cmd = NULL;
+        int ret = 0;
+
+        cmd = (char *)malloc(PAGE_SIZE * PAGE_SIZE);
+        if (!cmd) {
+                ret = -ENOMEM;
+                goto exception;
+        }
 
         /* Docker container 생성 */
         snprintf(filename, sizeof(filename), "%s_%u_%s.txt", current->scheduler,
@@ -297,17 +304,28 @@ static int docker_create_container(struct docker_info *current)
         if (fp == NULL) {
                 pr_info(ERROR, "Getting container id failed (name: %s)\n",
                         current->cgroup_id);
-                return -EFAULT;
+                ret = -EFAULT;
+                goto exception;
         }
 
         if (fgets(current->container_id, DOCKER_ID_LEN, fp) == NULL) {
-                pclose(fp);
-                return -EFAULT;
+                ret = -EFAULT;
+                goto exception;
         }
 
         pclose(fp);
+        free(cmd);
 
-        return 0;
+        return ret;
+exception:
+        if (fp != NULL) {
+                pclose(fp);
+        }
+
+        if (cmd != NULL) {
+                free(cmd);
+        }
+        return ret;
 }
 
 /**
@@ -329,13 +347,14 @@ int docker_runner(void)
 
         docker_info_list_traverse(current, global_info_head)
         {
+                __attribute__((unused)) int ignore_ret = 0;
                 // 기존의 container를 지우도록 합니다.
                 sprintf(cmd, "docker rm -f %s", current->cgroup_id);
-                (void)system(cmd);
+                ignore_ret = system(cmd);
 
                 // 기존의 디렉터리를 삭제하도록 합니다.
                 sprintf(cmd, "rm -rf /tmp/%s", current->cgroup_id);
-                (void)system(cmd);
+                ignore_ret = system(cmd);
         }
 
         snprintf(cmd, PATH_MAX, "echo %s >> /sys/block/%s/queue/scheduler",
