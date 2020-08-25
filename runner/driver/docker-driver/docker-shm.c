@@ -40,7 +40,7 @@
 /**
  * @brief Initialize the Semaphore.
  *
- * @param[in] pid Process' ID of using this Semaphore.
+ * @param[in] info `docker_info` structure which wants to init.
  *
  * @return SemaphoreID for success to init, negative value for fail to init.
  */
@@ -106,7 +106,7 @@ exception:
 /**
  * @brief Initialize the Shared Memory.
  *
- * @param[in] pid Process' ID of using this Shared Memory.
+ * @param[in] info `docker_info` structure which wants to init.
  *
  * @return Shared MemoryID for success to init, negative value for fail to init.
  */
