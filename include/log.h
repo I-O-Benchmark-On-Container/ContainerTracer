@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * @file log.h
- * @brief 로그 출력 양식에 해당합니다.
+ * @brief Format of log printing
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
  * @version 0.1
  * @date 2020-08-05
@@ -33,11 +33,11 @@
 #define ERROR "ERROR"
 
 /**
- * @details 각각 로그 출력 범위는 아래와 같습니다.
- * - `LOG_INFO`: INFO, WARNING, ERROR에 해당하는 로그를 출력합니다.
- * - `LOG_WARNING`: WARNING, ERROR에 해당하는 로그를 출력합니다.
- * - `LOG_ERROR`: ERROR에 해당하는 로그만 출력합니다.
- * - `UNDEFINED`: 아무것도 출력하지 않습니다.
+ * @details Each log format ranges based on following information.
+ * - `LOG_INFO`: INFO, WARNING, ERROR log prints.
+ * - `LOG_WARNING`: WARNING, ERROR log prints.
+ * - `LOG_ERROR`: ERROR log prints.
+ * - `UNDEFINED`: Nothing to print.
  */
 
 #if defined(LOG_INFO)

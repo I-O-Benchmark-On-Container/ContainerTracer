@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * @file docker-info.c
- * @brief info 구조체를 초기화하는 역할을 합니다.
+ * @brief Initialize the info structure.
  * @author SuhoSon (ngeol564@gmail.com)
  * @version 0.1
  * @date 2020-08-19
@@ -34,8 +34,8 @@
 #include <driver/docker-driver.h>
 
 /**
- * @brief 알려진 synthetic 형태에 대한 정의입니다.
- * 이 안에 있는 경우에는 파일로 확인을 하지 않습니다.
+ * @brief Definition of a well-known synthetic form.
+ * This value depends on the `trace-replay` specification.
  */
 static const char *global_synth_type[] = { "rand_read",  "rand_write",
                                            "rand_mixed", "seq_read",
@@ -43,14 +43,15 @@ static const char *global_synth_type[] = { "rand_read",  "rand_write",
                                            NULL };
 
 /**
- * @brief 정수 형태의 `info->(member)`에 json에서 값을 읽어서 값을 주도록 합니다. 
+ * @brief Read the JSON string and convert the value to integer form and set that value to `info->(member)`
  *
- * @param setting 탐색을 할 특정 위치를 지칭합니다.
- * @param key json에서 가져오고자 하는 데이터의 key 또는 field에 해당합니다.
- * @param member 실제 값이 삽입되는 위치에 해당합니다.
- * @param is_print 에러를 사용자에게 출력을 할 지 말지를 선택합니다.
+ * @param[in] setting The traverse start location of JSON object.
+ * @param[in] key JSON object's key which points to the value I want to find.
+ * @param[out] member `info` structure member address.
+ * @param[in] is_print The flag that determines to print the error.
  *
- * @return 성공적으로 입력이 되었다면 0이 반환되고, 그렇지 않은 경우에는 -EINVAL이 반환됩니다.
+ * @return 0 for success to input, -EINVAL for fail to input.
+ * @warning member must be an integer type.
  */
 static int docker_info_int_value_set(struct json_object *setting,
                                      const char *key, unsigned int *member,
@@ -68,20 +69,20 @@ static int docker_info_int_value_set(struct json_object *setting,
 }
 
 /**
- * @brief 문자열 형태의 `info->(member)`에 json에서 값을 읽어서 값을 주도록 합니다. 
+ * @brief Read the JSON string and convert the value to string form and set that value to `info->(member)`
  *
- * @param setting 탐색을 할 특정 위치를 지칭합니다.
- * @param key json에서 가져오고자 하는 데이터의 key 또는 field에 해당합니다.
- * @param member 실제 값이 삽입되는 위치에 해당합니다.
- * @param size 메모리의 크기를 나타냅니다.
- * @param is_print 에러를 사용자에게 출력을 할 지 말지를 선택합니다.
+ * @param[in] setting The traverse start location of JSON object.
+ * @param[in] key JSON object's key which points to the value I want to find.
+ * @param[out] member `info` structure member address.
+ * @param[in] size This value must under `member` memory size
+ * @param[in] is_print The flag that determines to print the error.
  *
- * @return 성공적으로 입력이 되었다면 0이 반환되고, 그렇지 않은 경우에는 -EINVAL이 반환됩니다.
- * @warning size의 값은 반드시 member의 크기보다 작거나 같아야 합니다.
+ * @return 0 for success to input, -EINVAL for fail to input.
+ * @warning member must be an string type.
  */
-static int docker_info_docker_value_set(struct json_object *setting,
-                                        const char *key, char *member,
-                                        size_t size, int is_print)
+static int docker_info_str_value_set(struct json_object *setting,
+                                     const char *key, char *member, size_t size,
+                                     int is_print)
 {
         struct json_object *tmp = NULL;
         if (!json_object_object_get_ex(setting, key, &tmp)) {
@@ -96,11 +97,12 @@ static int docker_info_docker_value_set(struct json_object *setting,
 }
 
 /**
- * @brief 현재 trace_data_path 값이 synthetic 형태인지를 확인합니다.
+ * @brief Check the `trace_data_path` value form is synthetic from.
  *
- * @param trace_data_path synthetic 여부를 확인하고자 하는 문자열입니다.
+ * @param[in] trace_data_path The value which I want to know either synthetic or not.
  *
- * @return 만약에 synthetic이면 DOCKER_SYNTH를 아니면 DOCKER_NOT_SYNTH를 반환합니다.
+ * @return DOCKER_SYNTH for `trace_data_path` is synthetic,
+ * DOCKER_NOT_SYNTH for `trace_data_path` isn't synthetic
  */
 static int docker_is_synth_type(const char *trace_data_path)
 {
@@ -114,13 +116,13 @@ static int docker_is_synth_type(const char *trace_data_path)
 }
 
 /**
- * @brief 각각의 프로세스의 동작 옵션을 설정을 해주도록 합니다.
+ * @brief Set the configuration of each process's behavior.
  *
- * @param setting 설정 값을 가지고 있는 json 객체의 포인터에 해당합니다.
- * @param index json의 task_option의 배열 순번에 대한 정보를 가집니다.
- * @param info 실제 값이 들어가는 위치에 해당합니다.
+ * @param[in] setting JSON object pointer which has the setting value.
+ * @param[in] index `task_option` array's index.
+ * @param[out] info The target structure of the member will be set by the JSON object.
  *
- * @return 정상적으로 초기화가 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ * @return 0 for success to init, error number for fail to init
  */
 static int __docker_info_init(struct json_object *setting, int index,
                               struct docker_info *info)
@@ -129,7 +131,7 @@ static int __docker_info_init(struct json_object *setting, int index,
         struct stat lstat_info;
         int ret = 0;
 
-        ENTRY item; /**< hsearch를 위해서 사용되는 변수입니다. */
+        ENTRY item; /**< Variable for `hsearch`. */
         ENTRY *result;
 
         assert(NULL != info);
@@ -161,19 +163,18 @@ static int __docker_info_init(struct json_object *setting, int index,
                                   DOCKER_PRINT_NONE);
         docker_info_int_value_set(tmp, "iosize", &info->iosize,
                                   DOCKER_PRINT_NONE);
-        docker_info_docker_value_set(tmp, "prefix_cgroup_name",
-                                     info->prefix_cgroup_name,
-                                     sizeof(info->prefix_cgroup_name),
-                                     DOCKER_PRINT_NONE);
-        docker_info_docker_value_set(tmp, "scheduler", info->scheduler,
-                                     sizeof(info->scheduler),
-                                     DOCKER_PRINT_NONE);
-        docker_info_docker_value_set(tmp, "trace_replay_path",
-                                     info->trace_replay_path,
-                                     sizeof(info->trace_replay_path),
-                                     DOCKER_PRINT_NONE);
-        docker_info_docker_value_set(tmp, "device", info->device,
-                                     sizeof(info->device), DOCKER_PRINT_NONE);
+        docker_info_str_value_set(tmp, "prefix_cgroup_name",
+                                  info->prefix_cgroup_name,
+                                  sizeof(info->prefix_cgroup_name),
+                                  DOCKER_PRINT_NONE);
+        docker_info_str_value_set(tmp, "scheduler", info->scheduler,
+                                  sizeof(info->scheduler), DOCKER_PRINT_NONE);
+        docker_info_str_value_set(tmp, "trace_replay_path",
+                                  info->trace_replay_path,
+                                  sizeof(info->trace_replay_path),
+                                  DOCKER_PRINT_NONE);
+        docker_info_str_value_set(tmp, "device", info->device,
+                                  sizeof(info->device), DOCKER_PRINT_NONE);
         ret = docker_valid_scheduler_test(info->scheduler);
         if (0 != ret) {
                 pr_info(ERROR, "Unsupported scheduler (name: %s)\n",
@@ -187,17 +188,17 @@ static int __docker_info_init(struct json_object *setting, int index,
                 goto exception;
         }
 
-        ret = docker_info_docker_value_set(tmp, "trace_data_path",
-                                           info->trace_data_path,
-                                           sizeof(info->trace_data_path),
-                                           DOCKER_ERROR_PRINT);
+        ret = docker_info_str_value_set(tmp, "trace_data_path",
+                                        info->trace_data_path,
+                                        sizeof(info->trace_data_path),
+                                        DOCKER_ERROR_PRINT);
         if (0 != ret) {
                 goto exception;
         }
 
-        ret = docker_info_docker_value_set(tmp, "cgroup_id", info->cgroup_id,
-                                           sizeof(info->cgroup_id),
-                                           DOCKER_ERROR_PRINT);
+        ret = docker_info_str_value_set(tmp, "cgroup_id", info->cgroup_id,
+                                        sizeof(info->cgroup_id),
+                                        DOCKER_ERROR_PRINT);
         if (0 != ret) {
                 goto exception;
         }
@@ -231,12 +232,12 @@ exception:
 }
 
 /**
- * @brief 각 프로세스에 들어가는 info 객체를 __생성__하고 구축하여 반환합니다.
+ * @brief __Generate__ and construct the per processes `info` object and return it.
  *
- * @param setting 설정 값을 가지고 있는 json 객체의 포인터에 해당합니다.
- * @param index json의 task_option의 배열 순번에 대한 정보를 가집니다.
+ * @param[in] setting JSON object pointer which has the setting value.
+ * @param[in] index `task_option` array's index.
  *
- * @return 정상적으로 초기화가 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ * @return 0 for success to init, error number for fail to init
  */
 struct docker_info *docker_info_init(struct json_object *setting, int index)
 {
@@ -259,21 +260,20 @@ struct docker_info *docker_info_init(struct json_object *setting, int index)
                                          DOCKER_ERROR_PRINT);
         ret |= docker_info_int_value_set(setting, "nr_thread", &info->nr_thread,
                                          DOCKER_ERROR_PRINT);
-        ret |= docker_info_docker_value_set(setting, "prefix_cgroup_name",
-                                            info->prefix_cgroup_name,
-                                            sizeof(info->prefix_cgroup_name),
-                                            DOCKER_ERROR_PRINT);
-        ret |= docker_info_docker_value_set(setting, "scheduler",
-                                            info->scheduler,
-                                            sizeof(info->scheduler),
-                                            DOCKER_ERROR_PRINT);
-        ret |= docker_info_docker_value_set(setting, "device", info->device,
-                                            sizeof(info->device),
-                                            DOCKER_ERROR_PRINT);
-        ret |= docker_info_docker_value_set(setting, "trace_replay_path",
-                                            info->trace_replay_path,
-                                            sizeof(info->trace_replay_path),
-                                            DOCKER_ERROR_PRINT);
+        ret |= docker_info_str_value_set(setting, "prefix_cgroup_name",
+                                         info->prefix_cgroup_name,
+                                         sizeof(info->prefix_cgroup_name),
+                                         DOCKER_ERROR_PRINT);
+        ret |= docker_info_str_value_set(setting, "scheduler", info->scheduler,
+                                         sizeof(info->scheduler),
+                                         DOCKER_ERROR_PRINT);
+        ret |= docker_info_str_value_set(setting, "device", info->device,
+                                         sizeof(info->device),
+                                         DOCKER_ERROR_PRINT);
+        ret |= docker_info_str_value_set(setting, "trace_replay_path",
+                                         info->trace_replay_path,
+                                         sizeof(info->trace_replay_path),
+                                         DOCKER_ERROR_PRINT);
         if (0 != ret) {
                 pr_info(ERROR, "error detected (errno: %d)\n", ret);
                 goto exception;
@@ -296,11 +296,11 @@ struct docker_info *docker_info_init(struct json_object *setting, int index)
                                   DOCKER_PRINT_NONE);
         docker_info_int_value_set(setting, "iosize", &info->iosize,
                                   DOCKER_PRINT_NONE);
-        /* trace_data_path의 검사는 __docker_info_init에서 합니다. */
-        docker_info_docker_value_set(setting, "trace_data_path",
-                                     info->trace_data_path,
-                                     sizeof(info->trace_data_path),
-                                     DOCKER_PRINT_NONE);
+        /* Validation check of `trace_data_path` in `__docker_info_init()` */
+        docker_info_str_value_set(setting, "trace_data_path",
+                                  info->trace_data_path,
+                                  sizeof(info->trace_data_path),
+                                  DOCKER_PRINT_NONE);
 
         ret = __docker_info_init(setting, index, info);
         if (0 != ret) {
