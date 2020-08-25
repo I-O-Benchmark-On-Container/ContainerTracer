@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * @file docker-mq.c
- * @brief Message Queue를 생성 및 사용하는 방식이 구현되어 있습니다.
+ * @brief This has the contents of creating and using Message Queue.
  * @author SuhoSon (ngeol564@gmail.com)
  * @version 0.1
  * @date 2020-08-19
@@ -37,11 +37,11 @@
 #include <driver/docker-driver.h>
 
 /**
- * @brief Message Queue를 초기화하는 함수입니다.
+ * @brief Initialize the Message Queue.
  *
- * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
+ * @param[in] info `docker_info` structure which wants to init.
  *
- * @return 성공적으로 종료된 경우에는 메시지 큐의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return Message ID for success to init, negative value for fail to init.
  */
 static int __docker_mq_init(struct docker_info *info)
 {
@@ -58,7 +58,7 @@ static int __docker_mq_init(struct docker_info *info)
         snprintf(mq_path, BASE_KEY_PATHNAME_LEN, "/tmp/%s%s_%d",
                  info->cgroup_id, MSGQ_KEY_PATHNAME, info->pid);
 
-        /* 파일이 존재하지 않는 경우에 파일을 생성합니다. */
+        /* Create the file if there isn't exist the directory in `mq_path` */
         (void)close(open(mq_path, O_WRONLY | O_CREAT, 0));
 
         if (0 > (mq_key = ftok(mq_path, PROJECT_ID))) {
@@ -89,11 +89,11 @@ exception:
 }
 
 /**
- * @brief Message Queue와 관련된 설정에 대해서 초기화를 진행하도록 합니다.
+ * @brief Wrapping function of `__docker_mq_init()`
  *
- * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
+ * @param[in] info `docker_info` structure which wants to init.
  *
- * @return 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 0 for success to init, negative value for fail to init.
  */
 int docker_mq_init(struct docker_info *info)
 {
@@ -120,12 +120,12 @@ exit:
 }
 
 /**
- * @brief Message Queue로 부터 데이터를 가져오는 함수입니다.
+ * @brief Retrieve the data from Message Queue.
  *
- * @param info 데이터를 가져와야 하는 곳을 가리키는 정보를 가진 구조체의 포인터에 해당합니다.
- * @param buffer 데이터가 실제 저장되는 버퍼를 가리킵니다.
+ * @param[in] info `docker_info` structure which wants to get data.
+ * @param[out] buffer Destination of data will be stored
  *
- * @return 정상 종료가 된 경우에는 0, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 0 for success to init, negative value for fail to init.
  */
 int docker_mq_get(const struct docker_info *info, void *buffer)
 {
@@ -145,10 +145,10 @@ int docker_mq_get(const struct docker_info *info, void *buffer)
 }
 
 /**
- * @brief Message Queue의 할당된 내용을 해제하도록 합니다.
+ * @brief Deallocate the Message Queue resources.
  *
- * @param info 할당 해제를 진행할 docker_info에 해당합니다.
- * @param flags 해제의 정도를 설정하는 flag에 해당합니다.
+ * @param[in] info `docker_info` structure which wants to deallocate.
+ * @param[in] flags Set a range of deallocation.
  */
 void docker_mq_free(struct docker_info *info, int flags)
 {

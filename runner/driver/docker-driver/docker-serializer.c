@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * @file docker-serializer.c
- * @brief 임의의 구조체를 json화 시키는 방식이 구현된 소스입니다.
+ * @brief To make structure to JSON format.
  * @author SuhoSon (ngeol564@gmail.com)
  * @version 0.1
  * @date 2020-08-19
@@ -33,13 +33,13 @@
 #include <runner.h>
 
 /**
- * @brief docker_info 구조체의 내용을 json_object로 만들어주도록 합니다.
+ * @brief To make a `docker_info` structure to `json_object`.
  *
- * @param info json으로 변환시킬 docker_info 형태의 구조체입니다.
+ * @param[in] info `docker_info` data structure which wants to convert `json_object`.
  *
- * @return 구조체의 json 객체가 반환됩니다.
+ * @return Structure's `json_object` 
  *
- * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ * @note You must deallocate this returned `json_object` or attach this to the other `json_object`.
  */
 static struct json_object *
 docker_info_serializer(const struct docker_info *info)
@@ -81,13 +81,13 @@ docker_info_serializer(const struct docker_info *info)
 }
 
 /**
- * @brief realtime_log 구조체의 내용을 json_object로 만들어주도록 합니다.
+ * @brief To make a `realtime_log` structure to `json_object`.
  *
- * @param log json으로 변환시킬 realtime_log 형태의 구조체입니다.
+ * @param[in] log `realtime_log` data structure which wants to convert `json_object`.
  *
- * @return realtime_log 구조체의 json 객체가 반환됩니다.
+ * @return Structure's `json_object`
  *
- * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ * @note You must deallocate this returned `json_object` or attach this to the other `json_object`.
  */
 static struct json_object *
 docker_realtime_log_serializer(const struct realtime_log *log)
@@ -115,13 +115,13 @@ docker_realtime_log_serializer(const struct realtime_log *log)
 }
 
 /**
- * @brief trace 구조체의 내용을 json_object로 만들어주도록 합니다.
+ * @brief To make a `trace` structure to `json_object`.
  *
- * @param traces json으로 변환시킬 trace 형태의 구조체입니다.
+ * @param[in] traces `trace` data structure which wants to convert `json_object`.
  *
- * @return trace 구조체의 json 객체가 반환됩니다.
+ * @return Structure's `json_object`
  *
- * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ * @note You must deallocate this returned `json_object` or attach this to the other `json_object`.
  */
 static struct json_object *
 docker_total_trace_serializer(const struct trace *traces)
@@ -140,14 +140,14 @@ docker_total_trace_serializer(const struct trace *traces)
 }
 
 /**
- * @brief total_results 구조체 config 멤버의 내용을 json_object로 만들어주도록 합니다.
+ * @brief To make a `total_results` structure's `config` member to `json_object`.
  *
- * @param total json으로 변환시킬 config를 멤버를 가진 total_results 형태의 구조체입니다.
- * @param jobject 동적 할당된 내용이 들어간 docker_total_json_object 형태 구조체입니다.
+ * @param[in] total `total_results` data structure which wants to convert `config` member to `json_object`.
+ * @param[in] jobject Address of `docker_total_json_object` which already occupying the memory.
  *
- * @return total_results 구조체 config 멤버의 json 객체가 반환됩니다.
+ * @return `total_results` structure's `config` member's `json_object`
  *
- * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ * @note You must deallocate this returned `json_object` or attach this to the other `json_object`.
  */
 static struct json_object *
 docker_total_config_serializer(const struct total_results *total,
@@ -188,13 +188,13 @@ docker_total_config_serializer(const struct total_results *total,
 }
 
 /**
- * @brief synthetic 구조체의 내용을 json_object로 만들어주도록 합니다.
+ * @brief To make a `synthetic` structure to `json_object`.
  *
- * @param _synthetic json으로 변환시킬 synthetic 형태의 구조체입니다.
+ * @param[in] _synthetic `synthetic` data structure which wants to convert `json_object`.
  *
- * @return synthetic 구조체의 json 객체가 반환됩니다.
+ * @return Structure's `json_object`
  *
- * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ * @note You must deallocate this returned `json_object` or attach this to the other `json_object`.
  */
 static struct json_object *
 docker_synthetic_serializer(const struct synthetic *_synthetic)
@@ -215,13 +215,13 @@ docker_synthetic_serializer(const struct synthetic *_synthetic)
 }
 
 /**
- * @brief trace_stat 구조체의 내용을 json_object로 만들어주도록 합니다.
+ * @brief To make a `trace_stat` structure to `json_object`.
  *
- * @param _stats json으로 변환시킬 trace_stat 형태의 구조체입니다.
+ * @param[in] _stats `trace_stat` data structure which wants to convert `json_object`.
  *
- * @return trace_stat 구조체의 json 객체가 반환됩니다.
+ * @return Structure's `json_object`
  *
- * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ * @note You must deallocate this returned `json_object` or attach this to the other `json_object`.
  */
 static struct json_object *
 docker_stats_serializer(const struct trace_stat *_stats)
@@ -268,14 +268,14 @@ docker_stats_serializer(const struct trace_stat *_stats)
 }
 
 /**
- * @brief total_results 구조체 per_trace 멤버의 내용을 json_object로 만들어주도록 합니다.
+ * @brief To make a `total_results` structure's `per_trace` member to `json_object`.
  *
- * @param total json으로 변환시킬 per_trace를 멤버를 가진 total_results 형태의 구조체입니다.
- * @param jobject 동적 할당된 내용이 들어간 docker_total_json_object 형태 구조체입니다.
+ * @param[in] total `total_results` data structure which wants to convert `per_trace` member to `json_object`.
+ * @param[in] jobject Address of `docker_total_json_object` which already occupying the memory.
  *
- * @return total_results 구조체 config 멤버의 json 객체가 반환됩니다.
+ * @return `total_results` structure's `per_trace` member's `json_object`
  *
- * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ * @note You must deallocate this returned `json_object` or attach this to the other `json_object`.
  */
 static struct json_object *
 docker_total_per_trace_serializer(const struct total_results *total,
@@ -305,7 +305,7 @@ docker_total_per_trace_serializer(const struct total_results *total,
                         json_object_new_int(
                                 total->results.per_trace[i].issynthetic));
 
-                /* issynthetic 값이 1인 경우에만 synthetic 정보는 의미가 있습니다. */
+                /* This only valuable when issynthetic value is 1 */
                 if (1 == total->results.per_trace[i].issynthetic) {
                         synthetic[i] = docker_synthetic_serializer(
                                 &total->results.per_trace[i].synthetic);
@@ -329,13 +329,13 @@ docker_total_per_trace_serializer(const struct total_results *total,
 }
 
 /**
- * @brief total_results 구조체의 aggr_results 내용을 json_object로 만들어주도록 합니다.
+ * @brief To make a `aggr_result` structure's `per_trace` member to `json_object`.
  *
- * @param total json으로 변환시킬 aggr_result 멤버를 가진 total_results 형태의 구조체입니다.
+ * @param[in] total `total_results` data structure which wants to convert `aggr_result` member to `json_object`.
  *
- * @return aggr_result가 stats만 가지고 있으므로 stats를 json화 시키는 함수를 통과시켜주도록 합니다.
+ * @return `total_results` structure's `aggr_result` member's `json_object`. This is same form of `stats`.
  *
- * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ * @note You must deallocate this returned `json_object` or attach this to the other `json_object`.
  */
 static struct json_object *
 docker_total_aggr_serializer(const struct total_results *total)
@@ -344,14 +344,15 @@ docker_total_aggr_serializer(const struct total_results *total)
 }
 
 /**
- * @brief total_results 구조체 내용 중 per_trace랑 aggr_results를 json_object로 만들어주도록 합니다.
+ * @brief to make a `total_results` structure's `per_trace` and `aggr_result` member to `json_object`.
  *
- * @param total json으로 변환시킬 total_results 형태의 구조체입니다.
- * @param jobject 동적 할당된 내용이 들어간 docker_total_json_object 형태 구조체입니다.
+ * @param[in] total `total_results` data structure which wants to convert `per_trace` and `aggr_result`
+ * member to `json_object`.
+ * @param[in] jobject address of `docker_total_json_object` which already occupying the memory.
  *
- * @return total_results 구조체의 per_trace랑 aggr_results를 가지고 만든 json 객체가 반환됩니다.
+ * @return `total_results` structure's `per_trace` and `aggr_result` member's `json_object`
  *
- * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ * @note you must deallocate this returned `json_object` or attach this to the other `json_object`.
  */
 static struct json_object *
 docker_total_result_serializer(const struct total_results *total,
@@ -369,14 +370,14 @@ docker_total_result_serializer(const struct total_results *total,
 }
 
 /**
- * @brief total_results 구조체 내용을 json_object로 만들어주도록 합니다.
+ * @brief to make a `total_results` structure's all member to `json_object`.
  *
- * @param total json으로 변환시킬 total_results 형태의 구조체입니다.
- * @param jobject 동적 할당된 내용이 들어간 docker_total_json_object 형태 구조체입니다.
+ * @param[in] total `total_results` data structure which wants to convert all member to `json_object`.
+ * @param[in] jobject address of `docker_total_json_object` which already occupying the memory.
  *
- * @return total_results 구조체 json 객체가 반환됩니다.
+ * @return `total_results` structure's all member's `json_object`
  *
- * @warning 만약에 반환 값을 다른 json_object에 붙이지 않는 경우에는 반드시 반환하는 절차를 거쳐줘야 합니다.
+ * @note you must deallocate this returned `json_object` or attach this to the other `json_object`.
  */
 static struct json_object *
 docker_total_results_serializer(const struct total_results *total,
@@ -392,13 +393,13 @@ docker_total_results_serializer(const struct total_results *total,
 }
 
 /**
- * @brief json으로 구조체에 있는 내용을 변환합니다.
+ * @brief Converts `realtime_log` to JSON string.
  *
- * @param info 현재 docker_info 구조체의 포인터입니다.
- * @param log 현재 출력 로그에 해당합니다.
- * @param buffer 수행 결과 만들어진 json 내용이 들어가는 부분에 해당합니다.
+ * @param[in] info `docker_info` structure's pointer.
+ * @param[in] log `realtime_log` structure's pointer.
+ * @param[out] buffer Data contains the execution-time results which are converted to JSON.
  *
- * @warning buffer는 반드시 이 함수를 부르기 전에 할당되어야하며, 그 크기는 INTERVAL_RESULT_STRING_SIZE 보다 커야 합니다.
+ * @warning `buffer` must be allocated memory over and equal `INTERVAL_RESULT_STRING_SIZE`
  */
 void docker_realtime_serializer(const struct docker_info *info,
                                 const struct realtime_log *log, char *buffer)
@@ -421,13 +422,13 @@ void docker_realtime_serializer(const struct docker_info *info,
 }
 
 /**
- * @brief json으로 구조체에 있는 내용을 변환합니다.
+ * @brief Converts `total_results` to JSON string.
  *
- * @param info 현재 docker_info 구조체의 포인터입니다.
- * @param total 현재 직렬화를 원하는 total_results 구조체의 포인터입니다.
- * @param buffer 수행 결과 만들어진 json 내용이 들어가는 부분에 해당합니다.
+ * @param[in] info `docker_info` structure's pointer.
+ * @param[in] total `total_results` structure's pointer.
+ * @param[out] buffer Data contains the end-time results which are converted to JSON.
  *
- * @warning buffer는 반드시 이 함수를 부르기 전에 할당되어야하며, 그 크기는 TOTAL_RESULT_STRING_SIZE 보다 커야 합니다.
+ * @warning `buffer` must be allocated memory over and equal `TOTAL_RESULT_STRING_SIZE`
  */
 void docker_total_serializer(const struct docker_info *info,
                              const struct total_results *total, char *buffer)

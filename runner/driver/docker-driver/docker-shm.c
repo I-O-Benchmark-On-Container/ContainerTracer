@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * @file docker-shm.c
- * @brief Shared Memory를 생성 및 사용하는 방식이 구현되어 있습니다.
+ * @brief This has the contents of creating and using Shared Memory.
  * @author SuhoSon (ngeol564@gmail.com)
  * @version 0.1
  * @date 2020-08-19
@@ -38,11 +38,11 @@
 #include <driver/docker-driver.h>
 
 /**
- * @brief 세마포어만을 초기화하는 함수입니다.
+ * @brief Initialize the Semaphore.
  *
- * @param info 세마포어 획득 대상 정보를 가진 구조체 포인터입니다.
+ * @param[in] pid Process' ID of using this Semaphore.
  *
- * @return 성공적으로 종료된 경우에는 세마포어의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return SemaphoreID for success to init, negative value for fail to init.
  */
 static int __docker_sem_init(struct docker_info *info)
 {
@@ -104,11 +104,11 @@ exception:
 }
 
 /**
- * @brief Shared Memory만을 초기화하는 함수입니다.
+ * @brief Initialize the Shared Memory.
  *
- * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
+ * @param[in] pid Process' ID of using this Shared Memory.
  *
- * @return 성공적으로 종료된 경우에는 Shared Memory의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return Shared MemoryID for success to init, negative value for fail to init.
  */
 static int __docker_shm_init(struct docker_info *info)
 {
@@ -125,7 +125,7 @@ static int __docker_shm_init(struct docker_info *info)
         snprintf(shm_path, BASE_KEY_PATHNAME_LEN, "/tmp/%s%s_%d",
                  info->cgroup_id, SHM_KEY_PATHNAME, info->pid);
 
-        /* 파일이 존재하지 않는 경우에 파일을 생성합니다. */
+        /* If there doesn't exist the file then create the file. */
         (void)close(open(shm_path, O_WRONLY | O_CREAT, 0));
 
         if (0 > (shm_key = ftok(shm_path, PROJECT_ID))) {
@@ -157,9 +157,9 @@ exception:
 }
 
 /**
- * @brief 세마포어 락을 획득합니다.
+ * @brief Acquire the semaphore lock.
  *
- * @param info 세마포어 획득 대상 정보를 가진 구조체 포인터입니다.
+ * @param[in] info This is an information pointer that wants to acquire the semaphore.
  */
 static void docker_sem_wait(const struct docker_info *info)
 {
@@ -170,14 +170,14 @@ static void docker_sem_wait(const struct docker_info *info)
         };
 
         pr_info(INFO, "Going to sleep (pid: %d)\n", info->pid);
-        /* 1은 연산 갯수를 지칭합니다. */
+        /* 1 means the number of operations. */
         assert(-1 != semop(info->semid, &sop, 1));
 }
 
 /**
- * @brief 세마포어 락을 반환합니다.
+ * @brief Release the semaphore lock.
  *
- * @param info 세마포어 반환 대상 정보를 가진 구조체 포인터입니다.
+ * @param[in] info This is an information pointer that wants to release the semaphore.
  */
 static void docker_sem_post(const struct docker_info *info)
 {
@@ -192,11 +192,11 @@ static void docker_sem_post(const struct docker_info *info)
 }
 
 /**
- * @brief Shared Memory와 관련된 설정에 대해서 초기화를 진행하도록 합니다.
+ * @brief Do the `__docker_shm_init()` and `__docker_sem_init()`
  *
- * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
+ * @param[in] info `docker_info` structure which wants to init.
  *
- * @return 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 0 for success to init, negative value for fail to init.
  */
 int docker_shm_init(struct docker_info *info)
 {
@@ -234,12 +234,12 @@ exit:
 }
 
 /**
- * @brief Shared Memory로 부터 데이터를 가져오는 함수입니다.
+ * @brief Retrieve the data from Shared Memory.
  *
- * @param info 데이터를 가져와야 하는 곳을 가리키는 정보를 가진 구조체의 포인터에 해당합니다.
- * @param buffer 데이터가 실제 저장되는 버퍼를 가리킵니다.
+ * @param[in] info `docker_info` structure which wants to get data.
+ * @param[out] buffer Destination of data will be stored
  *
- * @return 정상 종료가 된 경우에는 0, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 0 for success to init, negative value for fail to init.
  */
 int docker_shm_get(const struct docker_info *info, void *buffer)
 {
@@ -261,10 +261,10 @@ int docker_shm_get(const struct docker_info *info, void *buffer)
 }
 
 /**
- * @brief Shared Memory의 할당된 내용을 해제하도록 합니다.
+ * @brief Deallocate the Shared Memory resources.
  *
- * @param info 할당 해제를 진행할 docker_info에 해당합니다.
- * @param flags 해제의 정도를 설정하는 flag에 해당합니다.
+ * @param[in] info `docker_info` structure which wants to deallocate.
+ * @param[in] flags Set a range of deallocation.
  */
 void docker_shm_free(struct docker_info *info, int flags)
 {

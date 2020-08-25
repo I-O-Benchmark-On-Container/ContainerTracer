@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * @file tr-driver-test.c
- * @brief tr-driver의 올바른 동작 여부를 확인하는 테스터입니다.
+ * @brief Check the correctness of `tr-driver`.
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
  * @version 0.1
  * @date 2020-08-05
@@ -44,12 +44,15 @@
 #else
 #define TRACE_REPLAY_PATH "./build/debug/trace-replay"
 #endif
-#define TEST_DISK_PATH "sdb" /**< 대상 device의 이름입니다. /dev/ 포함 금지! */
+#define TEST_DISK_PATH                                                         \
+        "sdb" /**< Target device name. Do not contain the `/dev/` */
 #define SCHEDULER "none" /**< "none, bfq" in SCSI; "none, kyber, bfq" in NVMe */
 
 #define TIME (5) /**< seconds */
-#define Q_DEPTH (get_nprocs()) /**< CPU의 갯수 만큼 Q_DEPTH를 설정합니다. */
-#define PREFIX_CGROUP_NAME "tester.trace." /**< cgroup 폴더 생성 규칙입니다. */
+#define Q_DEPTH                                                                \
+        (get_nprocs()) /**< Queue depth size which based on the number of cores. */
+#define PREFIX_CGROUP_NAME                                                     \
+        "tester.trace." /**< The rule to generate the cgroup directory */
 
 static const char *key[] = { "cgroup-1", "cgroup-2", "cgroup-3",
                              "cgroup-4", "cgroup-5", "cgroup-6" };
@@ -91,7 +94,7 @@ void setUp(void)
         task_options = (char *)malloc(PAGE_SIZE);
         TEST_ASSERT_NOT_NULL(task_options);
 
-        /* strcat에서 문제가 발생할 수 있으므로 이를 반드시 수행해줘야 합니다. */
+        /* This needs because of the `strcat` finds the first position by NULL. */
         json[0] = task_options[0] = '\0';
 
         for (i = 0; i < key_len / 2; i++) {
@@ -136,12 +139,13 @@ void setUp(void)
                 TIME, Q_DEPTH, NR_THREAD, PREFIX_CGROUP_NAME, SCHEDULER,
                 task_options);
         print_json_string("Current Config", json);
-        TEST_ASSERT_EQUAL(0, runner_init(json)); /* config 설정 과정 */
+        TEST_ASSERT_EQUAL(0, runner_init(json)); /* config setting sequence */
         TEST_ASSERT_NOT_NULL(config = runner_get_global_config());
         TEST_ASSERT_EQUAL_STRING(config->driver, TEST_TARGET_DRIVER);
         TEST_ASSERT_EQUAL(get_generic_driver_index(TEST_TARGET_DRIVER),
                           get_generic_driver_index(config->driver));
-        TEST_ASSERT_EQUAL(0, runner_run()); /* trace-replay 실행 시점 */
+        TEST_ASSERT_EQUAL(0,
+                          runner_run()); /* trace-replay execution position */
 }
 
 void tearDown(void)
@@ -162,7 +166,7 @@ void test(void)
                 if (flags == FLAGS_MASK) {
                         break;
                 }
-                /* 전체 키의 내용을 읽습니다. */
+                /* Read all keys. */
                 for (unsigned long i = 0; i < key_len; i++) {
                         struct json_object *object, *tmp;
                         int type;
@@ -182,7 +186,7 @@ void test(void)
                         pr_info(INFO, "Current log.type = %d (target = %d)\n",
                                 type, FIN);
 
-                        /* FIN 명령을 받으면 종료합니다. */
+                        /* If program reads FIN makes terminate the retrieve execution-time results. */
                         if (FIN == type) {
                                 print_json_string("Get interval(last)", buffer);
                                 runner_put_result_string(buffer);
@@ -196,7 +200,7 @@ void test(void)
                 }
         }
 
-        /* 키의 수만큼 실행됩니다. */
+        /* Execute based on the number of keys. */
         for (unsigned long i = 0; i < key_len; i++) {
                 buffer = runner_get_total_result(key[i]);
                 TEST_ASSERT_NOT_NULL(buffer);
