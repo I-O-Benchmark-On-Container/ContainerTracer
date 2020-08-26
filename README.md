@@ -101,7 +101,7 @@ sudo ldconfig
 ```
 
 Additionally, you can get information about
-how to make the driver program of the runner from [this link](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/wiki/Runner%EC%97%90-driver%EB%A5%BC-%EC%B6%94%EA%B0%80%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95)
+how to make the driver program of the runner from [this link](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/wiki/4.-How-to-add-the-driver-to-Runner)
 
 ### Notes
 
