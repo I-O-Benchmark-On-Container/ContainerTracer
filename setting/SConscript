@@ -1,4 +1,4 @@
-# 일반적인 빌드 옵션들이 들어가게 됩니다.
+# Generic build options in here.
 import os
 import sys
 
@@ -6,11 +6,11 @@ project_version = "0.0.1"
 
 variables = Variables()
 variables.AddVariables(
-    ("PROJECT_VERSION", "프로젝트의 버전을 의미합니다.", project_version),
-    BoolVariable("RUNNER", "통합 실행 프로그램을 빌드하도록 합니다.", default=True),
-    BoolVariable("TRACE_REPLAY", "trace replay를 빌드하도록 합니다.", default=True),
-    BoolVariable("WEB", "파이썬 프로젝트를 빌드하도록 합니다.", default=True),
-    BoolVariable("DEBUG", "디버그 모드를 활성화 합니다.", default=False),
+    ("PROJECT_VERSION", "Thie specifies the project version", project_version),
+    BoolVariable("RUNNER", "Build the runner", default=True),
+    BoolVariable("TRACE_REPLAY", "Build the trace-replay", default=True),
+    BoolVariable("WEB", "Build the web", default=True),
+    BoolVariable("DEBUG", "Enable the debugging mode", default=False),
 )
 
 env = Environment(variables=variables,)

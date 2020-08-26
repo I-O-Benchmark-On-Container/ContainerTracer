@@ -33,7 +33,7 @@ sub_project = {
 	'runner/SConscript': env['RUNNER'],
 }
 
-# 프로그램 존재 여부 확인
+# Program existence check.
 dependency = ["clang-format", "cppcheck"]
 cmd = "where" if platform.system() == "Windows" else "which"
 
@@ -43,12 +43,12 @@ try:
         current_check_program = program
         subprocess.call([cmd, program], stdout=subprocess.DEVNULL)
 except:
-    print(current_check_program+"이 설치되지 않았습니다.", file=sys.stderr)
+    print(current_check_program+"isn't properlly installed.", file=sys.stderr)
 
-# log 기록을 위한 디렉터리의 생성
+# Make a directory for log
 os.makedirs(str(Dir(env["LOG_LOCATION"])), exist_ok=True)
 
-# clang-format 수행
+# Execute the clang-format
 clang_format_ouput_file = open(
     str(Dir(env["LOG_LOCATION"]))
     + os.sep
@@ -82,7 +82,7 @@ if env.GetOption('help'):
 
 env.CompileDb()
 
-# cppcheck 수행
+# Execute the cppcheck
 cppcheck_ouput_file = open(
     str(Dir(env["LOG_LOCATION"]))
     + os.sep

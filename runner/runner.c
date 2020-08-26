@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * @file runner.c
- * @brief runner.h에서 선언된 내용들에 대한 정의가 들어갑니다.
+ * @brief Definition of `runner.h` declaration contents.
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
  * @version 0.1
  * @date 2020-08-04
@@ -37,13 +37,14 @@
 #include <runner.h>
 #include <log.h>
 
-static struct runner_config *global_config = NULL;
+static struct runner_config *global_config =
+        NULL; /**< Global configuration contents of runner */
 
 /**
- * @brief global_runner가 가진 멤버 중 동적할당이 되어 있는 데이터를 반환합니다.
+ * @brief Deallocate the global_runner's contents.
  *
- * @param config 지우고자 하는 config의 포인터에 해당합니다.
- * @param flags global_runner의 멤버 중 지우고 싶은 멤버를 선택할 수 있습니다.
+ * @param[in] config pointer of `runner_config` structure.
+ * @param[in] flags Flag of deallocation range.
  */
 void runner_config_free(struct runner_config *config, const int flags)
 {
@@ -76,13 +77,13 @@ void runner_config_free(struct runner_config *config, const int flags)
 }
 
 /**
- * @brief json 문자열을 읽어서 runner에 대한 설정을 진행하도록 합니다.
+ * @brief Read the JSON string and config the runner.
  *
- * @param json_str 설정에 사용되는 JSON 형태의 문자열이 들어오게 됩니다.
+ * @param[in] json_str JSON string which is used in runner config.
  *
- * @return 성공한 경우에 0이 반환되고, 실패한 경우에는 에러 번호가 출력됩니다.
+ * @return 0 for success to init, error number for fail to init.
  *
- * @exception 하나라도 데이터가 적합하게 존재하지 않는 경우에는 관련된 에러 메시지와 함께 에러 번호가 출력됩니다.
+ * @exception Error number returns if there exists any invalid value in JSON string.
  */
 int runner_init(const char *json_str)
 {
@@ -146,9 +147,9 @@ exception:
 }
 
 /**
- * @brief 실제로 프로그램을 각각의 프로세스와 cgroup에 할당을 한 후에 실행을 하는 부분에 해당합니다.
+ * @brief Execute the benchmark program.
  *
- * @return driver에서의 수행한 결과가 반환됩니다. 정상 종료의 경우에는 0이 반환됩니다.
+ * @return Driver's execution result.
  */
 int runner_run(void)
 {
@@ -156,7 +157,7 @@ int runner_run(void)
 }
 
 /**
- * @brief __runner_free의 wrapping 함수에 해당하는 함수입니다.
+ * @brief Wrapping function of `__runner_free()`.
  */
 void runner_free(void)
 {
@@ -166,12 +167,12 @@ void runner_free(void)
 }
 
 /**
- * @brief 수행 결과를 담는 buffer를 만드는 함수입니다.
+ * @brief Generate the buffer which contains the result.
  *
- * @param buffer 할당을 받고자 하는 대상이 되는 버퍼에 해당합니다.
- * @param size 버퍼의 크기를 지칭합니다.
+ * @param[out] buffer Destination buffer which wants to allocate the memory.
+ * @param[in] size Buffer's size.
  *
- * @return buffer의 할당 성공 여부를 반환합니다.
+ * @return 0 for buffer allocation success, -EINVAL for buffer allocation fail.
  */
 static int runner_get_result_string(char **buffer, size_t size)
 {
@@ -184,9 +185,9 @@ static int runner_get_result_string(char **buffer, size_t size)
 }
 
 /**
- * @brief `runner_get_result_string`에서 할당 받은 buffer를 해제합니다.
+ * @brief Deallocate the buffer which is allocated by `runner_get_result_string()` function.
  *
- * @param buffer 해제 대상이 되는 동적 할당된 버퍼입니다.
+ * @param[in] buffer A dynamically allocated buffer which wants to deallocate.
  */
 void runner_put_result_string(char *buffer)
 {
@@ -196,15 +197,15 @@ void runner_put_result_string(char *buffer)
 }
 
 /**
- * @brief 임의의 드라이버에 대한 실시간 수행 출력 결과를 반환합니다.
+ * @brief Get a specific driver's execution-time results.
  *
- * @param key 출력하고자 하는 대상을 지칭하는 key입니다.
+ * @param[in] key The key which specifies target to get execution-time result.
  *
- * @return json 문자열로 구성된 실시간 수행 결과를 담고 있습니다.
- * 만약 할당을 실패한 경우에는 NULL이 반환됩니다.
+ * @return Return JSON string which contains the execution-time results.
+ * However, if allocates fail then returns NULL.
  *
- * @warning buffer는 동적 할당된 내용이므로 반드시 외부에서
- * `runner_put_result_string`으로 해제해줘야 합니다.
+ * @warning Due to the buffer was allocated by `runner_get_result_string()`,
+ * you must deallocate this buffer by using `runner_put_result_string()`.
  */
 char *runner_get_interval_result(const char *key)
 {
@@ -231,15 +232,15 @@ exception:
 }
 
 /**
- * @brief 임의의 드라이버에 대한 전체 수행 출력 결과를 반환합니다.
+ * @brief Get a specific driver's end-time results.
  *
- * @param key 출력하고자 하는 대상을 지칭하는 key입니다.
+ * @param[in] key The key which specifies target to get end-time result.
  *
- * @return json 문자열로 구성된 전체 수행 결과를 담고 있습니다.
- * 만약 할당을 실패한 경우에는 NULL이 반환됩니다.
+ * @return Return JSON string which contains the end-time results.
+ * However, if allocates fail then returns NULL.
  *
- * @warning buffer는 동적 할당된 내용이므로 반드시 외부에서
- * `runner_put_result_string`으로 해제해줘야 합니다.
+ * @warning Due to the buffer was allocated by `runner_get_result_string()`,
+ * you must deallocate this buffer by using `runner_put_result_string()`.
  */
 char *runner_get_total_result(const char *key)
 {
@@ -266,10 +267,10 @@ exception:
 }
 
 /**
- * @brief global_config의 주소를 반환하여 외부에서 global config
+ * @brief Get a global configuration pointer.
  *
- * @return global_config의 내용의 변경이 불가능한 상수 포인터를 반환합니다.
- * @note 이는 굉장히 제한적인 디버깅과 같은 환경에서만 사용해야 합니다!!
+ * @return `global_config` pointer.
+ * @note You must use only on debugging or restricted environments.
  */
 const struct runner_config *runner_get_global_config(void)
 {
