@@ -178,6 +178,7 @@ void docker_realtime_serializer(const struct docker_info *info,
                                 const struct realtime_log *log, char *buffer);
 /* docker-info.c */
 struct docker_info *docker_info_init(struct json_object *setting, int index);
+int docker_is_synth_type(const char *trace_data_path);
 
 /* docker-shm.c */
 int docker_shm_init(struct docker_info *info);

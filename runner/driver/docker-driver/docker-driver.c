@@ -316,6 +316,15 @@ static int docker_create_container(struct docker_info *current)
                 goto exception;
         }
 
+        if (DOCKER_SYNTH != docker_is_synth_type(current->trace_data_path)) {
+                sprintf(cmd, "docker cp %s %s:%s", current->trace_data_path,
+                        current->cgroup_id, current->trace_data_path);
+
+                ret = system(cmd);
+                if (ret)
+                        goto exception;
+        }
+
         pclose(fp);
         free(cmd);
 
