@@ -104,7 +104,7 @@ static int docker_info_str_value_set(struct json_object *setting,
  * @return DOCKER_SYNTH for `trace_data_path` is synthetic,
  * DOCKER_NOT_SYNTH for `trace_data_path` isn't synthetic
  */
-static int docker_is_synth_type(const char *trace_data_path)
+int docker_is_synth_type(const char *trace_data_path)
 {
         int i = 0;
         for (i = 0; global_synth_type[i] != NULL; i++) {
