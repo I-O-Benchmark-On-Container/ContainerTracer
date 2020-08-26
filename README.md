@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="./documentation/README-KOR.md">한국어 링크</a>
+  <a href="https://github.com/I-O-Benchmark-On-Container/ContainerTracer/blob/master/documentation/README-KOR.md">한국어 링크</a>
 </p>
 
 # Introduction
