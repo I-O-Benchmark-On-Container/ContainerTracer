@@ -59,7 +59,7 @@ static const char *key[] = { "cgroup-1", "cgroup-2", "cgroup-3",
 static const int weight[] = { 100, 250, 500, 1000, 2000, 4000 };
 static const char *test_path[] = {
         "./sample/sample1.dat", "./sample/sample2.dat",
-        "./sample/sample1.dat", "rand_read",
+        "./sample/sample3.dat", "rand_read",
         "rand_mixed",           "seq_mixed",
 };
 static const unsigned long key_len = sizeof(key) / sizeof(char *);
