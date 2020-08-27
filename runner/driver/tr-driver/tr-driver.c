@@ -1,6 +1,23 @@
 /**
+ * @copyright "Container Tracer" which executes the container performance mesurements
+ * Copyright (C) 2020 BlaCkinkGJ
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
  * @file tr-driver.c
- * @brief trace-replay를 동작시키는 driver 구현부에 해당합니다.
+ * @brief Implementation of run the `trace-replay` benchmark.
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
  * @version 0.1
  * @date 2020-08-05
@@ -33,8 +50,8 @@ enum { TR_NONE_SCHEDULER = 0,
 };
 
 /**
- * @brief 현재 tr-driver에서 지원하는 I/O 스케줄러가 들어가게 됩니다.
- * @warning kyber는 SCSI를 지원하지 않음을 유의해주시길 바랍니다.
+ * @brief Associated table of I/O scheduler.
+ * @warning Kyber sceduler doesn't support in SCSI devices.
  */
 static const char *tr_valid_scheduler[] = {
         [TR_NONE_SCHEDULER] = "none",
@@ -43,14 +60,13 @@ static const char *tr_valid_scheduler[] = {
         NULL,
 };
 
-static struct tr_info *global_info_head =
-        NULL; /**< trace-replay의 각각을 실행시킬 때 필요한 정보를 담고있는 구조체 리스트의 헤드입니다. */
+static struct tr_info *global_info_head = NULL; /**< global `tr_info` list */
 
 /**
- * @brief 자식이 생성되자마자 부모가 자식을 죽이는 명령을 보낸 경우에 각종 자식이 가진 자원을 정리합니다.
+ * @brief Capture the SIGTERM and deallocate all resources which this process has.
  *
- * @param signum 현재 받은 시그널에 해당합니다.
- * @note 이 함수는 SIGTEM을 캡쳐합니다. (SIGKILL은 캡처되지 않으므로 사용해서는 안됩니다!)
+ * @param[in] signum Current captured signal.
+ * @note SIGKILL isn't captured.
 	 */
 static void tr_kill_handle(int signum)
 {
@@ -67,7 +83,7 @@ static void tr_kill_handle(int signum)
 }
 
 /**
- * @brief 실질적으로 trace-replay 관련 구조체의 동적 할당된 내용을 해제하는 부분에 해당합니다.
+ * @brief Deallocate this driver's resources.
  * @note http://www.ascii-art.de/ascii/def/dr_who.txt
  */
 static void __tr_free(void)
@@ -77,7 +93,7 @@ static void __tr_free(void)
                 struct tr_info *next = global_info_head->next;
 
                 if (getpid() == current->ppid &&
-                    0 != current->pid) { /* 자식 프로세스를 죽입니다. */
+                    0 != current->pid) { /* KILL CHILD PROCESS. */
                         int status = 0;
                         /********************************************
                                                  Exterminate!
@@ -101,7 +117,7 @@ static void __tr_free(void)
                                         current->pid, status);
                                 _exit(EXIT_FAILURE);
                         }
-                        /* IPC 객체를 삭제합니다. */
+                        /* Remove the IPC object. */
                         tr_shm_free(current, TR_IPC_FREE);
                         tr_mq_free(current, TR_IPC_FREE);
                 }
@@ -116,11 +132,11 @@ static void __tr_free(void)
 }
 
 /**
- * @brief 현재 입력되는 scheduler가 driver가 지원하는 지를 확인하도록 합니다.
+ * @brief Check the current inputted scheduler text can be supported by the driver.
  *
- * @param scheduler 검사하고자 하는 스케쥴러 문자열을 가진 문자열 포인터입니다.
+ * @param[in] scheduler Inputted scheduler string.
  *
- * @return 가지고 있는 경우 0이 반환되고, 그렇지 않은 경우 -EINVAL이 반환됩니다.
+ * @return 0 for mean support the scheduler, -EINVAL for mean don't support the scheduler.
  */
 int tr_valid_scheduler_test(const char *scheduler)
 {
@@ -135,12 +151,12 @@ int tr_valid_scheduler_test(const char *scheduler)
 }
 
 /**
- * @brief 전역 옵션을 설정한 후에 각각의 프로세스 별로 할당할 옵션을 설정하도록 합니다.
+ * @brief Initialize the global configuration and per processes configuration.
  *
- * @param object 전역 runner_config의 포인터가 들어가야 합니다.
+ * @param[in] object global `runner_config` pointer.
  *
- * @return 정상적으로 초기화가 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
- * @warning 자식 프로세스에서 이 함수가 절대로 실행되서는 안됩니다.
+ * @return 0 for success to init, error number for fail to init.
+ * @warning Do not run this function in child process.
  */
 int tr_init(void *object)
 {
@@ -193,7 +209,7 @@ int tr_init(void *object)
 
         for (i = 0; i < nr_tasks; i++) {
                 current = tr_info_init(setting, i);
-                if (!current) { /* 할당 실패가 벌어진 경우 */
+                if (!current) { /* Fail to allocate */
                         ret = -ENOMEM;
                         goto exception;
                 }
@@ -203,7 +219,7 @@ int tr_init(void *object)
                         goto exception;
                 }
 
-                if (global_info_head == NULL) { /* 초기화 과정 */
+                if (global_info_head == NULL) { /* Initialize sequence */
                         prev = global_info_head = current;
                 } else {
                         prev->next = current;
@@ -218,18 +234,18 @@ exception:
 }
 
 /**
- * @brief control group에 자식 프로세스가 작동할 수 있도록 설정합니다.
+ * @brief Set the child process to specific control group(cgroup)
  *
- * @param current 현재 프로세스의 정보를 가진 구조체를 가리킵니다.
+ * @param[in] current The structure which has the current process information.
  *
- * @return 정상 종료한 경우에는 0 그 이외에는 적절한 errno이 반환됩니다.
+ * @return 0 for success to set, errno for fail to set.
  */
 static int tr_set_cgroup_state(struct tr_info *current)
 {
         int ret = 0;
         char cmd[PATH_MAX];
 
-        /* cgroup을 생성하는 과정에 해당합니다. */
+        /* Generate cgroup seqeunce. */
         snprintf(cmd, PATH_MAX, "mkdir /sys/fs/cgroup/blkio/%s%d",
                  current->prefix_cgroup_name, current->pid);
         pr_info(INFO, "Do command: \"%s\"\n", cmd);
@@ -240,7 +256,7 @@ static int tr_set_cgroup_state(struct tr_info *current)
         }
 
         ret = strcmp(current->scheduler, tr_valid_scheduler[TR_BFQ_SCHEDULER]);
-        if (ret == 0) { /* BFQ 스케쥴러이면 weight를 설정해줍니다. */
+        if (ret == 0) { /* Set the weight when BFQ scheduler. */
                 snprintf(cmd, PATH_MAX,
                          "echo %d > /sys/fs/cgroup/blkio/%s%d/blkio.%s.weight",
                          current->weight, current->prefix_cgroup_name,
@@ -269,11 +285,11 @@ static int tr_set_cgroup_state(struct tr_info *current)
 }
 
 /**
- * @brief 자식 프로세스에 trace-replay를 올려서 동작시키는 함수입니다.
+ * @brief Each process `trace-replay` execute part. 
  *
- * @param current 자식 프로세스에 돌릴 trace-replay 설정에 해당합니다.
+ * @param[in] current The structure which has the current process information.
  *
- * @return 성공한 경우에는 0, 그렇지 않은 경우 음수 값이 들어갑니다.
+ * @return 0 for success to execute, negative value for fail to create.
  */
 static int tr_do_exec(struct tr_info *current)
 {
@@ -328,9 +344,9 @@ static int tr_do_exec(struct tr_info *current)
 }
 
 /**
- * @brief trace-replay를 실행시키도록 합니다.
+ * @brief Run all processes' `trace-replay` part.
  *
- * @return 정상적으로 동작이 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ * @return 0 for success to run, error number for fail to run.
  */
 int tr_runner(void)
 {
@@ -342,7 +358,7 @@ int tr_runner(void)
         snprintf(cmd, PATH_MAX, "rmdir /sys/fs/cgroup/blkio/%s*",
                  current->prefix_cgroup_name);
         pr_info(INFO, "Do command: \"%s\"\n", cmd);
-        ret = system(cmd); /* 이 오류는 무시해도 상관없습니다. */
+        ret = system(cmd); /* You can ignore this return value. */
         if (ret) {
                 pr_info(WARNING, "Deletion sequence ignore: \"%s\"\n", cmd);
         }
@@ -357,13 +373,13 @@ int tr_runner(void)
                 return -EINVAL;
         }
 
-        TELL_WAIT(); /* 동기화를 준비하는 과정입니다. */
+        TELL_WAIT(); /* Prepare to synchronization. */
         tr_info_list_traverse(current, global_info_head)
         {
                 if (0 > (pid = fork())) {
                         pr_info(ERROR, "Fork failed. (pid: %d)\n", pid);
                         return -EFAULT;
-                } else if (0 == pid) { /* 자식 프로세스 */
+                } else if (0 == pid) { /* Child process */
                         struct sigaction act;
                         memset(&act, 0, sizeof(act));
                         act.sa_handler = tr_kill_handle;
@@ -373,7 +389,7 @@ int tr_runner(void)
                                         "Cannot execute program (errno: %d)\n",
                                         ret);
                                 perror("Execution error detected");
-                                tr_kill_handle(SIGKILL); /* execute 실패 */
+                                tr_kill_handle(SIGKILL); /* Failt to execute. */
                                 _exit(EXIT_FAILURE);
                         }
                         pr_info(WARNING,
@@ -383,11 +399,11 @@ int tr_runner(void)
                         _exit(EXIT_SUCCESS);
                 }
 
-                /* 부모 프로세스 */
+                /* Parent process */
                 current->pid = pid;
                 tr_set_cgroup_state(current);
 
-                /* IPC 객체를 생성합니다. */
+                /* Create the IPC object. */
                 if (0 > (ret = tr_shm_init(current))) {
                         return ret;
                 }
@@ -396,7 +412,7 @@ int tr_runner(void)
                 }
         }
 
-        /* 모든 자식을 깨우도록 합니다. */
+        /* Wake all children. */
         tr_info_list_traverse(current, global_info_head)
         {
                 TELL_CHILD();
@@ -406,13 +422,13 @@ int tr_runner(void)
 }
 
 /**
- * @brief trace-replay가 실행 중일 때의 정보를 반환합니다.
+ * @brief Get execution-time results from `trace-replay`.
  *
- * @param key 임의의 cgroup_id에 해당합니다.
- * @param buffer 값이 반환되는 위치에 해당합니다.
+ * @param[in] key `cgroup_id` value which specifies the location of data I want to get.
+ * @param[out] buffer Data contains the execution-time results based on `key`.
  *
- * @return 정상적으로 종료되는 경우에는 log.type 정보가 반환되고, 그렇지 않은 경우 적절한 음수 값이 반환됩니다.
- * @note buffer를 재활용을 많이 하기 때문에 buffer의 내용은 반드시 미리 runner에서 할당이 되어 있어야 합니다.
+ * @return `log.type` for success to get information, negative value for fail to get information.
+ * @warning `buffer` must be allocated memory over and equal `INTERVAL_RESULT_STRING_SIZE`
  */
 int tr_get_interval(const char *key, char *buffer)
 {
@@ -447,12 +463,13 @@ int tr_get_interval(const char *key, char *buffer)
 }
 
 /**
- * @brief trace-replay가 동작 완료한 후의 정보를 반환합니다.
+ * @brief Get end-time results from `trace-replay`.
  *
- * @param key 임의의 cgroup_id에 해당합니다.
- * @param buffer 값이 반환되는 위치에 해당합니다.
+ * @param[in] key `cgroup_id` value which specifies the location of data I want to get.
+ * @param[out] buffer Data contains the end-time results based on `key`.
  *
- * @return 정상적으로 동작이 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ * @return 0 for success to get information, negative value for fail to get information.
+ * @warning `buffer` must be allocated memory over and equal `TOTAL_RESULT_STRING_SIZE`
  */
 int tr_get_total(const char *key, char *buffer)
 {
@@ -486,7 +503,7 @@ int tr_get_total(const char *key, char *buffer)
 }
 
 /**
- * @brief trace-replay 관련 동적 할당 정보를 해제합니다.
+ * @brief Deallocate resources of this driver.
  */
 void tr_free(void)
 {

@@ -1,6 +1,23 @@
 /**
+ * @copyright "Container Tracer" which executes the container performance mesurements
+ * Copyright (C) 2020 BlaCkinkGJ
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
  * @file tr-mq.c
- * @brief Message Queue를 생성 및 사용하는 방식이 구현되어 있습니다.
+ * @brief This has the contents of creating and using Message Queue.
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
  * @version 0.1
  * @date 2020-08-10
@@ -20,11 +37,11 @@
 #include <driver/tr-driver.h>
 
 /**
- * @brief Message Queue를 초기화하는 함수입니다.
+ * @brief Initialize the Message Queue.
  *
- * @param pid 이 메시지 큐를 사용하는 Process의 ID입니다.
+ * @param[in] pid Process' ID of using this Message Queue.
  *
- * @return 성공적으로 종료된 경우에는 메시지 큐의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return Message ID for success to init, negative value for fail to init.
  */
 static int __tr_mq_init(const pid_t pid)
 {
@@ -41,7 +58,7 @@ static int __tr_mq_init(const pid_t pid)
         snprintf(mq_path, BASE_KEY_PATHNAME_LEN, "%s_%d", MSGQ_KEY_PATHNAME,
                  pid);
 
-        /* 파일이 존재하지 않는 경우에 파일을 생성합니다. */
+        /* Create the file if there isn't exist the directory in `mq_path` */
         (void)close(open(mq_path, O_WRONLY | O_CREAT, 0));
 
         if (0 > (mq_key = ftok(mq_path, PROJECT_ID))) {
@@ -72,11 +89,11 @@ exception:
 }
 
 /**
- * @brief Message Queue와 관련된 설정에 대해서 초기화를 진행하도록 합니다.
+ * @brief Wrapping function of `__tr_mq_init()`
  *
- * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
+ * @param[in] info `tr_info` structure which wants to init.
  *
- * @return 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 0 for success to init, negative value for fail to init.
  */
 int tr_mq_init(struct tr_info *info)
 {
@@ -101,12 +118,12 @@ int tr_mq_init(struct tr_info *info)
 }
 
 /**
- * @brief Message Queue로 부터 데이터를 가져오는 함수입니다.
+ * @brief Retrieve the data from Message Queue.
  *
- * @param info 데이터를 가져와야 하는 곳을 가리키는 정보를 가진 구조체의 포인터에 해당합니다.
- * @param buffer 데이터가 실제 저장되는 버퍼를 가리킵니다.
+ * @param[in] info `tr_info` structure which wants to get data.
+ * @param[out] buffer Destination of data will be stored
  *
- * @return 정상 종료가 된 경우에는 0, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 0 for success to init, negative value for fail to init.
  */
 int tr_mq_get(const struct tr_info *info, void *buffer)
 {
@@ -126,10 +143,10 @@ int tr_mq_get(const struct tr_info *info, void *buffer)
 }
 
 /**
- * @brief Message Queue의 할당된 내용을 해제하도록 합니다.
+ * @brief Deallocate the Message Queue resources.
  *
- * @param info 할당 해제를 진행할 tr_info에 해당합니다.
- * @param flags 해제의 정도를 설정하는 flag에 해당합니다.
+ * @param[in] info `tr_info` structure which wants to deallocate.
+ * @param[in] flags Set a range of deallocation.
  */
 void tr_mq_free(struct tr_info *info, int flags)
 {

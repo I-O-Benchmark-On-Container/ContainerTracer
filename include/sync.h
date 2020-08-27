@@ -1,7 +1,24 @@
 /**
+ * @copyright "Container Tracer" which executes the container performance mesurements
+ * Copyright (C) 2020 BlaCkinkGJ
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
  * @file sync.h
- * @brief 파이프를 활용한 동기화 도구입니다.
- * @details 파이프 크기는 Linux의 경우에는 약 4KB 입니다. 동기화 방식은 read, write의 Blocking 특성을 활용하여 개발되었습니다.
+ * @brief Synchronization program based on pipe.
+ * @details In Linux, the size of pipe is about 4KB. And the synchronization method is implemented by using R/W's blocking specification.
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
  * @version 0.1
  * @date 2020-08-09
@@ -19,9 +36,9 @@
 static int pfd1[2], pfd2[2];
 
 /**
- * @brief 파이프를 만들어주는 과정으로 부모가 자식을 부르기 전에 이를 반드시 호출해야 합니다.
+ * @brief Pipe initialize sequence. You must call before use this source.
  *
- * @return 성공한 경우에는 0 실패한 경우에는 -EPIPE를 반환합니다.
+ * @return 0 for success to make pipe, -EPIPE for fail to make pipe.
  */
 static inline int TELL_WAIT(void)
 {
@@ -33,10 +50,10 @@ static inline int TELL_WAIT(void)
 }
 
 /**
- * @brief 자식이 부모를 호출하는 역할을 합니다.
+ * @brief The child calls parents.
  *
- * @return 성공한 경우에는 0 실패한 경우에는 -EIO를 반환합니다.
- * @warning 특정 부모가 아닌 임의의 부모를 호출합니다.
+ * @return 0 for success to write, -EIO for fail to write
+ * @note This doesn't wake up a specific parent. This wakes randomly selected a parent.
  */
 static inline int TELL_PARENT(void)
 {
@@ -48,9 +65,9 @@ static inline int TELL_PARENT(void)
 }
 
 /**
- * @brief 부모에게 완료되었다는 메시지를 수신합니다.
+ * @brief Receive from parent's call.
  *
- * @return 성공한 경우에는 0 실패한 경우에는 -EIO를 반환합니다.
+ * @return 0 for success to read, -EIO for fail to read.
  */
 static inline int WAIT_PARENT(void)
 {
@@ -70,10 +87,10 @@ static inline int WAIT_PARENT(void)
 }
 
 /**
- * @brief 부모가 자식을 호출하는 역할을 합니다.
+ * @brief The parent calls children.
  *
- * @return 성공한 경우에는 0 실패한 경우에는 -EIO를 반환합니다.
- * @warning 특정 자식이 아닌 임의의 자식을 호출합니다.
+ * @return 0 for success to write, -EIO for fail to write
+ * @note This doesn't wake up a specific child. This wakes randomly selected a child.
  */
 static inline int TELL_CHILD(void)
 {
@@ -85,9 +102,9 @@ static inline int TELL_CHILD(void)
 }
 
 /**
- * @brief 자식에서 완료되었다는 메시지를 수신합니다.
+ * @brief Receive from child's call.
  *
- * @return 성공한 경우에는 0 실패한 경우에는 -EIO를 반환합니다.
+ * @return 0 for success to read, -EIO for fail to read.
  */
 static inline int WAIT_CHILD(void)
 {

@@ -132,11 +132,12 @@ static double time_since(struct timeval *start_tv, struct timeval *stop_tv)
 void *allocate_aligned_buffer(size_t size)
 {
         void *p;
+        int ret;
 
-        posix_memalign(&p, getpagesize(), size);
+        ret = posix_memalign(&p, getpagesize(), size);
 
-        if (!p) {
-                perror("memalign");
+        if (!p || (ret != 0)) {
+                fprintf(stderr, "memalign: %d\n", ret);
                 exit(0);
                 return NULL;
         }
@@ -562,7 +563,7 @@ Timeout:
         return NULL;
 }
 
-int print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
+void print_result(int nr_trace, int nr_thread, FILE *fp, int detail)
 {
         struct io_stat_t total_stat;
         struct realtime_msg rmsg;
@@ -960,10 +961,13 @@ void usage_help()
 int remove_lastchars(FILE *fp, int len)
 {
         int position;
+        int ret;
 
         fseek(fp, -len, SEEK_END);
         position = ftell(fp);
-        ftruncate(fileno(fp), position);
+        ret = ftruncate(fileno(fp), position);
+        if (ret != 0)
+                fprintf(stderr, "ftruncate: %d\n", ret);
 
         return position;
 }
@@ -1204,7 +1208,7 @@ void synthetic_gen(struct trace_info_t *trace)
         synthetic_mix(trace);
 }
 
-int destroy(pthread_t *threads, int qdepth)
+void destroy(pthread_t *threads, int qdepth)
 {
         int t, i;
 

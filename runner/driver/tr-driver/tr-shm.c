@@ -1,6 +1,23 @@
 /**
+ * @copyright "Container Tracer" which executes the container performance mesurements
+ * Copyright (C) 2020 BlaCkinkGJ
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
  * @file tr-shm.c
- * @brief Shared Memory를 생성 및 사용하는 방식이 구현되어 있습니다.
+ * @brief This has the contents of creating and using Shared Memory.
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
  * @version 0.1
  * @date 2020-08-10
@@ -21,11 +38,11 @@
 #include <driver/tr-driver.h>
 
 /**
- * @brief 세마포어만을 초기화하는 함수입니다.
+ * @brief Initialize the Semaphore.
  *
- * @param pid 이 세마포어를 사용하는 Process의 ID입니다.
+ * @param[in] pid Process' ID of using this Semaphore.
  *
- * @return 성공적으로 종료된 경우에는 세마포어의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return SemaphoreID for success to init, negative value for fail to init.
  */
 static int __tr_sem_init(const pid_t pid)
 {
@@ -87,11 +104,11 @@ exception:
 }
 
 /**
- * @brief Shared Memory만을 초기화하는 함수입니다.
+ * @brief Initialize the Shared Memory.
  *
- * @param pid 이 Shared Memory를 사용하는 Process ID입니다.
+ * @param[in] pid Process' ID of using this Shared Memory.
  *
- * @return 성공적으로 종료된 경우에는 Shared Memory의 ID가 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return Shared MemoryID for success to init, negative value for fail to init.
  */
 static int __tr_shm_init(const pid_t pid)
 {
@@ -108,7 +125,7 @@ static int __tr_shm_init(const pid_t pid)
         snprintf(shm_path, BASE_KEY_PATHNAME_LEN, "%s_%d", SHM_KEY_PATHNAME,
                  pid);
 
-        /* 파일이 존재하지 않는 경우에 파일을 생성합니다. */
+        /* If there doesn't exist the file then create the file. */
         (void)close(open(shm_path, O_WRONLY | O_CREAT, 0));
 
         if (0 > (shm_key = ftok(shm_path, PROJECT_ID))) {
@@ -140,9 +157,9 @@ exception:
 }
 
 /**
- * @brief 세마포어 락을 획득합니다.
+ * @brief Acquire the semaphore lock.
  *
- * @param info 세마포어 획득 대상 정보를 가진 구조체 포인터입니다.
+ * @param[in] info This is an information pointer that wants to acquire the semaphore.
  */
 static void tr_sem_wait(const struct tr_info *info)
 {
@@ -153,14 +170,14 @@ static void tr_sem_wait(const struct tr_info *info)
         };
 
         pr_info(INFO, "Going to sleep (pid: %d)\n", info->pid);
-        /* 1은 연산 갯수를 지칭합니다. */
+        /* 1 means the number of operations. */
         assert(-1 != semop(info->semid, &sop, 1));
 }
 
 /**
- * @brief 세마포어 락을 반환합니다.
+ * @brief Release the semaphore lock.
  *
- * @param info 세마포어 반환 대상 정보를 가진 구조체 포인터입니다.
+ * @param[in] info This is an information pointer that wants to release the semaphore.
  */
 static void tr_sem_post(const struct tr_info *info)
 {
@@ -175,11 +192,11 @@ static void tr_sem_post(const struct tr_info *info)
 }
 
 /**
- * @brief Shared Memory와 관련된 설정에 대해서 초기화를 진행하도록 합니다.
+ * @brief Do the `__tr_shm_init()` and `__tr_sem_init()`
  *
- * @param info 초기화를 진행하고자 하는 대상을 가리키는 구조체의 포인터입니다.
+ * @param[in] info `tr_info` structure which wants to init.
  *
- * @return 정상 종료가 된 경우에는 0이 반환되고, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 0 for success to init, negative value for fail to init.
  */
 int tr_shm_init(struct tr_info *info)
 {
@@ -214,12 +231,12 @@ int tr_shm_init(struct tr_info *info)
 }
 
 /**
- * @brief Shared Memory로 부터 데이터를 가져오는 함수입니다.
+ * @brief Retrieve the data from Shared Memory.
  *
- * @param info 데이터를 가져와야 하는 곳을 가리키는 정보를 가진 구조체의 포인터에 해당합니다.
- * @param buffer 데이터가 실제 저장되는 버퍼를 가리킵니다.
+ * @param[in] info `tr_info` structure which wants to get data.
+ * @param[out] buffer Destination of data will be stored
  *
- * @return 정상 종료가 된 경우에는 0, 그렇지 않은 경우에는 음수 값이 반환됩니다.
+ * @return 0 for success to init, negative value for fail to init.
  */
 int tr_shm_get(const struct tr_info *info, void *buffer)
 {
@@ -241,10 +258,10 @@ int tr_shm_get(const struct tr_info *info, void *buffer)
 }
 
 /**
- * @brief Shared Memory의 할당된 내용을 해제하도록 합니다.
+ * @brief Deallocate the Shared Memory resources.
  *
- * @param info 할당 해제를 진행할 tr_info에 해당합니다.
- * @param flags 해제의 정도를 설정하는 flag에 해당합니다.
+ * @param[in] info `tr_info` structure which wants to deallocate.
+ * @param[in] flags Set a range of deallocation.
  */
 void tr_shm_free(struct tr_info *info, int flags)
 {
