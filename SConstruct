@@ -19,6 +19,7 @@ env['CC']=["gcc"]
 if env["DEBUG"] == True:
 	env.Append(CFLAGS=["-g", "-pg"])
 	env.Append(CFLAGS=["-DLOG_INFO", "-DDEBUG"])
+	env.Append(LINKFLAGS=["-g", "-pg"])
 	env["PROGRAM_LOCATION"] = "#build/debug"
 else:
 	pass
