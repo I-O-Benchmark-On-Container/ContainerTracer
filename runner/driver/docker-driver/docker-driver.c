@@ -238,41 +238,6 @@ exception:
 }
 
 /**
- * @brief Set the child process to specific control group(cgroup)
- *
- * @param[in] current The structure which has the current process information.
- *
- * @return 0 for success to set, errno for fail to set.
- */
-static int docker_set_cgroup_state(struct docker_info *current)
-{
-        int ret = 0;
-
-        ret = strcmp(current->scheduler,
-                     docker_valid_scheduler[DOCKER_BFQ_SCHEDULER]);
-        if (ret == 0) { /* Set the weight when BFQ scheduler. */
-                char cmd[PATH_MAX];
-
-                snprintf(
-                        cmd, PATH_MAX,
-                        "echo %d > /sys/fs/cgroup/blkio/docker/%s/blkio.%s.weight",
-                        current->weight, current->container_id,
-                        current->scheduler);
-                pr_info(INFO, "Do command: \"%s\"\n", cmd);
-                ret = system(cmd);
-                if (ret) {
-                        pr_info(ERROR, "Cannot set weight: \"%s\"\n", cmd);
-                        return ret;
-                }
-        }
-
-        pr_info(INFO, "CGROUP READY (CONTAINER ID: %s)\n",
-                current->container_id);
-
-        return 0;
-}
-
-/**
  * @brief Each process `trace-replay` execute part. 
  *
  * @param[in] current The structure which has the current process information.
@@ -295,11 +260,17 @@ static int docker_create_container(struct docker_info *current)
         /* Create the docker container */
         snprintf(filename, sizeof(filename), "%s_%u_%s.txt", current->scheduler,
                  current->weight, current->cgroup_id);
-        sprintf(cmd,
-                "docker container create --name %s --ipc=host -v /tmp/%s/tmp:/tmp --device /dev/%s suhoson/trace_replay:latest /usr/local/bin/trace-replay %u %u %s %u %u /dev/%s %s %u %u %u",
+        sprintf(cmd, "docker container create \
+				--name %s \
+				--ipc=host \
+				-v /tmp/%s/tmp:/tmp \
+				--device /dev/%s \
+				--blkio-weight=%d \
+				suhoson/trace_replay:latest \
+				/usr/local/bin/trace-replay %u %u %s %u %u /dev/%s %s %u %u %u",
                 current->cgroup_id, current->cgroup_id, current->device,
-                current->q_depth, current->nr_thread, filename, current->time,
-                current->trace_repeat, current->device,
+                current->weight, current->q_depth, current->nr_thread, filename,
+                current->time, current->trace_repeat, current->device,
                 current->trace_data_path, current->wss, current->utilization,
                 current->iosize);
 
@@ -418,9 +389,6 @@ int docker_runner(void)
 
         docker_info_list_traverse(current, global_info_head)
         {
-                /* Set cgroup weight and execute. */
-                docker_set_cgroup_state(current);
-
                 sprintf(cmd, "docker start %s > /dev/null", current->cgroup_id);
                 if (0 != (ret = system(cmd))) {
                         pr_info(ERROR, "Cannot start container: %s\n",
