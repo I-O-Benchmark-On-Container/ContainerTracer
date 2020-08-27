@@ -38,7 +38,7 @@
                     <div style="padding:10px"></div>
                     <ul>
                         <li>
-                            <label>cgroup 개수</label>
+                            <label># of cgroup</label>
                             <select name="setCgroup" id="cgroup" class="form-control form_theme search_theme">
                                 <option value="4">4</option>
                                 <option value="8">8</option>
@@ -48,11 +48,11 @@
                         </li>
 
                         <li>
-                            <label>driver 선택</label>
+                            <label>Driver</label>
                             <input type="text" class="form-control form_theme search_theme" name="setDriver" id="driver" placeholder="ex: " autocomplete="off" value="trace-replay" readonly>
                         </li>
                     </ul>
-                    <button class="form-control form_theme search_theme btn_submit" id="btnSelectWork">세부 옵션 설정</button>
+                    <button class="form-control form_theme search_theme btn_submit" id="btnSelectWork">Advanced Settings</button>
                 </div>
                 <!-- MAIN CARDS-->
                 <div class="body_content bg-light hide" id="optionDisplay">
@@ -172,7 +172,7 @@
                             </div>
                         </div>
                         <div style="width:100%;" class="btn_submit_wrapper">
-                            <button class="form-control form_theme search_theme btn_submit" id="btnStartWork">작업 시작</button>
+                            <button class="form-control form_theme search_theme btn_submit" id="btnStartWork">Start</button>
                         </div>
                     </div>
                 </div>
@@ -193,14 +193,14 @@
                         </div>
                         <div class="col-sm-4">
                             <h2 class="text-info">
-                                <small class="text-muted">Current BW</small>
+                                <small class="text-muted">Current Bandwidth</small>
                             </h2>
                             <input type="hidden" class="chart_option" name="CHART_OPTION" value="CurBandwidth">
                             <canvas class="chart" id="curBandWidthChart" height="200"></canvas>
                         </div>
                         <div class="col-sm-4">
                             <h2 class="text-info">
-                                <small class="text-muted">Average BW</small>
+                                <small class="text-muted">Average Bandwidth</small>
                             </h2>
                             <input type="hidden" class="chart_option" name="CHART_OPTION" value="AvgBandwidth">
                             <canvas class="chart" id="avgBandWidthChart" height="200"></canvas>
@@ -211,7 +211,7 @@
         </div>
         <div class="row_min_width">
             <div class="notification_wrapper">
-                <span class="notification">지원되지 않는 해상도입니다.</span>
+                <span class="notification">Unsupported Resolution.</span>
             </div>
         </div>
     </section>

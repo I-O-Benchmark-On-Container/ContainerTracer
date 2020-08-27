@@ -5,7 +5,6 @@ let dataList = [[], [], []];
 let charts = [[], [], []];
 
 function showChart(nrCgroup) {
-    // 만약 차트를 추가한다면 ctxIdx를 추가하면 됨
     let rgb = new Array(nrCgroup);
     for(let ctxIdx = 0; ctxIdx < $ctxArray.length; ctxIdx++){
         for(let cgroupIdx = 0; cgroupIdx < nrCgroup; cgroupIdx++){
