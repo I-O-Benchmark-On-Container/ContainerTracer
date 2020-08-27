@@ -67,7 +67,7 @@ static const unsigned long key_len = sizeof(key) / sizeof(char *);
 #define NR_TASKS (key_len)
 #define NR_THREAD ((int)(Q_DEPTH / NR_TASKS))
 
-#define FLAGS_MASK (0x3F)
+#define FLAGS_MASK ((0x1 << NR_TASKS) - 1)
 
 static char *json, *task_options;
 static struct json_object *jobject;
@@ -169,8 +169,8 @@ void test(void)
                 for (unsigned long i = 0; i < key_len; i++) {
                         struct json_object *object, *tmp;
                         int type;
-                        if (flags & (0x1 << i)) {
-                                continue;
+                        if (flags == FLAGS_MASK) {
+                                break;
                         }
 
                         buffer = runner_get_interval_result(key[i]);

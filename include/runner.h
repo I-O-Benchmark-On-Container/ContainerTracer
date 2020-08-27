@@ -35,8 +35,8 @@
 #define INTERVAL_RESULT_STRING_SIZE (PAGE_SIZE) /**< Expected 4KB */
 #define TOTAL_RESULT_STRING_SIZE (PAGE_SIZE * PAGE_SIZE) /**< Expected 16MB */
 
-#define CGROUP_MIN_WEIGHT 1
-#define CGROUP_MAX_WEIGHT 1000
+#define BFQ_MIN_WEIGHT 1
+#define BFQ_MAX_WEIGHT 1000
 
 enum { RUNNER_FREE_ALL_MASK =
                0xFFFF, /**< This mask checks the flag want to deallocate all. */
@@ -66,5 +66,17 @@ void runner_put_result_string(char *buffer);
 void runner_free(void);
 void runner_config_free(struct runner_config *config, const int flags);
 const struct runner_config *runner_get_global_config(void);
+
+/**
+ * @brief Check the validation of BFQ scheduler's weight.
+ *
+ * @param[in] weight BFQ scheduler's weight.
+ *
+ * @return 1 for valid BFQ weight, 0 for invalid BFQ weight.
+ */
+static inline int runner_is_valid_bfq_weight(unsigned int weight)
+{
+        return (weight <= BFQ_MAX_WEIGHT && weight >= BFQ_MIN_WEIGHT);
+}
 
 #endif
