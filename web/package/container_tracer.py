@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from flask_socketio import SocketIO
 from threading import Thread
 import ctypes
+import json
 import os
 
 
@@ -25,6 +26,7 @@ class ContainerTracer(metaclass=ABCMeta):
         self.socketio = socketio
         self.libc = ctypes.CDLL(self._libc_path)
         self._set_config(config)
+        self.nr_tasks = int(config["setting"]["nr_tasks"])
         ret = self.libc.runner_init(self.config_json.encode())
         if ret != 0:
             raise OSError(ret, os.strerror(ret))
@@ -61,6 +63,21 @@ class ContainerTracer(metaclass=ABCMeta):
     @abstractmethod
     def _get_interval_result(self, key: str) -> None:
         pass
+
+    def _get_total_result(self) -> None:
+        key_set = set(["cgroup-" + str(i + 1) for i in range(self.nr_tasks)])
+        for key in key_set:
+            self.libc.runner_get_total_result.restype = ctypes.POINTER(ctypes.c_char)
+            ptr = self.libc.runner_get_total_result(key.encode())
+            if ptr == 0:
+                raise Exception("Memory Allocation Fail!")
+            ret = ctypes.cast(ptr, ctypes.c_char_p).value
+            self.libc.runner_put_result_string(ptr)
+
+            with open(f"{key}-total-result.json", "w") as f:
+                result_string = json.loads(ret.decode())
+                result_json = json.dumps(result_string, indent=4, sort_keys=True)
+                f.write(result_json)
 
     ##
     # @brief Refresh frontend chart by a interval with container-tracer async.

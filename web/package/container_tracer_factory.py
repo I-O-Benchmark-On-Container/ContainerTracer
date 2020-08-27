@@ -24,8 +24,11 @@ class ContainerTracerFactory(object):
     # @return Proper container-tracer module.
     def get_instance(self, config: dict, debug: bool = False) -> ContainerTracer:
         driver = config["driver"]
+        instance = None
         if driver in ["trace-replay", "docker"]:
             if debug:
-                return TraceReplayTest(self.socketio, config)
-            return TraceReplay(self.socketio, config)
-        return None
+                instance = TraceReplayTest(self.socketio, config)
+            else:
+                instance = TraceReplay(self.socketio, config)
+
+        return instance 

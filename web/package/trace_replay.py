@@ -1,7 +1,9 @@
 from .container_tracer import ContainerTracer
 from flask_socketio import SocketIO
 from . import chart
+import os
 import ctypes
+import stat
 import copy
 import json
 
@@ -51,9 +53,18 @@ class TraceReplay(ContainerTracer):
     # @param[in] confg config options from frontend.
     def _set_config(self, config: dict) -> None:
         super()._set_config(config)
+        if config["setting"]["trace_replay_path"] != "trace-replay":
+            self.socketio.emit("Invalid path")
+            raise Exception("Invalid container tracer path!")
+        device_path = "/dev/" + config["setting"]["device"]
+        st_mode = os.stat(device_path).st_mode
+        try:
+            stat.S_ISBLK(st_mode)
+        except:
+            self.socketio.emit("Invalid device")
+            raise Exception("Invalid device!")
         if isinstance(config["setting"]["nr_tasks"], str):
             config["setting"]["nr_tasks"] = int(config["setting"]["nr_tasks"])
-        self.nr_tasks = config["setting"]["nr_tasks"]
         self.config_json = json.dumps(config)
 
     ##
@@ -78,7 +89,9 @@ class TraceReplay(ContainerTracer):
     ##
     # @brief Refresh frotnend chart by a interval with trace-replay aysnc.
     # Send result via chart module.
-    def _refresh(self) -> None:
+    #
+    # @return `True` for success to execute, `False` for fail to execute.
+    def _refresh(self) -> bool:
         super()._refresh()
         frontend_chart = chart.Chart()
         key_set = set(["cgroup-" + str(i + 1) for i in range(self.nr_tasks)])
@@ -89,7 +102,6 @@ class TraceReplay(ContainerTracer):
 
             for key in current:
                 raw_data = self._get_interval_result(key).decode()
-                print(raw_data)
                 frontend_chart.set_config(raw_data)
                 chart_result = frontend_chart.get_chart_result()
 
@@ -100,3 +112,8 @@ class TraceReplay(ContainerTracer):
                 interval_results.append(chart_result)
             if len(key_set) == len(interval_results):
                 self._update_interval_results(interval_results)
+            else:
+                self._get_total_result()
+                self._update_interval_results({})
+                return True
+        return False
