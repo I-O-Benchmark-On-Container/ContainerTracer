@@ -253,6 +253,13 @@ static int docker_set_cgroup_state(struct docker_info *current)
         if (ret == 0) { /* Set the weight when BFQ scheduler. */
                 char cmd[PATH_MAX];
 
+                if (current->weight > CGROUP_MAX_WEIGHT ||
+                    current->weight < CGROUP_MIN_WEIGHT) {
+                        pr_info(ERROR, "Weight out of range: \"%d\"\n",
+                                current->weight);
+                        return -EINVAL;
+                }
+
                 snprintf(
                         cmd, PATH_MAX,
                         "echo %d > /sys/fs/cgroup/blkio/docker/%s/blkio.%s.weight",
@@ -418,9 +425,6 @@ int docker_runner(void)
 
         docker_info_list_traverse(current, global_info_head)
         {
-                /* Set cgroup weight and execute. */
-                docker_set_cgroup_state(current);
-
                 sprintf(cmd, "docker start %s > /dev/null", current->cgroup_id);
                 if (0 != (ret = system(cmd))) {
                         pr_info(ERROR, "Cannot start container: %s\n",
@@ -429,6 +433,9 @@ int docker_runner(void)
                         docker_shm_free(current, DOCKER_IPC_FREE);
                         docker_mq_free(current, DOCKER_IPC_FREE);
                 }
+
+                /* Set cgroup weight and execute. */
+                docker_set_cgroup_state(current);
         }
 
         return ret;

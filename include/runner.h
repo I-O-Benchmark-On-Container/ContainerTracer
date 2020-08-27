@@ -35,6 +35,9 @@
 #define INTERVAL_RESULT_STRING_SIZE (PAGE_SIZE) /**< Expected 4KB */
 #define TOTAL_RESULT_STRING_SIZE (PAGE_SIZE * PAGE_SIZE) /**< Expected 16MB */
 
+#define CGROUP_MIN_WEIGHT 1
+#define CGROUP_MAX_WEIGHT 1000
+
 enum { RUNNER_FREE_ALL_MASK =
                0xFFFF, /**< This mask checks the flag want to deallocate all. */
        RUNNER_FREE_DRIVER_MASK =
