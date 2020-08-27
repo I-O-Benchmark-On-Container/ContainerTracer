@@ -30,5 +30,4 @@ class ContainerTracerFactory(object):
                 instance = TraceReplayTest(self.socketio, config)
             else:
                 instance = TraceReplay(self.socketio, config)
-
         return instance 
