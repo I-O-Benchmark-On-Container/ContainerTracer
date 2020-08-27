@@ -12,7 +12,7 @@ class Config:
         unit_test_mode = "" if unit_test_mode is None else unit_test_mode
         self.unit_test_mode = unit_test_mode.lower() == "true"
         self.container_tracer = None
-        self.container_tracer_factory = container_tracer_factory.ContainerTracer(socketio)
+        self.container_tracer_factory = container_tracer_factory.ContainerTracerFactory(socketio)
 
     def store(self, input_data=dict, set_type=str):
         each_data = dict()

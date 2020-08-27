@@ -57,7 +57,7 @@ function addDataInChart(responseData){
     for (let chartIdx = 0; chartIdx < 3; chartIdx++) {
         var datasets = charts[chartIdx][CONFIG].data.datasets;
         for (let cgroupIdx = 0; cgroupIdx < datasets.length; cgroupIdx++) {
-            let id = responseData[cgroupIdx].cgroup_id;
+            let id = responseData[cgroupIdx].cgroup_id.split('-')[1];
             let data = responseData[cgroupIdx].data.lat;
 
             if (chartIdx == CUR_BW) {

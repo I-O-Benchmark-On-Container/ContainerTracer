@@ -9,20 +9,19 @@ class ContainerTracerFactory(object):
     ##
     # @brief Initialize with frontend socketio.
     #
-    # @param socketio Want to communicate with frontend.
+    # @param[in] socketio Want to communicate with frontend.
     def __init__(self, socketio: SocketIO) -> None:
         self.socketio = socketio
 
     ##
     # @brief Get proper instance with driver option in config.
     #
-    # @param socketio Want to communicate with frontend.
-    # @param config Container-tracer config options from frontend.
+    # @param[in] config Container-tracer config options from frontend.
     #
     # @return Proper container-tracer module.
     def get_instance(self, config: dict) -> ContainerTracer:
         driver = config["driver"]
-        if driver == "trace-replay":
+        if driver in ["trace-replay", "docker"]:
             return TraceReplay(self.socketio, config)
         else:
             return None
@@ -34,15 +33,14 @@ class ContainerTracerTest(object):
     ##
     # @brief Initialize with frontend socketio.
     #
-    # @param socketio Want to communicate with frontend.
+    # @param[in] socketio Want to communicate with frontend.
     def __init__(self, socketio: SocketIO) -> None:
         self.socketio = socketio
 
     ##
     # @brief Get proper instance with driver option in config.
     #
-    # @param socketio Want to communicate with frontend.
-    # @param config Container-tracer config options from frontend.
+    # @param[in] config Container-tracer config options from frontend.
     #
     # @return Proper container-tracer module.
     def get_instance(self, config: dict) -> ContainerTracer:

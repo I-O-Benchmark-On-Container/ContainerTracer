@@ -52,7 +52,6 @@ $(document).ready(function(){
 
     socket.on('chart_end', function(){
         toastr.clear();
-        socket.emit("reset");
         toastr.success("The results of the performance evaluation have been saved.", "Complete!");
         $("#chartState").val("0");
         $btnSelectWork.prop("disabled", false);

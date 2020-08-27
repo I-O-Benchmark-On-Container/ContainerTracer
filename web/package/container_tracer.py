@@ -19,8 +19,8 @@ class ContainerTracer(metaclass=ABCMeta):
     ##
     # @brief Initialize with socketio before run container-tracer.
     #
-    # @param socketio Want to communicate frontend socketio.
-    # @param config Config options from frontend.
+    # @param[in] socketio Want to communicate frontend socketio.
+    # @param[in] config Config options from frontend.
     def __init__(self, socketio: SocketIO, config: dict) -> None:
         self.socketio = socketio
         self.libc = ctypes.CDLL(self._libc_path)
@@ -32,7 +32,7 @@ class ContainerTracer(metaclass=ABCMeta):
     ##
     # @brief Set proper options before running run_all_container_tracer().
     #
-    # @param config Config options from frontend.
+    # @param[in] config Config options from frontend.
     @abstractmethod
     def _set_config(self, config: dict) -> None:
         pass
@@ -57,7 +57,7 @@ class ContainerTracer(metaclass=ABCMeta):
     # Run async with container-tracer.
     # If there are no result, pending.
     #
-    # @param key Certain group's key that want to receive.
+    # @param[in] key Certain group's key that want to receive.
     @abstractmethod
     def _get_interval_result(self, key: str) -> None:
         pass
@@ -72,12 +72,18 @@ class ContainerTracer(metaclass=ABCMeta):
     ##
     # @brief Send container-tracer interval result to frontend chart.
     #
-    # @param interval_result Container-traacer interval result
+    # @param[in] interval_result Container-traacer interval result
     # want to send to frontend chart.
     def _update_interval_results(self, interval_results: dict) -> None:
+        import pprint
+
+        print("======================================")
+        pprint.pprint(interval_results)
         if interval_results:
+            print("case 1")
             self.socketio.emit("chart_data_result", interval_results)
         else:
+            print("case 2")
             self.socketio.emit("chart_end")
 
     ##

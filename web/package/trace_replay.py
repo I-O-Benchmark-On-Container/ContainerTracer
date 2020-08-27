@@ -92,6 +92,7 @@ class TraceReplay(ContainerTracer):
 
                 if len(chart_result) == 0:
                     remain_set.remove(key)
+                    continue
 
                 interval_results.append(chart_result)
 

@@ -10,7 +10,7 @@ class Chart:
     ##
     # @brief Set interval result in json form into frontend chart form.
     #
-    # @param _json trace-replay interval result in json string form.
+    # @param[in] _json trace-replay interval result in json string form.
     def set_config(self, _json):
         interval_result = json.loads(_json)
 
@@ -26,28 +26,28 @@ class Chart:
     ##
     # @brief average bandwidth setter.
     #
-    # @param avg_bw average bandwidth.
+    # @param[in] avg_bw average bandwidth.
     def set_avg_bw(self, avg_bw):
         self.chart_result["data"]["avg_bw"] = avg_bw
 
     ##
     # @brief current bandwidth setter.
     #
-    # @param cur_bw current bandwidth
+    # @param[in] cur_bw current bandwidth
     def set_cur_bw(self, cur_bw):
         self.chart_result["data"]["cur_bw"] = cur_bw
 
     ##
     # @brief latency setter.
     #
-    # @param lat latency.
+    # @param[in] lat latency.
     def set_latency(self, lat):
         self.chart_result["data"]["lat"] = lat
 
     ##
     # @brief cgroup id setter.
     #
-    # @param cgroup_id cgroup id.
+    # @param[in] cgroup_id cgroup id.
     def set_cgroup_id(self, cgroup_id):
         self.chart_result["cgroup_id"] = cgroup_id
 
