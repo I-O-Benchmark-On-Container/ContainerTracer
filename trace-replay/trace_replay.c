@@ -132,11 +132,12 @@ static double time_since(struct timeval *start_tv, struct timeval *stop_tv)
 void *allocate_aligned_buffer(size_t size)
 {
         void *p;
+        int ret;
 
-        posix_memalign(&p, getpagesize(), size);
+        ret = posix_memalign(&p, getpagesize(), size);
 
-        if (!p) {
-                perror("memalign");
+        if (!p || (ret != 0)) {
+                fprintf(stderr, "memalign: %d\n", ret);
                 exit(0);
                 return NULL;
         }
@@ -960,10 +961,13 @@ void usage_help()
 int remove_lastchars(FILE *fp, int len)
 {
         int position;
+        int ret;
 
         fseek(fp, -len, SEEK_END);
         position = ftell(fp);
-        ftruncate(fileno(fp), position);
+        ret = ftruncate(fileno(fp), position);
+        if (ret != 0)
+                fprintf(stderr, "ftruncate: %d\n", ret);
 
         return position;
 }

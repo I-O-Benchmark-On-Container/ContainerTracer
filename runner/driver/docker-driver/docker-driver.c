@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * @file docker-driver.c
- * @brief trace-replay를 동작시키는 driver 구현부에 해당합니다.
+ * @brief Implementation of run the `trace-replay` benchmark with Docker.
  * @author SuhoSon (ngeol564@gmail.com)
  * @version 0.1
  * @date 2020-08-19
@@ -48,8 +48,8 @@ enum { DOCKER_NONE_SCHEDULER = 0,
 };
 
 /**
- * @brief 현재 tr-driver에서 지원하는 I/O 스케줄러가 들어가게 됩니다.
- * @warning kyber는 SCSI를 지원하지 않음을 유의해주시길 바랍니다.
+ * @brief Associated table of I/O scheduler.
+ * @warning Kyber sceduler doesn't support in SCSI devices.
  */
 static const char *docker_valid_scheduler[] = {
         [DOCKER_NONE_SCHEDULER] = "none",
@@ -59,30 +59,33 @@ static const char *docker_valid_scheduler[] = {
 };
 
 static struct docker_info *global_info_head =
-        NULL; /**< trace-replay의 각각을 실행시킬 때 필요한 정보를 담고있는 구조체 리스트의 헤드입니다. */
+        NULL; /**< global `docker_info` list */
 
+/**
+ * @brief Remove the docker container.
+ *
+ * @param[in] info Docker information that wants to remove.
+ */
 static void __docker_rm_container(struct docker_info *info)
 {
         char cmd[1000];
 
         sprintf(cmd, "docker rm -f %s > /dev/null 2>&1",
-                info->cgroup_id); /* Error는 무시 */
+                info->cgroup_id); /* Ignore the Error */
 
-        if (system(cmd) ==
-            -1) { /* Container가 존재하지 않을 경우 0이 아닌 값이 리턴 됨 */
+        if (system(cmd) == -1) {
                 pr_info(ERROR, "Cannot execute command: %s\n", cmd);
         }
 
         sprintf(cmd, "rm -rf /tmp/%s", info->cgroup_id);
 
-        if (system(cmd) ==
-            -1) { /* Container가 존재하지 않을 경우 0이 아닌 값이 리턴 됨 */
+        if (system(cmd) == -1) {
                 pr_info(ERROR, "Cannot execute command: %s\n", cmd);
         }
 }
 
 /**
- * @brief 실질적으로 trace-replay 관련 구조체의 동적 할당된 내용을 해제하는 부분에 해당합니다.
+ * @brief Deallocate this driver's resources.
  * @note http://www.ascii-art.de/ascii/def/dr_who.txt
  */
 static void __docker_free(void)
@@ -110,7 +113,7 @@ static void __docker_free(void)
 
                         __docker_rm_container(current);
 
-                        /* IPC 객체를 삭제합니다. */
+                        /* Remove the IPC object. */
                         docker_shm_free(current, DOCKER_IPC_FREE);
                         docker_mq_free(current, DOCKER_IPC_FREE);
 
@@ -124,11 +127,11 @@ static void __docker_free(void)
 }
 
 /**
- * @brief 현재 입력되는 scheduler가 driver가 지원하는 지를 확인하도록 합니다.
+ * @brief Check the current inputted scheduler text can be supported by the driver.
  *
- * @param scheduler 검사하고자 하는 스케쥴러 문자열을 가진 문자열 포인터입니다.
+ * @param[in] scheduler Inputted scheduler string.
  *
- * @return 가지고 있는 경우 0이 반환되고, 그렇지 않은 경우 -EINVAL이 반환됩니다.
+ * @return 0 for mean support the scheduler, -EINVAL for mean don't support the scheduler.
  */
 int docker_valid_scheduler_test(const char *scheduler)
 {
@@ -143,12 +146,12 @@ int docker_valid_scheduler_test(const char *scheduler)
 }
 
 /**
- * @brief 전역 옵션을 설정한 후에 각각의 프로세스 별로 할당할 옵션을 설정하도록 합니다.
+ * @brief Initialize the global configuration and per processes configuration.
  *
- * @param object 전역 runner_config의 포인터가 들어가야 합니다.
+ * @param[in] object global `runner_config` pointer.
  *
- * @return 정상적으로 초기화가 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
- * @warning 자식 프로세스에서 이 함수가 절대로 실행되서는 안됩니다.
+ * @return 0 for success to init, error number for fail to init.
+ * @warning Do not run this function in child process.
  */
 int docker_init(void *object)
 {
@@ -201,7 +204,7 @@ int docker_init(void *object)
 
         for (i = 0; i < nr_tasks; i++) {
                 current = docker_info_init(setting, i);
-                if (!current) { /* 할당 실패가 벌어진 경우 */
+                if (!current) { /* Fail to allocate */
                         ret = -ENOMEM;
                         goto exception;
                 }
@@ -211,7 +214,7 @@ int docker_init(void *object)
                         goto exception;
                 }
 
-                if (global_info_head == NULL) { /* 초기화 과정 */
+                if (global_info_head == NULL) { /* Initialize sequence */
                         prev = global_info_head = current;
                 } else {
                         prev->next = current;
@@ -219,7 +222,7 @@ int docker_init(void *object)
                 }
         }
 
-        /* Trace replay가 포함된 ubuntu 16.04 이미지 다운로드 */
+        /* Download the ubuntu 16.04 with trace-replay image*/
         ret = system(
                 "docker pull suhoson/trace_replay:latest > /dev/null 2>&1");
         if (ret) {
@@ -235,11 +238,11 @@ exception:
 }
 
 /**
- * @brief control group에 자식 프로세스가 작동할 수 있도록 설정합니다.
+ * @brief Set the child process to specific control group(cgroup)
  *
- * @param current 현재 프로세스의 정보를 가진 구조체를 가리킵니다.
+ * @param[in] current The structure which has the current process information.
  *
- * @return 정상 종료한 경우에는 0 그 이외에는 적절한 errno이 반환됩니다.
+ * @return 0 for success to set, errno for fail to set.
  */
 static int docker_set_cgroup_state(struct docker_info *current)
 {
@@ -247,7 +250,7 @@ static int docker_set_cgroup_state(struct docker_info *current)
 
         ret = strcmp(current->scheduler,
                      docker_valid_scheduler[DOCKER_BFQ_SCHEDULER]);
-        if (ret == 0) { /* BFQ 스케쥴러이면 weight를 설정해줍니다. */
+        if (ret == 0) { /* Set the weight when BFQ scheduler. */
                 char cmd[PATH_MAX];
 
                 snprintf(
@@ -270,11 +273,11 @@ static int docker_set_cgroup_state(struct docker_info *current)
 }
 
 /**
- * @brief 자식 프로세스에 trace-replay를 올려서 동작시키는 함수입니다.
+ * @brief Each process `trace-replay` execute part. 
  *
- * @param current 자식 프로세스에 돌릴 trace-replay 설정에 해당합니다.
+ * @param[in] current The structure which has the current process information.
  *
- * @return 성공한 경우에는 0, 그렇지 않은 경우 음수 값이 들어갑니다.
+ * @return 0 for success to create, negative value for fail to create.
  */
 static int docker_create_container(struct docker_info *current)
 {
@@ -289,7 +292,7 @@ static int docker_create_container(struct docker_info *current)
                 goto exception;
         }
 
-        /* Docker container 생성 */
+        /* Create the docker container */
         snprintf(filename, sizeof(filename), "%s_%u_%s.txt", current->scheduler,
                  current->weight, current->cgroup_id);
         sprintf(cmd,
@@ -313,6 +316,15 @@ static int docker_create_container(struct docker_info *current)
                 goto exception;
         }
 
+        if (DOCKER_SYNTH != docker_is_synth_type(current->trace_data_path)) {
+                sprintf(cmd, "docker cp %s %s:%s", current->trace_data_path,
+                        current->cgroup_id, current->trace_data_path);
+
+                ret = system(cmd);
+                if (ret)
+                        goto exception;
+        }
+
         pclose(fp);
         free(cmd);
 
@@ -329,9 +341,9 @@ exception:
 }
 
 /**
- * @brief trace-replay를 실행시키도록 합니다.
+ * @brief Run all processes' `trace-replay` part.
  *
- * @return 정상적으로 동작이 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ * @return 0 for success to run, error number for fail to run.
  */
 int docker_runner(void)
 {
@@ -341,18 +353,18 @@ int docker_runner(void)
 
         docker_info_list_traverse(current, global_info_head)
         {
-                // 기존의 container를 지우도록 합니다.
+                /* Remove the existing container */
                 __docker_rm_container(current);
         }
 
         docker_info_list_traverse(current, global_info_head)
         {
                 __attribute__((unused)) int ignore_ret = 0;
-                // 기존의 container를 지우도록 합니다.
+                /* Remove the existing container */
                 sprintf(cmd, "docker rm -f %s", current->cgroup_id);
                 ignore_ret = system(cmd);
 
-                // 기존의 디렉터리를 삭제하도록 합니다.
+                /* Remove the existing directory */
                 sprintf(cmd, "rm -rf /tmp/%s", current->cgroup_id);
                 ignore_ret = system(cmd);
         }
@@ -369,16 +381,16 @@ int docker_runner(void)
 
         docker_info_list_traverse(current, global_info_head)
         {
-                current->pid = 1; /* Container 안에서 pid입니다. */
+                current->pid = 1; /* Container's PID */
 
-                /* IPC 통신 key값 저장을 위한 tmp directory를 생성합니다. */
+                /* Prepare the `tmp` directory for store the IPC key. */
                 sprintf(cmd, "mkdir -p /tmp/%s/tmp", current->cgroup_id);
                 if (0 != (ret = system(cmd))) {
                         pr_info(ERROR, "Cannot make directory: %s\n", cmd);
                         return ret;
                 }
 
-                /* Container를 생성합니다. */
+                /* Create the container. */
                 if (0 != (ret = docker_create_container(current))) {
                         pr_info(ERROR, "Cannot execute program (errno: %d)\n",
                                 ret);
@@ -386,7 +398,7 @@ int docker_runner(void)
                         return ret;
                 }
 
-                /* IPC 객체를 생성합니다. */
+                /* Create the IPC object. */
                 if (0 > (ret = docker_shm_init(current))) {
                         pr_info(ERROR,
                                 "Shared memory init failed.(errno: %d)\n", ret);
@@ -406,7 +418,7 @@ int docker_runner(void)
 
         docker_info_list_traverse(current, global_info_head)
         {
-                /* cgroup weight를 설정하고 실행합니다. */
+                /* Set cgroup weight and execute. */
                 docker_set_cgroup_state(current);
 
                 sprintf(cmd, "docker start %s > /dev/null", current->cgroup_id);
@@ -423,13 +435,13 @@ int docker_runner(void)
 }
 
 /**
- * @brief trace-replay가 실행 중일 때의 정보를 반환합니다.
+ * @brief Get execution-time results from `trace-replay`.
  *
- * @param key 임의의 cgroup_id에 해당합니다.
- * @param buffer 값이 반환되는 위치에 해당합니다.
+ * @param[in] key `cgroup_id` value which specifies the location of data I want to get.
+ * @param[out] buffer Data contains the execution-time results based on `key`.
  *
- * @return 정상적으로 종료되는 경우에는 log.type 정보가 반환되고, 그렇지 않은 경우 적절한 음수 값이 반환됩니다.
- * @note buffer를 재활용을 많이 하기 때문에 buffer의 내용은 반드시 미리 runner에서 할당이 되어 있어야 합니다.
+ * @return `log.type` for success to get information, negative value for fail to get information.
+ * @warning `buffer` must be allocated memory over and equal `INTERVAL_RESULT_STRING_SIZE`
  */
 int docker_get_interval(const char *key, char *buffer)
 {
@@ -464,12 +476,13 @@ int docker_get_interval(const char *key, char *buffer)
 }
 
 /**
- * @brief trace-replay가 동작 완료한 후의 정보를 반환합니다.
+ * @brief Get end-time results from `trace-replay`.
  *
- * @param key 임의의 cgroup_id에 해당합니다.
- * @param buffer 값이 반환되는 위치에 해당합니다.
+ * @param[in] key `cgroup_id` value which specifies the location of data I want to get.
+ * @param[out] buffer Data contains the end-time results based on `key`.
  *
- * @return 정상적으로 동작이 된 경우 0을 그렇지 않은 경우 적절한 오류 번호를 반환합니다. 
+ * @return 0 for success to get information, negative value for fail to get information.
+ * @warning `buffer` must be allocated memory over and equal `TOTAL_RESULT_STRING_SIZE`
  */
 int docker_get_total(const char *key, char *buffer)
 {
@@ -503,7 +516,7 @@ int docker_get_total(const char *key, char *buffer)
 }
 
 /**
- * @brief trace-replay 관련 동적 할당 정보를 해제합니다.
+ * @brief Deallocate resources of this driver.
  */
 void docker_free(void)
 {
