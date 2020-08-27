@@ -9,12 +9,10 @@ class Config:
     def __init__(self):
         self.data = dict()
         unit_test_mode = os.environ.get("PYTHON_UNIT_TEST")
-        unit_test_mode = "" if unit_test_mode == None else unit_test_mode
-        unit_test_mode = unit_test_mode.lower() == "true"
-        if unit_test_mode == False:
-            self.container_tracer_factory = container_tracer_factory.ContainerTracerFactory(socketio)
-        else:
-            self.container_tracer_factory = container_tracer_factory.ContainerTracerTestor(socketio)
+        unit_test_mode = "" if unit_test_mode is None else unit_test_mode
+        self.unit_test_mode = unit_test_mode.lower() == "true"
+        self.container_tracer = None
+        self.container_tracer_factory = container_tracer_factory.ContainerTracer(socketio)
 
     def store(self, input_data=dict, set_type=str):
         each_data = dict()
@@ -37,6 +35,18 @@ class Config:
             self.data["setting"] = {}
         elif set_type == "set_all":
             self.data["setting"]["task_option"] = []
+
+    def set_container_tracer(self, config):
+        if self.container_tracer:
+            self.container_tracer.container_tracer_free()
+            self.container_tracer = None
+
+        if self.unit_test_mode is False:
+            self.container_tracer = self.container_tracer_factory.get_instance(config)
+        else:
+            self.container_tracer = self.container_tracer_factory.get_instance(config)
+
+        return self.container_tracer
 
     def get_config_data(self):
         return self.data

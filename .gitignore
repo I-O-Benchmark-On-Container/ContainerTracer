@@ -179,3 +179,7 @@ fabric.properties
 # Ignore compile_commands
 compile_commands.json
 .compile_commands.json
+
+# Ignore perf file and gprof data file
+gmon.out
+perf.data

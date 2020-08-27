@@ -78,6 +78,7 @@ li {
     float: left;
     /* margin: 0 1em; */
     min-width: 20%;
+    max-width: 20%;
     margin: 0 2em 0 .5em;
 
 }
@@ -100,5 +101,23 @@ input.search_theme, select.search_theme, button.search_theme {
     /* background: #324d68; */
     font-size: 0.875em;
     /* color: #fff; */
+}
+
+.btn_submit_wrapper {
+    margin-top:15px;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+.btn_submit#btnStartWork {
+    width: 10%;
+    float: right;
+}
+
+.search_wrap .row {
+    margin: 0 10px 20px 10px;
+}
+
+.search_wrap .row:last-child {
+    margin: 0 10px 0px 10px;
 }
 
