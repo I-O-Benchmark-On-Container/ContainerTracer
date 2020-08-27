@@ -1,17 +1,16 @@
 import json
-import copy
 
 
 ##
-# @brief trace-replay interval result를 Frontend의 차트 형식에 맞게 전처리하기 위한 클래스.
-# average bandwidth, current bandwidth, latency, cgroup_id를 보여줌.
-class chart:
+# @brief Want to convert trace-replay interval result into Frontend chart form.
+# Show average bandwidth, current bandwidth, latency, cgroup_id.
+class Chart:
     FIN = 3
 
     ##
-    # @brief 전달받은 json 형식의 interval result를 Frontend 차트 형식에 맞게 지정.
+    # @brief Set interval result in json form into frontend chart form.
     #
-    # @param _json trace-replay interval result로 json string 형식.
+    # @param _json trace-replay interval result in json string form.
     def set_config(self, _json):
         interval_result = json.loads(_json)
 
@@ -53,22 +52,8 @@ class chart:
         self.chart_result["cgroup_id"] = cgroup_id
 
     ##
-    # @brief set_config()에서 formatting한 차트 형식의 데이터를 리턴.
+    # @brief return formatted data at set_config()
     #
-    # @return Frontend 차트 형식에 맞는 데이터. 딕셔너리 형태.
+    # @return Trace-replay interval resut in frontend chart form. dictinory.
     def get_chart_result(self):
         return self.chart_result
-
-
-##
-# @brief trace-replay interval result를 Frontend 차트 형식으로 reformatting하는 유저 함수.
-#
-# @param raw_json_data string json 형식의 trace-replay interval result.
-#
-# @return Frontend 차트에 맞게 reformatting된 trace-replay interval result.
-def get_chart_result(raw_json_data):
-    buf = chart()
-    buf.set_config(raw_json_data)
-    chart_result = copy.copy(buf.get_chart_result())
-    del buf
-    return chart_result

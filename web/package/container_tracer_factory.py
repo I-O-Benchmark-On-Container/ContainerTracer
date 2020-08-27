@@ -1,22 +1,53 @@
 from .trace_replay import TraceReplay
 from .container_tracer import ContainerTracer
 from flask_socketio import SocketIO
-import Object
 
 
 ##
-# @brief conatiner-tracer를 위한 factory method pattern.
-class ContainerTracerFactory(Object):
+# @brief Factory method pattern with conatiner-tracer.
+class ContainerTracerFactory(object):
     ##
-    # @brief
+    # @brief Initialize with frontend socketio.
     #
-    # @param socketio Frontend와 통신할 socketio.
-    # @param dict Frontend에서 전달받은 container-tracer 설정으로 dictionary 형태여야 함.
+    # @param socketio Want to communicate with frontend.
+    def __init__(self, socketio: SocketIO) -> None:
+        self.socketio = socketio
+
+    ##
+    # @brief Get proper instance with driver option in config.
     #
-    # @return 해당 드라이버에 맞는 container-tracer 모듈을 반환.
-    def get_instance(socketio: SocketIO, config: dict) -> ContainerTracer:
+    # @param socketio Want to communicate with frontend.
+    # @param config Container-tracer config options from frontend.
+    #
+    # @return Proper container-tracer module.
+    def get_instance(self, config: dict) -> ContainerTracer:
         driver = config["driver"]
         if driver == "trace-replay":
-            return TraceReplay(socketio, config)
+            return TraceReplay(self.socketio, config)
+        else:
+            return None
+
+
+##
+# @brief Factory method pattern with conatiner-tracer testor.
+class ContainerTracerTest(object):
+    ##
+    # @brief Initialize with frontend socketio.
+    #
+    # @param socketio Want to communicate with frontend.
+    def __init__(self, socketio: SocketIO) -> None:
+        self.socketio = socketio
+
+    ##
+    # @brief Get proper instance with driver option in config.
+    #
+    # @param socketio Want to communicate with frontend.
+    # @param config Container-tracer config options from frontend.
+    #
+    # @return Proper container-tracer module.
+    def get_instance(self, config: dict) -> ContainerTracer:
+        driver = config["driver"]
+        if driver == "trace-replay":
+            return TraceReplay(self.socketio, config)
         else:
             return None

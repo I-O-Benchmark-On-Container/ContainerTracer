@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_socketio import SocketIO
-from . import tracereplay
+from . import container_tracer_factory
 import os
 
 socketio = SocketIO()
@@ -12,9 +12,9 @@ class Config:
         unit_test_mode = "" if unit_test_mode == None else unit_test_mode
         unit_test_mode = unit_test_mode.lower() == "true"
         if unit_test_mode == False:
-            self.trace_replay = tracereplay.TraceReplay(socketio)
+            self.container_tracer_factory = container_tracer_factory.ContainerTracerFactory(socketio)
         else:
-            self.trace_replay = tracereplay.TraceReplayTest(socketio)
+            self.container_tracer_factory = container_tracer_factory.ContainerTracerTestor(socketio)
 
     def store(self, input_data=dict, set_type=str):
         each_data = dict()

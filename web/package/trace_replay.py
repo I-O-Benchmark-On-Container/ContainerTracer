@@ -1,35 +1,36 @@
-import ctypes
+from .container_tracer import ContainerTracer
+from flask_socketio import SocketIO
 from . import chart
+import ctypes
 import copy
 import json
-from .container_tracer import ContainerTracer
 
 
 ##
-# @brief 유닛 테스트를 위한 Test Class
+# @brief Test class with unit-test.
 class TraceReplayTest(ContainerTracer):
     def __init__(self, socketio):
         pass
 
-    def set_config(self, config: dict):
+    def _set_config(self, config: dict):
         pass
 
     def trace_replay_free(self):
         pass
 
-    def trace_replay_run(self):
+    def _trace_replay_run(self):
         pass
 
-    def get_interval_result(self, key):
+    def _get_interval_result(self, key):
         pass
 
-    def refresh(self):
+    def _refresh(self):
         pass
 
-    def update_interval_results(self, interval_results):
+    def _update_interval_results(self, interval_results):
         pass
 
-    def trace_replay_driver(self):
+    def _trace_replay_driver(self):
         pass
 
     def run_all_trace_replay(self):
@@ -37,27 +38,32 @@ class TraceReplayTest(ContainerTracer):
 
 
 ##
-# @brief trace-replay 드라이버
+# @brief trace-replay driver.
 class TraceReplay(ContainerTracer):
-    FIN = 3  # trace-replay 종료 Flag
+    FIN = 3  # trace-replay finish flag,
+
+    def __init__(self, socketio: SocketIO, config: dict) -> None:
+        super().__init__(socketio, config)
 
     ##
-    # @brief task 개수를 저장 후 json string으로 dump.
+    # @brief Save task# and dump into json string.
     #
-    # @param config Frontend에서 전달받은 config options.
-    def set_config(self, config: dict) -> None:
+    # @param[in] confg config options from frontend.
+    def _set_config(self, config: dict) -> None:
+        super()._set_config(config)
         if isinstance(config["setting"]["nr_tasks"], str):
             config["setting"]["nr_tasks"] = int(config["setting"]["nr_tasks"])
         self.nr_tasks = config["setting"]["nr_tasks"]
         self.config_json = json.dumps(config)
 
     ##
-    # @brief trace-replay 결과를 받음.
+    # @brief receive trace-replay result.
     #
-    # @param key 받아올 특정 그룹의 키 값.
+    # @param[in] key Want to select certain group.
     #
-    # @return runner 모듈에서 해당 키 값에 매핑되는 result.
-    def get_interval_result(self, key: str) -> None:
+    # @return result mapped with key in runner module.
+    def _get_interval_result(self, key: str) -> None:
+        super()._get_interval_result(key)
         self.libc.runner_get_interval_result.restype = ctypes.POINTER(ctypes.c_char)
         ptr = self.libc.runner_get_interval_result(key.encode())
         if ptr == 0:
@@ -67,9 +73,11 @@ class TraceReplay(ContainerTracer):
         return ret
 
     ##
-    # @brief trace-replay가 동작하면서 매 interval마다 Frontend의 차트를 갱신.
-    # chart 모듈을 거쳐 Frontend로 전달.
-    def refresh(self) -> None:
+    # @brief Refresh frotnend chart by a interval with trace-replay aysnc.
+    # Send result via chart module.
+    def _refresh(self) -> None:
+        super()._refresh()
+        frontend_chart = chart.Chart()
         key_set = set(["cgroup-" + str(i + 1) for i in range(self.nr_tasks)])
         remain_set = copy.copy(key_set)
         while len(remain_set):
@@ -77,12 +85,14 @@ class TraceReplay(ContainerTracer):
             interval_results = []
 
             for key in current:
-                raw_data = self.get_interval_result(key).decode()
-                chart_result = chart.get_chart_result(raw_data)
+                raw_data = self._get_interval_result(key).decode()
+                print(raw_data)
+                frontend_chart.set_config(raw_data)
+                chart_result = frontend_chart.get_chart_result()
 
                 if len(chart_result) == 0:
                     remain_set.remove(key)
 
                 interval_results.append(chart_result)
 
-            self.update_interval_results(interval_results)
+            self._update_interval_results(interval_results)
