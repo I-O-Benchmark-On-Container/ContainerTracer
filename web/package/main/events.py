@@ -40,6 +40,11 @@ def set_options(set_each, set_all):
     emit("chart_start", nr_cgroup)
 
 
+@socketio.on("reset")
+def reset_trace_repaly():
+    set_config.set_trace_replay()
+
+
 @socketio.on("test_set_options")
 def test_set_options(set_each, set_all):
     set_config.store(set_all, "set_all")

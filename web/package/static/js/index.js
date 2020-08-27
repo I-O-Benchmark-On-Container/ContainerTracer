@@ -7,9 +7,9 @@ $(document).ready(function(){
     const $btnStartWork = $('#btnStartWork');
     const $options = $('#options');
 
-    /* driver, croup 선택 */
+    /* advanced opttions button event listener */
     $btnSelectWork.on('click', function(event){
-        /* Cgroup의 수를 바로 변경할 경우에...*/
+        $chartDisplay.addClass('hide');
         $options.children().remove();
         let nrCgroup = $('#cgroup').val();
         let driver = $('#driver').val();
@@ -22,7 +22,7 @@ $(document).ready(function(){
         socket.emit("set_driver", data);
     });
 
-    /* 세부 옵션 선택 */
+    /* start button event listener */
     $btnStartWork.on('click', function(event){
         event.preventDefault();
         let setEach = $("form[name=setEach").serializeObject();
@@ -32,7 +32,6 @@ $(document).ready(function(){
         $btnStartWork.prop("disabled", true);
     });
 
-    /* left side button response */
     socket.on('set_driver_ret', function(){
         $optionDisplay.removeClass('hide');
     });
@@ -41,6 +40,8 @@ $(document).ready(function(){
     socket.on('chart_start', function(nrCgroup){
         $chartDisplay.removeClass('hide');
         $("#chartState").val("1");
+        toastr.info("Do not refresh or move pages while the work is being completed.", "Performance evaluation is currently in progress.",
+                    {timeOut: 0, extendedTimeOut: 0, tapToDismiss: false});
         showChart(nrCgroup);
         $optionDisplay.addClass('hide');
     });
@@ -50,9 +51,13 @@ $(document).ready(function(){
     });
 
     socket.on('chart_end', function(){
+        toastr.clear();
+        socket.emit("reset");
+        toastr.success("The results of the performance evaluation have been saved.", "Complete!");
         $("#chartState").val("0");
         $btnSelectWork.prop("disabled", false);
         $btnStartWork.prop("disabled", false);
         $options.children().remove();
     });
 });
+
