@@ -253,9 +253,8 @@ static int docker_set_cgroup_state(struct docker_info *current)
         if (ret == 0) { /* Set the weight when BFQ scheduler. */
                 char cmd[PATH_MAX];
 
-                if (current->weight > CGROUP_MAX_WEIGHT ||
-                    current->weight < CGROUP_MIN_WEIGHT) {
-                        pr_info(ERROR, "Weight out of range: \"%d\"\n",
+                if (!runner_is_valid_bfq_weight(current->weight)) {
+                        pr_info(ERROR, "BFQ weight is out of range: \"%u\"\n",
                                 current->weight);
                         return -EINVAL;
                 }
