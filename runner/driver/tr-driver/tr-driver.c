@@ -257,6 +257,11 @@ static int tr_set_cgroup_state(struct tr_info *current)
 
         ret = strcmp(current->scheduler, tr_valid_scheduler[TR_BFQ_SCHEDULER]);
         if (ret == 0) { /* Set the weight when BFQ scheduler. */
+                if (!runner_is_valid_bfq_weight(current->weight)) {
+                        pr_info(ERROR, "BFQ weight is out of range: \"%u\"\n",
+                                current->weight);
+                        return -EINVAL;
+                }
                 snprintf(cmd, PATH_MAX,
                          "echo %d > /sys/fs/cgroup/blkio/%s%d/blkio.%s.weight",
                          current->weight, current->prefix_cgroup_name,
@@ -333,7 +338,7 @@ static int tr_do_exec(struct tr_info *current)
         tr_print_info(&info);
 #endif
         if (-1 == lstat(info.trace_replay_path, &lstat_info)) {
-                pr_info(ERROR, "trace replay doesn't exist: \"%s\"",
+                pr_info(ERROR, "trace replay doesn't exist: \"%s\"\n",
                         info.trace_replay_path);
                 return -EACCES;
         }

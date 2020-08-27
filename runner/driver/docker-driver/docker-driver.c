@@ -253,9 +253,8 @@ static int docker_set_cgroup_state(struct docker_info *current)
         if (ret == 0) { /* Set the weight when BFQ scheduler. */
                 char cmd[PATH_MAX];
 
-                if (current->weight > CGROUP_MAX_WEIGHT ||
-                    current->weight < CGROUP_MIN_WEIGHT) {
-                        pr_info(ERROR, "Weight out of range: \"%d\"\n",
+                if (!runner_is_valid_bfq_weight(current->weight)) {
+                        pr_info(ERROR, "BFQ weight is out of range: \"%u\"\n",
                                 current->weight);
                         return -EINVAL;
                 }
@@ -362,18 +361,6 @@ int docker_runner(void)
         {
                 /* Remove the existing container */
                 __docker_rm_container(current);
-        }
-
-        docker_info_list_traverse(current, global_info_head)
-        {
-                __attribute__((unused)) int ignore_ret = 0;
-                /* Remove the existing container */
-                sprintf(cmd, "docker rm -f %s", current->cgroup_id);
-                ignore_ret = system(cmd);
-
-                /* Remove the existing directory */
-                sprintf(cmd, "rm -rf /tmp/%s", current->cgroup_id);
-                ignore_ret = system(cmd);
         }
 
         snprintf(cmd, PATH_MAX, "echo %s >> /sys/block/%s/queue/scheduler",
