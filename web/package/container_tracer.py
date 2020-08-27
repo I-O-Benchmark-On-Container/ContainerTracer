@@ -75,15 +75,9 @@ class ContainerTracer(metaclass=ABCMeta):
     # @param[in] interval_result Container-traacer interval result
     # want to send to frontend chart.
     def _update_interval_results(self, interval_results: dict) -> None:
-        import pprint
-
-        print("======================================")
-        pprint.pprint(interval_results)
         if interval_results:
-            print("case 1")
             self.socketio.emit("chart_data_result", interval_results)
         else:
-            print("case 2")
             self.socketio.emit("chart_end")
 
     ##

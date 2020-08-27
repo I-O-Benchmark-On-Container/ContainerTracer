@@ -9,31 +9,31 @@ import json
 ##
 # @brief Test class with unit-test.
 class TraceReplayTest(ContainerTracer):
-    def __init__(self, socketio):
+    def __init__(self, socketio: SocketIO, config: dict) -> None:
         pass
 
-    def _set_config(self, config: dict):
+    def _set_config(self, config: dict) -> None:
         pass
 
-    def trace_replay_free(self):
+    def trace_replay_free(self) -> None:
         pass
 
-    def _trace_replay_run(self):
+    def _trace_replay_run(self) -> None:
         pass
 
-    def _get_interval_result(self, key):
+    def _get_interval_result(self, key: str) -> None:
         pass
 
-    def _refresh(self):
+    def _refresh(self) -> None:
         pass
 
-    def _update_interval_results(self, interval_results):
+    def _update_interval_results(self, interval_results: dict) -> None:
         pass
 
-    def _trace_replay_driver(self):
+    def _trace_replay_driver(self) -> None:
         pass
 
-    def run_all_trace_replay(self):
+    def run_all_trace_replay(self) -> None:
         pass
 
 
@@ -64,8 +64,11 @@ class TraceReplay(ContainerTracer):
     # @return result mapped with key in runner module.
     def _get_interval_result(self, key: str) -> None:
         super()._get_interval_result(key)
-        self.libc.runner_get_interval_result.restype = ctypes.POINTER(ctypes.c_char)
-        ptr = self.libc.runner_get_interval_result(key.encode())
+
+        interval_result = self.libc.runner_get_interval_result
+        interval_result.restype = ctypes.POINTER(ctypes.c_char)
+
+        ptr = interval_result(key.encode())
         if ptr == 0:
             raise Exception("Memory Allocation 실패")
         ret = ctypes.cast(ptr, ctypes.c_char_p).value
@@ -95,5 +98,5 @@ class TraceReplay(ContainerTracer):
                     continue
 
                 interval_results.append(chart_result)
-
-            self._update_interval_results(interval_results)
+            if len(key_set) == len(interval_results):
+                self._update_interval_results(interval_results)

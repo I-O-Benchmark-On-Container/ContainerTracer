@@ -5,14 +5,18 @@ import os
 
 socketio = SocketIO()
 
+
 class Config:
     def __init__(self):
-        self.data = dict()
         unit_test_mode = os.environ.get("PYTHON_UNIT_TEST")
         unit_test_mode = "" if unit_test_mode is None else unit_test_mode
+
+        factory = container_tracer_factory.ContainerTracerFactory(socketio)
+
+        self.data = dict()
         self.unit_test_mode = unit_test_mode.lower() == "true"
         self.container_tracer = None
-        self.container_tracer_factory = container_tracer_factory.ContainerTracerFactory(socketio)
+        self.container_tracer_factory = factory
 
     def store(self, input_data=dict, set_type=str):
         each_data = dict()
@@ -37,14 +41,16 @@ class Config:
             self.data["setting"]["task_option"] = []
 
     def set_container_tracer(self, config):
+        factory = self.container_tracer_factory
+
         if self.container_tracer:
             self.container_tracer.container_tracer_free()
             self.container_tracer = None
 
         if self.unit_test_mode is False:
-            self.container_tracer = self.container_tracer_factory.get_instance(config)
+            self.container_tracer = factory.get_instance(config)
         else:
-            self.container_tracer = self.container_tracer_factory.get_instance(config)
+            self.container_tracer = factory.get_instance(config, True)
 
         return self.container_tracer
 
@@ -57,6 +63,7 @@ def create_app(debug=False):
     app.secret_key = "secret"
     app.debug = debug
     from .main import main as main_blueprint
+
     app.register_blueprint(main_blueprint)
     socketio.init_app(app)
     return app

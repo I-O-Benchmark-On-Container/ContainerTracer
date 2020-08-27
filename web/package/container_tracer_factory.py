@@ -1,6 +1,9 @@
-from .trace_replay import TraceReplay
+from .trace_replay import TraceReplay, TraceReplayTest
 from .container_tracer import ContainerTracer
 from flask_socketio import SocketIO
+
+
+socketio = ()
 
 
 ##
@@ -19,33 +22,10 @@ class ContainerTracerFactory(object):
     # @param[in] config Container-tracer config options from frontend.
     #
     # @return Proper container-tracer module.
-    def get_instance(self, config: dict) -> ContainerTracer:
+    def get_instance(self, config: dict, debug: bool = False) -> ContainerTracer:
         driver = config["driver"]
         if driver in ["trace-replay", "docker"]:
+            if debug:
+                return TraceReplayTest(self.socketio, config)
             return TraceReplay(self.socketio, config)
-        else:
-            return None
-
-
-##
-# @brief Factory method pattern with conatiner-tracer testor.
-class ContainerTracerTest(object):
-    ##
-    # @brief Initialize with frontend socketio.
-    #
-    # @param[in] socketio Want to communicate with frontend.
-    def __init__(self, socketio: SocketIO) -> None:
-        self.socketio = socketio
-
-    ##
-    # @brief Get proper instance with driver option in config.
-    #
-    # @param[in] config Container-tracer config options from frontend.
-    #
-    # @return Proper container-tracer module.
-    def get_instance(self, config: dict) -> ContainerTracer:
-        driver = config["driver"]
-        if driver == "trace-replay":
-            return TraceReplay(self.socketio, config)
-        else:
-            return None
+        return None
