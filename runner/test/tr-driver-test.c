@@ -67,7 +67,7 @@ static const unsigned long key_len = sizeof(key) / sizeof(char *);
 #define NR_TASKS (key_len)
 #define NR_THREAD ((int)(Q_DEPTH / NR_TASKS))
 
-#define FLAGS_MASK (0x3F) /**< 0b0011 1111 */
+#define FLAGS_MASK ((0x1 << NR_TASKS) - 1)
 
 static char *json, *task_options;
 static struct json_object *jobject;

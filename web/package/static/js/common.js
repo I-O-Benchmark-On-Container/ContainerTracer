@@ -18,8 +18,9 @@ $.fn.serializeObject = function() {
 };
 
 function addOptions(nrCgroup) {
+    let ulList = $('#options');
+    ulList.append("<div class=row>" + "<label>All weights are in the range <B>(10, 1000)</B></label>" + "</div>");
     for (let idx = 1; idx < Number(nrCgroup) + 1; idx++) {
-        let ulList = $('#options');
         ulList.append("<li>" +
                             "<div class=form-group>" +
                             "<label>Cgroup " + idx + "</label>" +

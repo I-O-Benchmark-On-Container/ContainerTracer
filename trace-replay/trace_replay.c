@@ -25,6 +25,7 @@
 #include <libaio.h>
 #include <errno.h>
 #include <signal.h>
+#include <float.h>
 
 #include <sys/mount.h>
 #include <sys/types.h>
@@ -531,12 +532,12 @@ void *sub_worker(void *threadid)
                 gettimeofday(&io_stat->end_time, NULL);
                 io_stat->execution_time =
                         time_since(&io_stat->start_time, &io_stat->end_time);
-                if (io_stat->execution_time > trace->timeout &&
+                if (io_stat->execution_time > (trace->timeout - FLT_EPSILON) &&
                     trace->timeout > 0.0) {
                         goto Timeout;
                 }
                 if (trace->timeout &&
-                    io_stat->execution_time > trace->timeout) {
+                    io_stat->execution_time > (trace->timeout - FLT_EPSILON)) {
                         goto Timeout;
                 }
                 pthread_spin_lock(&trace->trace_lock);
