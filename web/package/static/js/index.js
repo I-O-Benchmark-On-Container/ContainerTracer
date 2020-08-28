@@ -17,7 +17,8 @@ $(document).ready(function(){
         let data = {
             driver: driver,
         };
-
+        
+        $('#nr_tasks').val(nrCgroup);
         addOptions(nrCgroup);
         socket.emit("set_driver", data);
     });
@@ -36,6 +37,9 @@ $(document).ready(function(){
         $optionDisplay.removeClass('hide');
     });
 
+    socket.on('Invalid', function(message){
+        toastr.error("Invalid " + message , "error!!");
+    });
 
     socket.on('chart_start', function(nrCgroup){
         $chartDisplay.removeClass('hide');
