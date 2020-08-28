@@ -39,6 +39,7 @@ $(document).ready(function(){
 
     socket.on('Invalid', function(message){
         toastr.error("Invalid " + message , "error!!");
+        $btnStartWork.prop("disabled", false);
     });
 
     socket.on('chart_start', function(nrCgroup){
