@@ -6,7 +6,7 @@
 </p>
 
 
-## 소개
+# 소개
 
 Container Tracer는 컨테이너 별 I/O 성능을 측정하는 도구로 기존의 fio나 filebench의
 부족한 cgroup 별 I/O 성능 측정 기능을 보완하는 프로그램입니다.
@@ -14,7 +14,20 @@ Container Tracer는 컨테이너 별 I/O 성능을 측정하는 도구로 기존
 Container Tracer는 장치의 컨테이너 별 I/O 성능을 측정하기 위해서 [trace-replay](https://github.com/yongseokoh/trace-replay)를
 사용합니다.
 
-## 프로젝트의 구성
+# 권장 시스템 조건
+
+이 프로그램은 POSIX 표준을 따르는 시스템에서는 다 동작하게 개발되었습니다.
+
+그러나 이 문서 및 테스트는 이하 표에서 제공하는 시스템에서 수행을 했습니다.
+
+그러므로 반드시 빌드 또는 프로그램을 수행할 때에는 이 정보에 주의해야 합니다.
+
+| 항목 | 내용 |
+|:---------------:|:------------:|
+| 운영 체제 | Ubuntu 18.04 |
+| 커널 | linux 4.19   |
+
+# 프로젝트의 구성
 
 프로젝트의 구성은 아래와 같습니다.
 
@@ -27,12 +40,12 @@ Container Tracer는 장치의 컨테이너 별 I/O 성능을 측정하기 위해
 
 각 폴더의 하위 항목으로 있는 **test**에는 단위 테스트 파일이 들어가게 됩니다.
 
-### 구현 내용
+## 구현 내용
 
 [링크](https://i-o-benchmark-on-container.github.io/ContainerTracerDoxygen/)를 확인해주시길
 바랍니다.
 
-## 빌드 방법
+# 빌드 방법
 
 공통적으로는 아래를 수행해주셔야 합니다.
 
@@ -41,15 +54,25 @@ sudo pip3 install black flake8
 sudo apt install doxygen
 ```
 
-### web의 경우
+## web의 경우
 
 Flask를 사용하기 때문에 반드시 아래를 수행해주셔야 합니다.
 
 ```bash
-sudo pip3 install flask flask_restful
+sudo pip3 install flask flask_restful flask_socketio
 ```
 
-### trace-replay나 runner의 경우
+그리고 프로젝트 루트 디렉터리에서 아래의 명령을 통해서
+이 프로그램을 실행할 수 있습니다.
+
+```bash
+sudo python web/run.py
+```
+
+자세한 내용은 [링크](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/wiki/8.-How-to-run-the-%60web%60-program)
+를 확인해주시길 바랍니다.
+
+## trace-replay나 runner의 경우
 
 소스 코드를 다운 받은 후에 빌드에 필요한 프로그램을 설치하도록 합니다.
 
@@ -92,21 +115,21 @@ sudo ldconfig
 추가적으로 드라이버 제작 방법 관련해서는 [링크](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/wiki/4.-How-to-add-the-driver-to-Runner)를
 확인해주시길 바랍니다.
 
-#### 참고 사항
+### 참고 사항
 
 - `DEBUG=True`를 주게되면 모든 로그가 다 출력되어 좀 더 수월하게 디버깅이 가능해집니다.
 - `sudo`를 주는 이유는 `trace-replay`가 실행되기 위해서는 `sudo` 권한을 필요로 하기 때문입니다.
 - `sudo scons test`를 하면 `compile_commands.json`이 생성되지 않으므로 생성을 원하는
   경우 `scons`를 수행해주시길 바랍니다.
 
-#### 유의 사항
+### 유의 사항
 
 1. trace replay는 Direct-IO를 수행하므로 동작 과정에서 **사용자 디스크의 파일 시스템을 붕괴** 시킵니다.
    따라서, 파일 시스템이 구축되지 않은 디스크 및 백업이 간편한 가상 환경에서 수행해주시길 바랍니다
 2. Runner의 init에 JSON을 보낼 때에는 반드시 `{"driver": "<DRIVER-NAME>", "setting": {...}}`과
    같은 형식으로 보내야 합니다. "setting"에는 드라이버에 종속적인 내용이 들어갑니다.
 
-## 사용 라이브러리
+# 사용 라이브러리
 
 1. pthread: trace-replay 동작용 POSIX 라이브러리
 2. AIO: asynchronous I/O 라이브러리
@@ -115,7 +138,7 @@ sudo ldconfig
 5. [unity](https://github.com/ThrowTheSwitch/Unity): C용 unit test 라이브러리
 6. [jemalloc](https://github.com/jemalloc/jemalloc): 효율적인 메모리 동적 할당을 해주는 라이브러리
 
-## 코드 기여 규칙
+# 코드 기여 규칙
 
 기여 규칙은 [관련 링크](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/blob/master/CONTRIBUTING.md)를 확인해주시길 바랍니다.
 
