@@ -18,6 +18,20 @@ the existing I/O performance measurement program like fio and filebench.
 Currently, Container Tracer uses [trace-replay](https://github.com/yongseokoh/trace-replay)
 to measure the I/O performance of each container.
 
+# Recommended system requirements
+
+This program can run on the system which follows the POSIX standards.
+
+But in these documents and our testing was based on the system
+which is described in the following table.
+
+So, when you build and run this program you have to care about this information.
+
+| item            | content      |
+|:---------------:|:------------:|
+| Operting System | Ubuntu 18.04 |
+| Kernel          | linux 4.19   |
+
 # Project Components
 
 The composition of the project is as follows.
@@ -50,11 +64,20 @@ sudo apt install doxygen
 ## web
 
 Since we are using Flask, you must install Flask and
-install the replated package first.
+install the related package first.
 
 ```bash
-sudo pip3 install flask flask_restful
+sudo pip3 install flask flask_restful flask_socketio
 ```
+
+And you can run this program with the following command
+in the project root directory.
+
+```bash
+sudo python web/run.py
+```
+
+You can get more information from this [link](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/wiki/8.-How-to-run-the-%60web%60-program).
 
 ## trace-replay and runner
 

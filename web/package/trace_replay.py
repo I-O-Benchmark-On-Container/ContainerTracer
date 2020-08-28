@@ -53,18 +53,24 @@ class TraceReplay(ContainerTracer):
     # @param[in] confg config options from frontend.
     def _set_config(self, config: dict) -> None:
         super()._set_config(config)
-        if config["setting"]["trace_replay_path"] != "trace-replay":
-            self.socketio.emit("Invalid path")
-            raise Exception("Invalid container tracer path!")
-        device_path = "/dev/" + config["setting"]["device"]
-        st_mode = os.stat(device_path).st_mode
-        try:
-            stat.S_ISBLK(st_mode)
-        except:
-            self.socketio.emit("Invalid device")
-            raise Exception("Invalid device!")
         if isinstance(config["setting"]["nr_tasks"], str):
             config["setting"]["nr_tasks"] = int(config["setting"]["nr_tasks"])
+
+        for elem in config["setting"]["task_option"]:
+            if not (10<= int(elem["weight"]) and int(elem["weight"])<= 1000):
+                raise Exception("weight")
+            if not os.path.isfile(elem["trace_data_path"]):
+                raise Exception("trace_data_path")
+
+        if config["setting"]["trace_replay_path"] != "trace-replay":
+            raise Exception("tracer_replay_path")
+        try:
+            device_path = "/dev/" + config["setting"]["device"]
+            st_mode = os.stat(device_path).st_mode
+            stat.S_ISBLK(st_mode)
+        except:
+            raise Exception("device")
+
         self.config_json = json.dumps(config)
 
     ##
