@@ -57,7 +57,7 @@ class TraceReplay(ContainerTracer):
             config["setting"]["nr_tasks"] = int(config["setting"]["nr_tasks"])
 
         for elem in config["setting"]["task_option"]:
-            if not (10< elem["weight"] < 1000):
+            if not (10<= int(elem["weight"]) and int(elem["weight"])<= 1000):
                 raise Exception("weight")
             if not os.path.isfile(elem["trace_data_path"]):
                 raise Exception("trace_data_path")
@@ -65,9 +65,9 @@ class TraceReplay(ContainerTracer):
         if config["setting"]["trace_replay_path"] != "trace-replay":
             raise Exception("tracer_replay_path")
         
-        device_path = "/dev/" + config["setting"]["device"]
-        st_mode = os.stat(device_path).st_mode
         try:
+            device_path = "/dev/" + config["setting"]["device"]
+            st_mode = os.stat(device_path).st_mode
             stat.S_ISBLK(st_mode)
         except:
             raise Exception("device")

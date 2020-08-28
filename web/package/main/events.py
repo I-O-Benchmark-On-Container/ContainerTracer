@@ -39,7 +39,7 @@ def set_options(set_each, set_all):
         print(e, file=sys.stderr)
         sys.exit(-1)
     except Exception as e:
-        emit("Invalid", e)
+        emit("Invalid", str(e))
         return
 
     nr_cgroup = len(set_config.data["setting"]["task_option"])
