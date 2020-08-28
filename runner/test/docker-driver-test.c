@@ -170,7 +170,7 @@ void test(void)
                         struct json_object *object, *tmp;
                         int type;
                         if (flags == FLAGS_MASK) {
-                                continue;
+                                break;
                         }
 
                         buffer = runner_get_interval_result(key[i]);
