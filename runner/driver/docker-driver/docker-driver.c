@@ -91,7 +91,7 @@ static void __docker_rm_container(struct docker_info *info)
 static void __docker_free(void)
 {
         if (system("docker rmi -f suhoson/trace_replay:local")) {
-                pr_info(INFO, "Fail to remove local image\n");
+                pr_info(INFO, "Fail to remove local image: not error\n");
         }
 
         while (global_info_head != NULL) {
@@ -237,7 +237,13 @@ int docker_init(void *object)
         }
 
         ret = system("docker rm -f new_trace_replay");
+        if (ret) {
+                pr_info(INFO, "Cannot remove new_trace_replay: not error\n");
+		}
         ret = system("docker rmi -f suhoson/trace_replay:local");
+        if (ret) {
+                pr_info(INFO, "Cannot remove trace_replay local version image: not error\n");
+		}
 
         ret = system(
                 "docker run --name new_trace_replay -d suhoson/trace_replay tail -f /dev/null");
