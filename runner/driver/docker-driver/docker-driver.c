@@ -90,6 +90,10 @@ static void __docker_rm_container(struct docker_info *info)
  */
 static void __docker_free(void)
 {
+        if (system("docker rmi -f suhoson/trace_replay:local")) {
+                pr_info(INFO, "Fail to remove local image: not error\n");
+        }
+
         while (global_info_head != NULL) {
                 struct docker_info *current = global_info_head;
                 struct docker_info *next = global_info_head->next;
@@ -164,6 +168,8 @@ int docker_init(void *object)
         int ret = 0, i = 0;
         int nr_tasks = -1;
 
+        char *cmd = NULL;
+
         op->runner = docker_runner;
         op->get_interval = docker_get_interval;
         op->get_total = docker_get_total;
@@ -222,7 +228,6 @@ int docker_init(void *object)
                 }
         }
 
-        /* Download the ubuntu 16.04 with trace-replay image*/
         ret = system(
                 "docker pull suhoson/trace_replay:latest > /dev/null 2>&1");
         if (ret) {
@@ -231,9 +236,54 @@ int docker_init(void *object)
                 goto exception;
         }
 
+        ret = system("docker rm -f new_trace_replay");
+        if (ret) {
+                pr_info(INFO, "Cannot remove new_trace_replay: not error\n");
+        }
+        ret = system("docker rmi -f suhoson/trace_replay:local");
+        if (ret) {
+                pr_info(INFO,
+                        "Cannot remove trace_replay local version image: not error\n");
+        }
+
+        ret = system(
+                "docker run --name new_trace_replay -d suhoson/trace_replay tail -f /dev/null");
+        if (ret) {
+                pr_info(ERROR, "Cannot run new_trace_replay\n");
+                goto exception;
+        }
+
+        cmd = (char *)malloc(PAGE_SIZE * PAGE_SIZE);
+        if (!cmd) {
+                ret = -ENOMEM;
+                goto exception;
+        }
+
+        sprintf(cmd, "docker cp %s new_trace_replay:/usr/local/bin/",
+                global_info_head->trace_replay_path);
+        ret = system(cmd);
+        if (ret) {
+                pr_info(ERROR, "Cannot copy trace_replay binary.\n");
+                goto exception;
+        }
+
+        ret = system(
+                "docker commit new_trace_replay suhoson/trace_replay:local");
+        if (ret) {
+                pr_info(ERROR, "Cannot commit new image.\n");
+                goto exception;
+        }
+
+        ret = system("docker rm -f new_trace_replay");
+
+        free(cmd);
+
         return ret;
 exception:
         __docker_free();
+        if (cmd != NULL) {
+                free(cmd);
+        }
         return ret;
 }
 
