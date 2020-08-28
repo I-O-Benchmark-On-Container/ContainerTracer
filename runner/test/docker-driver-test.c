@@ -169,7 +169,7 @@ void test(void)
                 for (unsigned long i = 0; i < key_len; i++) {
                         struct json_object *object, *tmp;
                         int type;
-                        if (flags & (0x1 << i)) {
+                        if (flags == FLAGS_MASK) {
                                 continue;
                         }
 
