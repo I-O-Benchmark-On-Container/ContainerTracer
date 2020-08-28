@@ -150,6 +150,7 @@
                                                 <div class="form-group">
                                                     <label>scheduler</label>
                                                     <select name="scheduler" id="scheduler" class="form-control form_theme search_theme">
+
                                                         <option value="bfq">bfq</option>
                                                         <option value="kyber">kyber</option>
                                                     </select>
@@ -184,27 +185,28 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-sm-4">
+                        <div class="col-sm-6">
                             <h2 class="text-info">
                                 <small class="text-muted">Latency</small>
                             </h2>
                             <input type="hidden" class="chart_option" name="CHART_OPTION" value="Latency">
                             <canvas class="chart" id="LatencyChart" height="200"></canvas>
                         </div>
-                        <div class="col-sm-4">
+                        <div class="col-sm-6">
                             <h2 class="text-info">
                                 <small class="text-muted">Current Bandwidth</small>
                             </h2>
                             <input type="hidden" class="chart_option" name="CHART_OPTION" value="CurBandwidth">
                             <canvas class="chart" id="curBandWidthChart" height="200"></canvas>
                         </div>
-                        <div class="col-sm-4">
+                        <div class="col-sm-12">
                             <h2 class="text-info">
                                 <small class="text-muted">Average Bandwidth</small>
                             </h2>
                             <input type="hidden" class="chart_option" name="CHART_OPTION" value="AvgBandwidth">
-                            <canvas class="chart" id="avgBandWidthChart" height="200"></canvas>
+                            <canvas class="chart" id="avgBandWidthChart" height="60"></canvas>
                         </div>
+                        <div class="col-sm-12" style="height:150px;"></div>
                     </div>
                 </div>
             </div>

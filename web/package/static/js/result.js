@@ -44,7 +44,7 @@ function showChart(nrCgroup) {
                             beginAtZero:true
                         }
                     }]
-                }
+                },
             }
 
         };
@@ -58,17 +58,30 @@ function addDataInChart(responseData){
         var datasets = charts[chartIdx][CONFIG].data.datasets;
         for (let cgroupIdx = 0; cgroupIdx < datasets.length; cgroupIdx++) {
             let id = responseData[cgroupIdx].cgroup_id;
-            let data = responseData[cgroupIdx].data.lat;
+            let data = 0;
 
-            if (chartIdx == CUR_BW) {
-                data = responseData[cgroupIdx].data.cur_bw;
-            } else { //AVG BW
-                data = responseData[cgroupIdx].data.avg_bw;
+            switch (chartIdx) {
+                case LATENCY:
+                    data = responseData[cgroupIdx].data.lat;
+                    break;
+                case CUR_BW:
+                    data = responseData[cgroupIdx].data.cur_bw;
+                    break;
+                case AVG_BW:
+                    data = responseData[cgroupIdx].data.avg_bw;
+                    break;
+                default:
+                    alert("Invalid chartIdx detected ${chardIdx}");
             }
 
-            let eachData = datasets[id - 1].data;
-            eachData.shift();
-            eachData.push(data);
+            try {
+                let indexOfId = parseInt(id.match('[0-9]+')[0]);
+                let eachData = datasets[indexOfId - 1].data;
+                eachData.shift();
+                eachData.push(data);
+            } catch (e) {
+                assert(e);
+            }
         }
     }
 

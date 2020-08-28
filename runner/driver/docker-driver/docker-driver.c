@@ -253,6 +253,12 @@ static int docker_set_cgroup_state(struct docker_info *current)
         if (ret == 0) { /* Set the weight when BFQ scheduler. */
                 char cmd[PATH_MAX];
 
+                if (!runner_is_valid_bfq_weight(current->weight)) {
+                        pr_info(ERROR, "BFQ weight is out of range: \"%u\"\n",
+                                current->weight);
+                        return -EINVAL;
+                }
+
                 snprintf(
                         cmd, PATH_MAX,
                         "echo %d > /sys/fs/cgroup/blkio/docker/%s/blkio.%s.weight",
@@ -357,18 +363,6 @@ int docker_runner(void)
                 __docker_rm_container(current);
         }
 
-        docker_info_list_traverse(current, global_info_head)
-        {
-                __attribute__((unused)) int ignore_ret = 0;
-                /* Remove the existing container */
-                sprintf(cmd, "docker rm -f %s", current->cgroup_id);
-                ignore_ret = system(cmd);
-
-                /* Remove the existing directory */
-                sprintf(cmd, "rm -rf /tmp/%s", current->cgroup_id);
-                ignore_ret = system(cmd);
-        }
-
         snprintf(cmd, PATH_MAX, "echo %s >> /sys/block/%s/queue/scheduler",
                  global_info_head->scheduler, global_info_head->device);
         pr_info(INFO, "Do command: \"%s\"\n", cmd);
@@ -418,9 +412,6 @@ int docker_runner(void)
 
         docker_info_list_traverse(current, global_info_head)
         {
-                /* Set cgroup weight and execute. */
-                docker_set_cgroup_state(current);
-
                 sprintf(cmd, "docker start %s > /dev/null", current->cgroup_id);
                 if (0 != (ret = system(cmd))) {
                         pr_info(ERROR, "Cannot start container: %s\n",
@@ -429,6 +420,9 @@ int docker_runner(void)
                         docker_shm_free(current, DOCKER_IPC_FREE);
                         docker_mq_free(current, DOCKER_IPC_FREE);
                 }
+
+                /* Set cgroup weight and execute. */
+                docker_set_cgroup_state(current);
         }
 
         return ret;
