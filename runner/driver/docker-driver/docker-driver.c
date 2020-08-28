@@ -239,11 +239,12 @@ int docker_init(void *object)
         ret = system("docker rm -f new_trace_replay");
         if (ret) {
                 pr_info(INFO, "Cannot remove new_trace_replay: not error\n");
-		}
+        }
         ret = system("docker rmi -f suhoson/trace_replay:local");
         if (ret) {
-                pr_info(INFO, "Cannot remove trace_replay local version image: not error\n");
-		}
+                pr_info(INFO,
+                        "Cannot remove trace_replay local version image: not error\n");
+        }
 
         ret = system(
                 "docker run --name new_trace_replay -d suhoson/trace_replay tail -f /dev/null");

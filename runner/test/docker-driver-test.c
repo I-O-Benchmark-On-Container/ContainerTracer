@@ -169,8 +169,8 @@ void test(void)
                 for (unsigned long i = 0; i < key_len; i++) {
                         struct json_object *object, *tmp;
                         int type;
-                        if (flags == FLAGS_MASK) {
-                                break;
+                        if (flags & (0x1 << i)) {
+                                continue;
                         }
 
                         buffer = runner_get_interval_result(key[i]);
