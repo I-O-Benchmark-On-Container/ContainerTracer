@@ -157,12 +157,14 @@ int docker_valid_scheduler_test(const char *scheduler)
 int docker_create_local_images(void)
 {
         int ret = 0;
+        char *cmd = NULL;
+
         ret = system(
                 "docker pull suhoson/trace_replay:latest > /dev/null 2>&1");
         if (ret) {
                 pr_info(ERROR,
                         "Cannot pull image: suhoson/trace_replay:latest\n");
-                return ret;
+                goto exit;
         }
 
         ret = system("docker rm -f new_trace_replay");
@@ -182,7 +184,36 @@ int docker_create_local_images(void)
                 "docker run --name new_trace_replay -d suhoson/trace_replay tail -f /dev/null");
         if (ret) {
                 pr_info(ERROR, "Cannot run new_trace_replay\n");
-                return ret;
+                goto exit;
+        }
+
+        cmd = (char *)malloc(PAGE_SIZE * PAGE_SIZE);
+        if (!cmd) {
+                pr_info(ERROR, "Cannot allocate the memory(cmd: %p)\n", cmd);
+                ret = -ENOMEM;
+                goto exit;
+        }
+
+        sprintf(cmd, "docker cp %s new_trace_replay:/usr/local/bin/",
+                global_info_head->trace_replay_path);
+        ret = system(cmd);
+        if (ret) {
+                pr_info(ERROR, "Cannot copy trace_replay binary.\n");
+                goto exit;
+        }
+
+        ret = system(
+                "docker commit new_trace_replay suhoson/trace_replay:local");
+        if (ret) {
+                pr_info(ERROR, "Cannot commit new image.\n");
+                goto exit;
+        }
+
+        ret = system("docker rm -f new_trace_replay");
+
+exit:
+        if (cmd) {
+                free(cmd);
         }
         return ret;
 }
@@ -205,8 +236,6 @@ int docker_init(void *object)
 
         int ret = 0, i = 0;
         int nr_tasks = -1;
-
-        char *cmd = NULL;
 
         op->runner = docker_runner;
         op->get_interval = docker_get_interval;
@@ -271,37 +300,10 @@ int docker_init(void *object)
                 goto exception;
         }
 
-        cmd = (char *)malloc(PAGE_SIZE * PAGE_SIZE);
-        if (!cmd) {
-                ret = -ENOMEM;
-                goto exception;
-        }
-
-        sprintf(cmd, "docker cp %s new_trace_replay:/usr/local/bin/",
-                global_info_head->trace_replay_path);
-        ret = system(cmd);
-        if (ret) {
-                pr_info(ERROR, "Cannot copy trace_replay binary.\n");
-                goto exception;
-        }
-
-        ret = system(
-                "docker commit new_trace_replay suhoson/trace_replay:local");
-        if (ret) {
-                pr_info(ERROR, "Cannot commit new image.\n");
-                goto exception;
-        }
-
-        ret = system("docker rm -f new_trace_replay");
-
-        free(cmd);
-
         return ret;
+
 exception:
         __docker_free();
-        if (cmd != NULL) {
-                free(cmd);
-        }
         return ret;
 }
 
