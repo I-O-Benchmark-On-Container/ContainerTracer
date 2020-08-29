@@ -150,6 +150,44 @@ int docker_valid_scheduler_test(const char *scheduler)
 }
 
 /**
+ * @brief Create the docker local image.
+ *
+ * @return 0 for success to create the docker image, other for fail to create the docker image.
+ */
+int docker_create_local_images(void)
+{
+        int ret = 0;
+        ret = system(
+                "docker pull suhoson/trace_replay:latest > /dev/null 2>&1");
+        if (ret) {
+                pr_info(ERROR,
+                        "Cannot pull image: suhoson/trace_replay:latest\n");
+                return ret;
+        }
+
+        ret = system("docker rm -f new_trace_replay");
+        if (ret) {
+                pr_info(INFO, "Cannot remove new_trace_replay: not error\n");
+                ret = 0;
+        }
+
+        ret = system("docker rmi -f suhoson/trace_replay:local");
+        if (ret) {
+                pr_info(INFO,
+                        "Cannot remove trace_replay local version image: not error\n");
+                ret = 0;
+        }
+
+        ret = system(
+                "docker run --name new_trace_replay -d suhoson/trace_replay tail -f /dev/null");
+        if (ret) {
+                pr_info(ERROR, "Cannot run new_trace_replay\n");
+                return ret;
+        }
+        return ret;
+}
+
+/**
  * @brief Initialize the global configuration and per processes configuration.
  *
  * @param[in] object global `runner_config` pointer.
@@ -228,28 +266,8 @@ int docker_init(void *object)
                 }
         }
 
-        ret = system(
-                "docker pull suhoson/trace_replay:latest > /dev/null 2>&1");
+        ret = docker_create_local_images();
         if (ret) {
-                pr_info(ERROR,
-                        "Cannot pull image: suhoson/trace_replay:latest\n");
-                goto exception;
-        }
-
-        ret = system("docker rm -f new_trace_replay");
-        if (ret) {
-                pr_info(INFO, "Cannot remove new_trace_replay: not error\n");
-        }
-        ret = system("docker rmi -f suhoson/trace_replay:local");
-        if (ret) {
-                pr_info(INFO,
-                        "Cannot remove trace_replay local version image: not error\n");
-        }
-
-        ret = system(
-                "docker run --name new_trace_replay -d suhoson/trace_replay tail -f /dev/null");
-        if (ret) {
-                pr_info(ERROR, "Cannot run new_trace_replay\n");
                 goto exception;
         }
 
