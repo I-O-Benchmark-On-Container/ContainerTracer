@@ -5,7 +5,6 @@
   <a href="https://travis-ci.org/I-O-Benchmark-On-Container/ContainerTracer"><img src="https://travis-ci.org/I-O-Benchmark-On-Container/ContainerTracer.svg?branch=master"/></a>
 </p>
 
-
 # 소개
 
 Container Tracer는 컨테이너 별 I/O 성능을 측정하는 도구로 기존의 fio나 filebench의
@@ -13,6 +12,8 @@ Container Tracer는 컨테이너 별 I/O 성능을 측정하는 도구로 기존
 
 Container Tracer는 장치의 컨테이너 별 I/O 성능을 측정하기 위해서 [trace-replay](https://github.com/yongseokoh/trace-replay)를
 사용합니다.
+
+![Execution Sample](https://user-images.githubusercontent.com/16631264/91652483-c35e7280-ead2-11ea-8e4e-1861ab77b52d.gif)
 
 # 권장 시스템 조건
 
