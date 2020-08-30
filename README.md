@@ -11,14 +11,14 @@
 
 # Introduction
 
-![Execution Sample](https://user-images.githubusercontent.com/16631264/91652483-c35e7280-ead2-11ea-8e4e-1861ab77b52d.gif)
-
 Container Tracer is a tool that measures I/O performance per container.
 This program complements lacks of cgroup and container building sequence
 the existing I/O performance measurement program like fio and filebench.
 
 Currently, Container Tracer uses [trace-replay](https://github.com/yongseokoh/trace-replay)
 to measure the I/O performance of each container.
+
+![Execution Sample](https://user-images.githubusercontent.com/16631264/91652483-c35e7280-ead2-11ea-8e4e-1861ab77b52d.gif)
 
 # Recommended system requirements
 
