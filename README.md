@@ -18,6 +18,8 @@ the existing I/O performance measurement program like fio and filebench.
 Currently, Container Tracer uses [trace-replay](https://github.com/yongseokoh/trace-replay)
 to measure the I/O performance of each container.
 
+![Execution Sample](https://user-images.githubusercontent.com/16631264/91653592-28b76100-eadd-11ea-9b66-5773bcfc5845.gif)
+
 # Recommended system requirements
 
 This program can run on the system which follows the POSIX standards.
