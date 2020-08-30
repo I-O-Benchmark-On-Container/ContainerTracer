@@ -9,11 +9,9 @@
   <a href="https://github.com/I-O-Benchmark-On-Container/ContainerTracer/blob/master/documentation/README-KOR.md">한국어 링크</a>
 </p>
 
-# Sample
+# Introduction
 
 ![Execution Sample](https://user-images.githubusercontent.com/16631264/91652483-c35e7280-ead2-11ea-8e4e-1861ab77b52d.gif)
-
-# Introduction
 
 Container Tracer is a tool that measures I/O performance per container.
 This program complements lacks of cgroup and container building sequence
