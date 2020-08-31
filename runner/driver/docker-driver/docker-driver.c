@@ -19,7 +19,7 @@
  * @file docker-driver.c
  * @brief Implementation of run the `trace-replay` benchmark with Docker.
  * @author SuhoSon (ngeol564@gmail.com)
- * @version 0.1
+ * @version 0.1.1
  * @date 2020-08-19
  */
 
@@ -57,6 +57,8 @@ static const char *docker_valid_scheduler[] = {
         [DOCKER_BFQ_SCHEDULER] = "bfq",
         NULL,
 };
+
+static const int docker_weight_support_scheduler[] = { DOCKER_BFQ_SCHEDULER };
 
 static struct docker_info *global_info_head =
         NULL; /**< global `docker_info` list */
@@ -147,6 +149,26 @@ int docker_valid_scheduler_test(const char *scheduler)
                 index++;
         }
         return -EINVAL;
+}
+
+/**
+ * @brief Check the parameter's `scheduler_index` supports weight.
+ *
+ * @param[in] scheduler_index The scheduler's index which is based on `docker_valid_scheduler` and wants to check.
+ *
+ * @return 0 for doesn't support the weight, 1 for supporting the weight.
+ */
+int docker_has_weight_scheduler(const int scheduler_index)
+{
+        const int nr_index =
+                sizeof(docker_weight_support_scheduler) / sizeof(int);
+        int index = 0;
+        for (index = 0; index < nr_index; index++) {
+                if (scheduler_index == docker_weight_support_scheduler[index]) {
+                        return 1;
+                }
+        }
+        return 0;
 }
 
 /**
@@ -318,9 +340,15 @@ static int docker_set_cgroup_state(struct docker_info *current)
 {
         int ret = 0;
 
-        ret = strcmp(current->scheduler,
-                     docker_valid_scheduler[DOCKER_BFQ_SCHEDULER]);
-        if (ret == 0) { /* Set the weight when BFQ scheduler. */
+        ret = docker_valid_scheduler_test(current->scheduler);
+        if (ret) {
+                pr_info(ERROR, "Cannot support the scheduler: \"%s\"\n",
+                        current->scheduler);
+                return ret;
+        }
+
+        ret = docker_has_weight_scheduler(ret);
+        if (ret) { /* Set the weight when BFQ scheduler. */
                 char cmd[PATH_MAX];
 
                 if (!runner_is_valid_bfq_weight(current->weight)) {

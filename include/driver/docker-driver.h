@@ -19,7 +19,7 @@
  * @file docker-driver.h
  * @brief driver declaration part of run `docker with trace-replay`
  * @author SuhoSon (ngeol564@gmail.com)
- * @version 0.1
+ * @version 0.1.1
  * @date 2020-08-19
  */
 #ifndef _DOCKER_DRIVER_H
@@ -167,6 +167,7 @@ struct docker_info {
 int docker_init(void *object);
 int docker_runner(void);
 int docker_valid_scheduler_test(const char *scheduler);
+int docker_has_weight_scheduler(const int scheduler_index);
 int docker_get_interval(const char *key, char *buffer);
 int docker_get_total(const char *key, char *buffer);
 void docker_free(void);

@@ -19,7 +19,7 @@
  * @file tr-info.c
  * @brief Initialize the info structure.
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
- * @version 0.1
+ * @version 0.1.1
  * @date 2020-08-10
  */
 
@@ -127,6 +127,7 @@ static int __tr_info_init(struct json_object *setting, int index,
         struct json_object *tmp;
         struct stat lstat_info;
         int ret = 0;
+        int print_flag = TR_PRINT_NONE;
 
         ENTRY item; /**< Variable for `hsearch`. */
         ENTRY *result;
@@ -171,9 +172,12 @@ static int __tr_info_init(struct json_object *setting, int index,
                 return ret;
         }
 
-        ret = tr_info_int_value_set(tmp, "weight", &info->weight,
-                                    TR_ERROR_PRINT);
-        if (0 != ret) {
+        if (tr_has_weight_scheduler(ret)) {
+                print_flag = TR_ERROR_PRINT;
+        }
+
+        ret = tr_info_int_value_set(tmp, "weight", &info->weight, print_flag);
+        if (TR_ERROR_PRINT == print_flag && 0 != ret) {
                 return ret;
         }
 

@@ -19,7 +19,7 @@
  * @file runner.c
  * @brief Definition of `runner.h` declaration contents.
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
- * @version 0.1
+ * @version 0.1.1
  * @date 2020-08-04
  */
 
@@ -49,7 +49,7 @@ static struct runner_config *global_config =
 void runner_config_free(struct runner_config *config, const int flags)
 {
         if (NULL == config) {
-                pr_info(ERROR, "invalid config location: %p\n", config);
+                pr_info(WARNING, "invalid config location: %p\n", config);
                 return;
         }
 
@@ -143,6 +143,7 @@ exception:
         }
         global_config->setting = NULL;
         runner_config_free(global_config, RUNNER_FREE_ALL);
+        global_config = NULL;
         return ret;
 }
 

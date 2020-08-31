@@ -19,7 +19,7 @@
  * @file tr-driver.h
  * @brief driver declaration part of run `trace-replay`
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
- * @version 0.1
+ * @version 0.1.1
  * @date 2020-08-05
  */
 #ifndef _TR_DRIVER_H
@@ -164,6 +164,7 @@ struct tr_info {
 int tr_init(void *object);
 int tr_runner(void);
 int tr_valid_scheduler_test(const char *scheduler);
+int tr_has_weight_scheduler(const int scheduler_index);
 int tr_get_interval(const char *key, char *buffer);
 int tr_get_total(const char *key, char *buffer);
 void tr_free(void);
