@@ -288,8 +288,7 @@ struct docker_info *docker_info_init(struct json_object *setting, int index)
         if (-1 == lstat(info->trace_replay_path, &lstat_info)) {
                 char *buffer = (char *)malloc(sizeof(info->trace_replay_path));
                 assert(NULL != buffer);
-                strncpy(buffer, info->trace_replay_path,
-                        sizeof(info->trace_replay_path));
+                sprintf(buffer, "%s", info->trace_replay_path);
                 sprintf(info->trace_replay_path, "/usr/bin/%s", buffer);
                 pr_info(WARNING, "redirect: %s => %s\n", buffer,
                         info->trace_replay_path);
