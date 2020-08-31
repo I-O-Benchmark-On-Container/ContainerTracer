@@ -19,7 +19,7 @@
  * @file docker-info.c
  * @brief Initialize the info structure.
  * @author SuhoSon (ngeol564@gmail.com)
- * @version 0.1
+ * @version 0.1.1
  * @date 2020-08-19
  */
 
@@ -130,6 +130,7 @@ static int __docker_info_init(struct json_object *setting, int index,
         struct json_object *tmp;
         struct stat lstat_info;
         int ret = 0;
+        int print_flag = DOCKER_PRINT_NONE;
 
         ENTRY item; /**< Variable for `hsearch`. */
         ENTRY *result;
@@ -182,9 +183,13 @@ static int __docker_info_init(struct json_object *setting, int index,
                 goto exception;
         }
 
+        if (docker_has_weight_scheduler(ret)) {
+                print_flag = DOCKER_ERROR_PRINT;
+        }
+
         ret = docker_info_int_value_set(tmp, "weight", &info->weight,
-                                        DOCKER_ERROR_PRINT);
-        if (0 != ret) {
+                                        print_flag);
+        if (DOCKER_ERROR_PRINT == print_flag && 0 != ret) {
                 goto exception;
         }
 
