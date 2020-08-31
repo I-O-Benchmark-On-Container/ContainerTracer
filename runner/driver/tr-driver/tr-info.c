@@ -172,19 +172,12 @@ static int __tr_info_init(struct json_object *setting, int index,
                 return ret;
         }
 
-        ret = tr_valid_scheduler_test(info->scheduler);
-        if (ret) {
-                pr_info(ERROR, " Cannot support the scheduler: \"%s\"\n",
-                        info->scheduler);
-                return ret;
-        }
-
         if (tr_has_weight_scheduler(ret)) {
                 print_flag = TR_ERROR_PRINT;
         }
 
         ret = tr_info_int_value_set(tmp, "weight", &info->weight, print_flag);
-        if (print_flag == TR_ERROR_PRINT && 0 != ret) {
+        if (TR_ERROR_PRINT == print_flag && 0 != ret) {
                 return ret;
         }
 
