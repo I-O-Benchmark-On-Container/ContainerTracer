@@ -19,7 +19,7 @@
  * @file tr-driver.h
  * @brief driver declaration part of run `trace-replay`
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
- * @version 0.1
+ * @version 0.1.1
  * @date 2020-08-05
  */
 #ifndef _TR_DRIVER_H

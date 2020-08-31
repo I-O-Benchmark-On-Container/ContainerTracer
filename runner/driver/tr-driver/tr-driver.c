@@ -19,7 +19,7 @@
  * @file tr-driver.c
  * @brief Implementation of run the `trace-replay` benchmark.
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
- * @version 0.1
+ * @version 0.1.1
  * @date 2020-08-05
  */
 
@@ -155,7 +155,7 @@ int tr_valid_scheduler_test(const char *scheduler)
 /**
  * @brief Check the parameter's `scheduler_index` supports weight.
  *
- * @param scheduler_index The scheduler's index which is based on `tr_valid_scheduler` and wants to check.
+ * @param[in] scheduler_index The scheduler's index which is based on `tr_valid_scheduler` and wants to check.
  *
  * @return 0 for doesn't support the weight, 1 for supporting the weight
  */

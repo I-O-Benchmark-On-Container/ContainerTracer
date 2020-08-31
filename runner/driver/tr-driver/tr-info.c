@@ -19,7 +19,7 @@
  * @file tr-info.c
  * @brief Initialize the info structure.
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
- * @version 0.1
+ * @version 0.1.1
  * @date 2020-08-10
  */
 
