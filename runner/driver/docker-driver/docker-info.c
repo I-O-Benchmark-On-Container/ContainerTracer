@@ -247,6 +247,7 @@ exception:
 struct docker_info *docker_info_init(struct json_object *setting, int index)
 {
         struct docker_info *info;
+        struct stat lstat_info;
         int ret = 0;
 
         info = (struct docker_info *)malloc(sizeof(struct docker_info));
@@ -281,6 +282,22 @@ struct docker_info *docker_info_init(struct json_object *setting, int index)
                                          DOCKER_ERROR_PRINT);
         if (0 != ret) {
                 pr_info(ERROR, "error detected (errno: %d)\n", ret);
+                goto exception;
+        }
+
+        if (-1 == lstat(info->trace_replay_path, &lstat_info)) {
+                char *buffer = (char *)malloc(sizeof(info->trace_replay_path));
+                assert(NULL != buffer);
+                sprintf(buffer, "%s", info->trace_replay_path);
+                sprintf(info->trace_replay_path, "/usr/bin/%s", buffer);
+                pr_info(WARNING, "redirect: %s => %s\n", buffer,
+                        info->trace_replay_path);
+                free(buffer);
+        }
+
+        if (-1 == lstat(info->trace_replay_path, &lstat_info)) {
+                pr_info(ERROR, "Cannot find the trace_replay_path: %s\n",
+                        info->trace_replay_path);
                 goto exception;
         }
 

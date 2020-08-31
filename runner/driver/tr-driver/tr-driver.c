@@ -326,7 +326,6 @@ static int tr_set_cgroup_state(struct tr_info *current)
 static int tr_do_exec(struct tr_info *current)
 {
         struct tr_info info;
-        struct stat lstat_info;
         char filename[PATH_MAX];
 
         char q_depth_str[PAGE_SIZE / 4];
@@ -364,11 +363,6 @@ static int tr_do_exec(struct tr_info *current)
 #ifdef DEBUG
         tr_print_info(&info);
 #endif
-        if (-1 == lstat(info.trace_replay_path, &lstat_info)) {
-                pr_info(ERROR, "trace replay doesn't exist: \"%s\"\n",
-                        info.trace_replay_path);
-                return -EACCES;
-        }
         return execlp(info.trace_replay_path, info.trace_replay_path,
                       q_depth_str, nr_thread_str, filename, time_str,
                       trace_repeat_str, device_path, info.trace_data_path,
