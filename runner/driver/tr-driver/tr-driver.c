@@ -60,7 +60,8 @@ static const char *tr_valid_scheduler[] = {
         NULL,
 };
 
-static const int tr_weight_support_scheduler[] = { TR_BFQ_SCHEDULER };
+static const int tr_weight_support_scheduler[] = { TR_BFQ_SCHEDULER,
+                                                   TR_KYBER_SCHEDULER };
 
 static struct tr_info *global_info_head = NULL; /**< global `tr_info` list */
 
