@@ -19,7 +19,7 @@
  * @file tr-driver.c
  * @brief Implementation of run the `trace-replay` benchmark.
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
- * @version 0.1.1
+ * @version 0.1.2
  * @date 2020-08-05
  */
 
@@ -138,16 +138,16 @@ static void __tr_free(void)
  *
  * @param[in] scheduler Inputted scheduler string.
  *
- * @return 0 for mean support the scheduler, -EINVAL for mean don't support the scheduler.
+ * @return 0 and positive integer for mean support the scheduler, -EINVAL for mean don't support the scheduler.
  */
 int tr_valid_scheduler_test(const char *scheduler)
 {
-        const char *index = tr_valid_scheduler[0];
-        while (index != NULL) {
-                if (strcmp(scheduler, index) == 0) {
-                        return 0;
+        int index = 0;
+        const char *current = NULL;
+        while (NULL != (current = tr_valid_scheduler[index++])) {
+                if (0 == strcmp(scheduler, current)) {
+                        return index - 1;
                 }
-                index++;
         }
         return -EINVAL;
 }
@@ -277,7 +277,7 @@ static int tr_set_cgroup_state(struct tr_info *current)
         }
 
         ret = tr_valid_scheduler_test(current->scheduler);
-        if (ret) {
+        if (0 > ret) {
                 pr_info(ERROR, " Cannot support the scheduler: \"%s\"\n",
                         current->scheduler);
                 return ret;

@@ -19,7 +19,7 @@
  * @file tr-info.c
  * @brief Initialize the info structure.
  * @author BlaCkinkGJ (ss5kijun@gmail.com)
- * @version 0.1.1
+ * @version 0.1.2
  * @date 2020-08-10
  */
 
@@ -166,7 +166,7 @@ static int __tr_info_init(struct json_object *setting, int index,
         tr_info_str_value_set(tmp, "device", info->device, sizeof(info->device),
                               TR_PRINT_NONE);
         ret = tr_valid_scheduler_test(info->scheduler);
-        if (0 != ret) {
+        if (0 > ret) {
                 pr_info(ERROR, "Unsupported scheduler (name: %s)\n",
                         info->scheduler);
                 return ret;
@@ -268,7 +268,7 @@ struct tr_info *tr_info_init(struct json_object *setting, int index)
         }
 
         ret = tr_valid_scheduler_test(info->scheduler);
-        if (0 != ret) {
+        if (0 > ret) {
                 pr_info(ERROR, "Unsupported scheduler (name: %s)\n",
                         info->scheduler);
                 goto exception;
