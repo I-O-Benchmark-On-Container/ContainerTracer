@@ -354,7 +354,38 @@ static int tr_do_exec(struct tr_info *current)
 
         snprintf(trace_repeat_str, sizeof(trace_repeat_str), "%u",
                  info.trace_repeat);
-        snprintf(wss_str, sizeof(wss_str), "%u", info.wss);
+        if (info.utilization == 0 && info.iosize == 0) {
+                double scaling = 0.0;
+                FILE *fp = NULL;
+                char *last_line = NULL;
+                size_t size = 0;
+
+                fp = fopen(info.trace_data_path, "r");
+                assert(NULL != fp);
+
+                fseek(fp, -sizeof(wss_str), SEEK_END);
+                size = fread(wss_str, 1, sizeof(wss_str), fp);
+
+                wss_str[size - 1] = '\0';
+
+                last_line = strrchr(wss_str, '\n');
+                assert(NULL != last_line);
+                last_line += 1;
+
+                sscanf(last_line, "%lf", &scaling);
+
+                scaling = (info.time * 1000) /
+                          scaling; /**< 1000 for seconds to milli-seconds */
+
+                pr_info(INFO, "scaling value: %lf\n", scaling);
+
+                fclose(fp);
+
+                memset(wss_str, 0, sizeof(wss_str));
+                snprintf(wss_str, sizeof(wss_str), "%lf", scaling);
+        } else {
+                snprintf(wss_str, sizeof(wss_str), "%u", info.wss);
+        }
         snprintf(utilization_str, sizeof(utilization_str), "%u",
                  info.utilization);
         snprintf(iosize_str, sizeof(iosize_str), "%u", info.iosize);
