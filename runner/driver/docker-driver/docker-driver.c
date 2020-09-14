@@ -19,7 +19,7 @@
  * @file docker-driver.c
  * @brief Implementation of run the `trace-replay` benchmark with Docker.
  * @author SuhoSon (ngeol564@gmail.com)
- * @version 0.1.1
+ * @version 0.1.2
  * @date 2020-08-19
  */
 
@@ -137,17 +137,19 @@ static void __docker_free(void)
  *
  * @param[in] scheduler Inputted scheduler string.
  *
- * @return 0 for mean support the scheduler, -EINVAL for mean don't support the scheduler.
+ * @return 0 and positive integer for mean support the scheduler, -EINVAL for mean don't support the scheduler.
  */
 int docker_valid_scheduler_test(const char *scheduler)
 {
-        const char *index = docker_valid_scheduler[0];
-        while (index != NULL) {
-                if (strcmp(scheduler, index) == 0) {
-                        return 0;
+        int index = 0;
+        const char *current = NULL;
+
+        while (NULL != (current = docker_valid_scheduler[index++])) {
+                if (0 == strcmp(scheduler, current)) {
+                        return index - 1;
                 }
-                index++;
         }
+
         return -EINVAL;
 }
 
@@ -341,7 +343,7 @@ static int docker_set_cgroup_state(struct docker_info *current)
         int ret = 0;
 
         ret = docker_valid_scheduler_test(current->scheduler);
-        if (ret) {
+        if (0 > ret) {
                 pr_info(ERROR, "Cannot support the scheduler: \"%s\"\n",
                         current->scheduler);
                 return ret;

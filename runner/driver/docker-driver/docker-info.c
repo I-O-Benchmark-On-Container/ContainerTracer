@@ -19,7 +19,7 @@
  * @file docker-info.c
  * @brief Initialize the info structure.
  * @author SuhoSon (ngeol564@gmail.com)
- * @version 0.1.1
+ * @version 0.1.2
  * @date 2020-08-19
  */
 
@@ -177,7 +177,7 @@ static int __docker_info_init(struct json_object *setting, int index,
         docker_info_str_value_set(tmp, "device", info->device,
                                   sizeof(info->device), DOCKER_PRINT_NONE);
         ret = docker_valid_scheduler_test(info->scheduler);
-        if (0 != ret) {
+        if (0 > ret) {
                 pr_info(ERROR, "Unsupported scheduler (name: %s)\n",
                         info->scheduler);
                 goto exception;
@@ -302,7 +302,7 @@ struct docker_info *docker_info_init(struct json_object *setting, int index)
         }
 
         ret = docker_valid_scheduler_test(info->scheduler);
-        if (0 != ret) {
+        if (0 > ret) {
                 pr_info(ERROR, "Unsupported scheduler (name: %s)\n",
                         info->scheduler);
                 goto exception;
