@@ -2,6 +2,28 @@ let socket = io.connect("http://" + document.domain + ":" + location.port);
 let prevDataList = null;
 let nrCgroup = 0;
 
+function setCookie(cookie_name, value, days) {
+    var exdate = new Date();
+    exdate.setDate(exdate.getDate() + days);
+
+    var cookie_value = escape(value) + ((days == null) ? '' : ';    expires=' + exdate.toUTCString());
+    document.cookie = cookie_name + '=' + cookie_value;
+}
+
+function getCookie(cookie_name) {
+    var x, y;
+    var val = document.cookie.split(';');
+
+    for (var i = 0; i < val.length; i++) {
+        x = val[i].substr(0, val[i].indexOf('='));
+        y = val[i].substr(val[i].indexOf('=') + 1);
+        x = x.replace(/^\s+|\s+$/g, '');
+        if (x == cookie_name) {
+              return unescape(y);
+        }
+    }
+}
+
 $(document).ready(function(){
     const $optionDisplay = $('#optionDisplay');
     const $chartDisplay = $('#chartDisplay');
@@ -11,6 +33,14 @@ $(document).ready(function(){
 
     if (prevDataList === null) {
 	    prevDataList = new Array();
+	    idx = 1;
+	    while (getCookie("cgroup-"+idx) !== undefined) {
+		    console.log(getCookie("cgroup-"+idx));
+		    let weight = getCookie("cgroup-"+idx);
+		    let path = getCookie("cgroup-"+idx+"path");
+		    prevDataList.push({"weight":weight, "path":path});
+		    idx++;
+	    }
     }
 
     /* advanced opttions button event listener */
@@ -25,8 +55,9 @@ $(document).ready(function(){
         nrCgroup = $('#cgroup').val();
         
         $('#nr_tasks').val(nrCgroup);
-	for (let idx = prevDataList.length; idx < Number(nrCgroup); idx++)
+	for (let idx = prevDataList.length; idx < Number(nrCgroup); idx++) {
 		prevDataList.push({"weight":1000, "path":"./sample/sample1.dat"});
+	}
         addOptions(nrCgroup, prevDataList);
         socket.emit("set_driver", data);
     });
@@ -40,6 +71,8 @@ $(document).ready(function(){
 	for (let idx = 1; idx <= Number(nrCgroup); idx++) {
 		prevDataList[idx-1]["weight"] = setEach["cgroup-"+idx]
 		prevDataList[idx-1]["path"] = setEach["cgroup-"+idx+"-path"]
+		setCookie("cgroup-"+idx, setEach["cgroup-"+idx])
+		setCookie("cgroup-"+idx+"-path", setEach["cgroup-"+idx+"-path"])
 	}
         socket.emit("set_options", setEach, setAll);
         $btnSelectWork.prop("disabled", true);
