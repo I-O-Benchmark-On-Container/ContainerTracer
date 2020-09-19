@@ -17,7 +17,7 @@ $.fn.serializeObject = function() {
     return obj;
 };
 
-function addOptions(nrCgroup) {
+function addOptions(nrCgroup, prevDataList) {
     let ulList = $('#options');
     ulList.append("<div class=row>" + "<label>All weights are in the range <B>(10, 1000)</B></label>" + "</div>");
     for (let idx = 1; idx < Number(nrCgroup) + 1; idx++) {
@@ -27,11 +27,11 @@ function addOptions(nrCgroup) {
                                 ": " +
                                 '<div class="row">' +
                                 "<label>Weight</label>" +
-                                '<input type="text" class="form-control form_theme search_theme" name="cgroup-' + idx + '" id="cgroup' + idx + '" placeholder="input weight" autocomplete="off" value="1000">' +
+                                '<input type="text" class="form-control form_theme search_theme" name="cgroup-' + idx + '" id="cgroup' + idx + '" placeholder="input weight" autocomplete="off" value="'+prevDataList[idx-1]["weight"]+'">' +
                                 "</div>" +
                                 '<div class="row">' +
                                 "<label>trace_data_path</label>" +
-                                '<input type="text" class="form-control form_theme search_theme" name="cgroup-' + idx + '-path" id="cgroup' + idx + '-path" placeholder="ex: " autocomplete="off" value="./sample/sample1.dat">' +
+                                '<input type="text" class="form-control form_theme search_theme" name="cgroup-' + idx + '-path" id="cgroup' + idx + '-path" placeholder="ex: " autocomplete="off" value="'+prevDataList[idx-1]["path"]+'">' +
                                 "</div>" +
                             "</div>" +
                         "</li>");

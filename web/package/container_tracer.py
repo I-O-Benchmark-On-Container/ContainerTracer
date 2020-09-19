@@ -4,6 +4,8 @@ from threading import Thread
 import ctypes
 import json
 import os
+import copy
+from datetime import datetime
 
 
 ##
@@ -44,8 +46,8 @@ class ContainerTracer(metaclass=ABCMeta):
     # Must call container_tracer_free after running run_all_container_tracer().
     # If don't, Error must be occur at next phase.
     def container_tracer_free(self) -> None:
-        self.driver.join()
-        self.libc.runner_free()
+            self.driver.join()
+            self.libc.runner_free()
 
     ##
     # @brief Call runner module with config options at set_config().
@@ -64,6 +66,30 @@ class ContainerTracer(metaclass=ABCMeta):
     def _get_interval_result(self, key: str) -> None:
         pass
 
+    ##
+    # @brief Check the validation of the filename.
+    # And if it is not valid, then attach number 1, 2, 3...
+    #
+    # @param str Filename which I want to output.
+    #
+    # @return Valid filename string.
+    @staticmethod
+    def get_valid_filename(filename: str) -> str:
+        if not os.path.exists(filename):
+            return filename 
+
+        number = 1
+        base = copy.copy(filename) # may occur overhead ?
+        filename = f"{base}.{number}"
+
+        while os.path.exists(filename):
+            number += 1
+            filename = f"{base}.{number}"
+
+        return filename 
+
+    ##
+    # @brief Get total result from runner library.
     def _get_total_result(self) -> None:
         key_set = set(["cgroup-" + str(i + 1) for i in range(self.nr_tasks)])
         for key in key_set:
@@ -74,7 +100,8 @@ class ContainerTracer(metaclass=ABCMeta):
             ret = ctypes.cast(ptr, ctypes.c_char_p).value
             self.libc.runner_put_result_string(ptr)
 
-            with open(f"{key}-total-result.json", "w") as f:
+            filename = self.get_valid_filename(f"{key}-total-result.json")
+            with open(filename, "w") as f:
                 result_string = json.loads(ret.decode())
                 result_json = json.dumps(result_string, indent=4, sort_keys=True)
                 f.write(result_json)

@@ -1,4 +1,6 @@
 let socket = io.connect("http://" + document.domain + ":" + location.port);
+let prevDataList = null;
+let nrCgroup = 0;
 
 $(document).ready(function(){
     const $optionDisplay = $('#optionDisplay');
@@ -7,19 +9,25 @@ $(document).ready(function(){
     const $btnStartWork = $('#btnStartWork');
     const $options = $('#options');
 
+    if (prevDataList === null) {
+	    prevDataList = new Array();
+    }
+
     /* advanced opttions button event listener */
     $btnSelectWork.on('click', function(event){
         $chartDisplay.addClass('hide');
         $options.children().remove();
-        let nrCgroup = $('#cgroup').val();
         let driver = $('#driver').val();
-
         let data = {
             driver: driver,
         };
+
+        nrCgroup = $('#cgroup').val();
         
         $('#nr_tasks').val(nrCgroup);
-        addOptions(nrCgroup);
+	for (let idx = prevDataList.length; idx < Number(nrCgroup); idx++)
+		prevDataList.push({"weight":1000, "path":"./sample/sample1.dat"});
+        addOptions(nrCgroup, prevDataList);
         socket.emit("set_driver", data);
     });
 
@@ -28,6 +36,11 @@ $(document).ready(function(){
         event.preventDefault();
         let setEach = $("form[name=setEach").serializeObject();
         let setAll = $("form[name=setAll]").serializeObject();
+
+	for (let idx = 1; idx <= Number(nrCgroup); idx++) {
+		prevDataList[idx-1]["weight"] = setEach["cgroup-"+idx]
+		prevDataList[idx-1]["path"] = setEach["cgroup-"+idx+"-path"]
+	}
         socket.emit("set_options", setEach, setAll);
         $btnSelectWork.prop("disabled", true);
         $btnStartWork.prop("disabled", true);
