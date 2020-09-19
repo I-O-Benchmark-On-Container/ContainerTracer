@@ -27,11 +27,11 @@ function addOptions(nrCgroup, prevDataList) {
                                 ": " +
                                 '<div class="row">' +
                                 "<label>Weight</label>" +
-                                '<input type="text" class="form-control form_theme search_theme" name="cgroup-' + idx + '" id="cgroup' + idx + '" placeholder="input weight" autocomplete="off" value="'+prevDataList[idx-1]['weight']+'">' +
+                                '<input type="text" class="form-control form_theme search_theme" name="cgroup-' + idx + '" id="cgroup' + idx + '" placeholder="input weight" autocomplete="off" value="'+prevDataList[idx-1].weight+'">' +
                                 "</div>" +
                                 '<div class="row">' +
                                 "<label>trace_data_path</label>" +
-                                '<input type="text" class="form-control form_theme search_theme" name="cgroup-' + idx + '-path" id="cgroup' + idx + '-path" placeholder="ex: " autocomplete="off" value="'+prevDataList[idx-1]['path']+'">' +
+                                '<input type="text" class="form-control form_theme search_theme" name="cgroup-' + idx + '-path" id="cgroup' + idx + '-path" placeholder="ex: " autocomplete="off" value="'+prevDataList[idx-1].path+'">' +
                                 "</div>" +
                             "</div>" +
                         "</li>");
