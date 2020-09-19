@@ -93,15 +93,47 @@ class TraceReplay(ContainerTracer):
         return ret
 
     ##
+    # @brief Create a data dictionary which will contain the interval results.
+    #
+    # @param[in] ket_set Set of keys.
+    #
+    # @return data structure which will contain the interval results.
+    @staticmethod
+    def prepare_data_dict(key_set: set) -> dict:
+        data_dict = {}
+        for key in key_set:
+            data_dict[key] = {"results": [], "meta" : None}
+        return data_dict
+
+    ##
+    # @brief save interval results to json file.
+    #
+    # @param[in] data_dict dictionary data structure which contains the interval results.
+    @staticmethod
+    def save_interval_to_files(data_dict: dict) -> None:
+        import pprint
+        pprint.pprint(data_dict)
+        for key, value in data_dict.items():
+            filename = ContainerTracer.get_valid_filename(f"{key}-interval-result.json")
+            current_file = open(filename, "w")
+            current_file.write(json.dumps(value, indent=4, sort_keys=True))
+            current_file.close()
+
+    ##
     # @brief Refresh frotnend chart by a interval with trace-replay aysnc.
     # Send result via chart module.
     #
     # @return `True` for success to execute, `False` for fail to execute.
+    #
+    # @note This function will free resources.
     def _refresh(self) -> bool:
         super()._refresh()
         frontend_chart = chart.Chart()
         key_set = set(["cgroup-" + str(i + 1) for i in range(self.nr_tasks)])
         remain_set = copy.copy(key_set)
+
+        data_dict = self.prepare_data_dict(key_set)
+
         while len(remain_set):
             current = copy.copy(remain_set)
             interval_results = []
@@ -115,11 +147,17 @@ class TraceReplay(ContainerTracer):
                     remain_set.remove(key)
                     continue
 
+                json_data = json.loads(raw_data)
+                data_dict[key]["results"].append(json_data["data"])
+                data_dict[key]["meta"] = json_data["meta"]
+
                 interval_results.append(chart_result)
             if len(key_set) == len(interval_results):
                 self._update_interval_results(interval_results)
             else:
                 self._get_total_result()
+                self.save_interval_to_files(data_dict)
                 self._update_interval_results({})
                 return True
+
         return False

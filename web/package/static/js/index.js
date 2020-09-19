@@ -1,4 +1,28 @@
 let socket = io.connect("http://" + document.domain + ":" + location.port);
+let prevDataList = null;
+let nrCgroup = 0;
+
+function setCookie(cookie_name, value, days) {
+    var exdate = new Date();
+    exdate.setDate(exdate.getDate() + days);
+
+    var cookie_value = escape(value) + ((days == null) ? '' : ';    expires=' + exdate.toUTCString());
+    document.cookie = cookie_name + '=' + cookie_value;
+}
+
+function getCookie(cookie_name) {
+    var x, y;
+    var val = document.cookie.split(';');
+
+    for (var i = 0; i < val.length; i++) {
+        x = val[i].substr(0, val[i].indexOf('='));
+        y = val[i].substr(val[i].indexOf('=') + 1);
+        x = x.replace(/^\s+|\s+$/g, '');
+        if (x == cookie_name) {
+              return unescape(y);
+        }
+    }
+}
 
 $(document).ready(function(){
     const $optionDisplay = $('#optionDisplay');
@@ -7,19 +31,33 @@ $(document).ready(function(){
     const $btnStartWork = $('#btnStartWork');
     const $options = $('#options');
 
+    if (prevDataList === null) {
+	    prevDataList = new Array();
+	    idx = 1;
+	    while (getCookie("cgroup-"+idx) !== undefined) {
+		    let weight = getCookie("cgroup-"+idx);
+		    let path = getCookie("cgroup-"+idx+"-path");
+		    prevDataList.push({"weight":weight, "path":path});
+		    idx++;
+	    }
+    }
+
     /* advanced opttions button event listener */
     $btnSelectWork.on('click', function(event){
         $chartDisplay.addClass('hide');
         $options.children().remove();
-        let nrCgroup = $('#cgroup').val();
         let driver = $('#driver').val();
-
         let data = {
             driver: driver,
         };
+
+        nrCgroup = $('#cgroup').val();
         
         $('#nr_tasks').val(nrCgroup);
-        addOptions(nrCgroup);
+	for (let idx = prevDataList.length; idx < Number(nrCgroup); idx++) {
+		prevDataList.push({"weight":1000, "path":"./sample/sample1.dat"});
+	}
+        addOptions(nrCgroup, prevDataList);
         socket.emit("set_driver", data);
     });
 
@@ -28,6 +66,13 @@ $(document).ready(function(){
         event.preventDefault();
         let setEach = $("form[name=setEach").serializeObject();
         let setAll = $("form[name=setAll]").serializeObject();
+
+	for (let idx = 1; idx <= Number(nrCgroup); idx++) {
+		prevDataList[idx-1].weight = setEach["cgroup-"+idx];
+		prevDataList[idx-1].path = setEach["cgroup-"+idx+"-path"];
+		setCookie("cgroup-"+idx, setEach["cgroup-"+idx]);
+		setCookie("cgroup-"+idx+"-path", setEach["cgroup-"+idx+"-path"]);
+	}
         socket.emit("set_options", setEach, setAll);
         $btnSelectWork.prop("disabled", true);
         $btnStartWork.prop("disabled", true);
