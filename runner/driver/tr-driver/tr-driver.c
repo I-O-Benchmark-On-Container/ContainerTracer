@@ -354,6 +354,8 @@ static int tr_do_exec(struct tr_info *current)
 
         snprintf(trace_repeat_str, sizeof(trace_repeat_str), "%u",
                  info.trace_repeat);
+        snprintf(wss_str, sizeof(wss_str), "%u", info.wss);
+#ifdef TR_SCALING
         if (info.utilization == 0 && info.iosize == 0) {
                 double scaling = 0.0;
                 FILE *fp = NULL;
@@ -383,9 +385,8 @@ static int tr_do_exec(struct tr_info *current)
 
                 memset(wss_str, 0, sizeof(wss_str));
                 snprintf(wss_str, sizeof(wss_str), "%lf", scaling);
-        } else {
-                snprintf(wss_str, sizeof(wss_str), "%u", info.wss);
         }
+#endif
         snprintf(utilization_str, sizeof(utilization_str), "%u",
                  info.utilization);
         snprintf(iosize_str, sizeof(iosize_str), "%u", info.iosize);
