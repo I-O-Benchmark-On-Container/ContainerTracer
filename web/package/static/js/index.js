@@ -35,7 +35,6 @@ $(document).ready(function(){
 	    prevDataList = new Array();
 	    idx = 1;
 	    while (getCookie("cgroup-"+idx) !== undefined) {
-		    console.log(getCookie("cgroup-"+idx));
 		    let weight = getCookie("cgroup-"+idx);
 		    let path = getCookie("cgroup-"+idx+"path");
 		    prevDataList.push({"weight":weight, "path":path});
