@@ -114,6 +114,8 @@ class TraceReplay(ContainerTracer):
     # Send result via chart module.
     #
     # @return `True` for success to execute, `False` for fail to execute.
+    #
+    # @note This function will free resources.
     def _refresh(self) -> bool:
         super()._refresh()
         frontend_chart = chart.Chart()
@@ -141,8 +143,8 @@ class TraceReplay(ContainerTracer):
                 self._update_interval_results(interval_results)
             else:
                 self._get_total_result()
-                self._update_interval_results({})
                 self.save_interval_to_files(data_dict)
+                self._update_interval_results({})
                 return True
 
         return False

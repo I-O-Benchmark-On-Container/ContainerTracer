@@ -5,6 +5,7 @@ import ctypes
 import json
 import os
 import copy
+from .__init__ import Config
 from datetime import datetime
 
 
@@ -29,6 +30,7 @@ class ContainerTracer(metaclass=ABCMeta):
         self.libc = ctypes.CDLL(self._libc_path)
         self._set_config(config)
         self.nr_tasks = int(config["setting"]["nr_tasks"])
+        self.global_config = None
         ret = self.libc.runner_init(self.config_json.encode())
         if ret != 0:
             raise OSError(ret, os.strerror(ret))
@@ -41,12 +43,14 @@ class ContainerTracer(metaclass=ABCMeta):
     def _set_config(self, config: dict) -> None:
         pass
 
+    def set_global_config(self, config: Config) -> None:
+        self.global_config = config
+
     ##
     # @brief Free memory after running container-trace.
     # Must call container_tracer_free after running run_all_container_tracer().
     # If don't, Error must be occur at next phase.
     def container_tracer_free(self) -> None:
-            self.driver.join()
             self.libc.runner_free()
 
     ##
@@ -136,6 +140,14 @@ class ContainerTracer(metaclass=ABCMeta):
 
         refresh_proc.start()
         refresh_proc.join()
+
+        if self.global_config == None:
+            raise Exception("`global_config` must be specified");
+
+        global_config = self.global_config
+        if global_config.container_tracer:
+            global_config.container_tracer.container_tracer_free()
+            global_config.container_tracer = None
 
     ##
     # @brief Run container-tracer.
