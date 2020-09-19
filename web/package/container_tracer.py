@@ -6,7 +6,6 @@ import json
 import os
 import copy
 from .__init__ import Config
-from datetime import datetime
 
 
 ##
@@ -86,7 +85,7 @@ class ContainerTracer(metaclass=ABCMeta):
     @staticmethod
     def get_valid_filename(filename: str) -> str:
         if not os.path.exists(filename):
-            return filename 
+            return filename
 
         number = 1
         base = copy.copy(filename) # may occur overhead ?
@@ -96,7 +95,7 @@ class ContainerTracer(metaclass=ABCMeta):
             number += 1
             filename = f"{base}.{number}"
 
-        return filename 
+        return filename
 
     ##
     # @brief Get total result from runner library.

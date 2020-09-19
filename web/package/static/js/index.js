@@ -68,10 +68,10 @@ $(document).ready(function(){
         let setAll = $("form[name=setAll]").serializeObject();
 
 	for (let idx = 1; idx <= Number(nrCgroup); idx++) {
-		prevDataList[idx-1]["weight"] = setEach["cgroup-"+idx]
-		prevDataList[idx-1]["path"] = setEach["cgroup-"+idx+"-path"]
-		setCookie("cgroup-"+idx, setEach["cgroup-"+idx])
-		setCookie("cgroup-"+idx+"-path", setEach["cgroup-"+idx+"-path"])
+		prevDataList[idx-1]['weight'] = setEach["cgroup-"+idx];
+		prevDataList[idx-1]['path'] = setEach["cgroup-"+idx+"-path"];
+		setCookie("cgroup-"+idx, setEach["cgroup-"+idx]);
+		setCookie("cgroup-"+idx+"-path", setEach["cgroup-"+idx+"-path"]);
 	}
         socket.emit("set_options", setEach, setAll);
         $btnSelectWork.prop("disabled", true);

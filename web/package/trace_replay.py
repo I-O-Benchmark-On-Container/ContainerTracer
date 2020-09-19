@@ -102,7 +102,7 @@ class TraceReplay(ContainerTracer):
     def prepare_data_dict(key_set: set) -> dict:
         data_dict = {}
         for key in key_set:
-            data_dict[key] = {"results": []}
+            data_dict[key] = {"results": [], "meta" : None}
         return data_dict
 
     ##
@@ -147,7 +147,10 @@ class TraceReplay(ContainerTracer):
                     remain_set.remove(key)
                     continue
 
-                data_dict[key]["results"].append(json.loads(raw_data)['data'])
+                json_data = json.loads(raw_data)
+                data_dict[key]["results"].append(json_data["data"])
+                data_dict[key]["meta"] = json_data["meta"]
+
                 interval_results.append(chart_result)
             if len(key_set) == len(interval_results):
                 self._update_interval_results(interval_results)
