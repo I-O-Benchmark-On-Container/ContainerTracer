@@ -92,6 +92,12 @@ class TraceReplay(ContainerTracer):
         self.libc.runner_put_result_string(ptr)
         return ret
 
+    ##
+    # @brief Create a data dictionary which will contain the interval results.
+    #
+    # @param[in] ket_set Set of keys.
+    #
+    # @return data structure which will contain the interval results.
     @staticmethod
     def prepare_data_dict(key_set: set) -> dict:
         data_dict = {}
@@ -99,6 +105,10 @@ class TraceReplay(ContainerTracer):
             data_dict[key] = {"results": []}
         return data_dict
 
+    ##
+    # @brief save interval results to json file.
+    #
+    # @param[in] data_dict dictionary data structure which contains the interval results.
     @staticmethod
     def save_interval_to_files(data_dict: dict) -> None:
         import pprint

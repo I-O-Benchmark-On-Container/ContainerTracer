@@ -43,6 +43,12 @@ class ContainerTracer(metaclass=ABCMeta):
     def _set_config(self, config: dict) -> None:
         pass
 
+    ##
+    # @brief Set global configuration object by this function.
+    #
+    # @param Config global configuration object
+    #
+    # @note This method is called by `set_options()` in `web/package/main/events.py`
     def set_global_config(self, config: Config) -> None:
         self.global_config = config
 
