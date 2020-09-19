@@ -43,10 +43,6 @@ class Config:
     def set_container_tracer(self, config):
         factory = self.container_tracer_factory
 
-        if self.container_tracer:
-            self.container_tracer.container_tracer_free()
-            self.container_tracer = None
-
         if self.unit_test_mode is False:
             self.container_tracer = factory.get_instance(config)
         else:

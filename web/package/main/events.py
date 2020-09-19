@@ -34,6 +34,7 @@ def set_options(set_each, set_all):
     json_config = set_config.get_config_data()
     try:
         container_tracer = set_config.set_container_tracer(json_config)
+        container_tracer.set_global_config(set_config)
         container_tracer.run_all_container_tracer()  # 여기서 trace-replay가 시작합니다
     except OSError as e:
         print(e, file=sys.stderr)
