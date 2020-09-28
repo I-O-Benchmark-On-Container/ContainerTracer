@@ -9,3 +9,7 @@ repos:
     hooks:
     - id: flake8
       types: [python]
+-   repo: https://github.com/jorisroovers/gitlint
+    rev: master
+    hooks:
+    -   id: gitlint
