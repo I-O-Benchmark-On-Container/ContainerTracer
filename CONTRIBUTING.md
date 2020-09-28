@@ -1,6 +1,7 @@
 # Common Rules
 
 You must comment the all source code except `trace-replay` based on `Doxygen` style.
+And commit message must follow the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) style.
 
 ## `web` Contributing Rules
 
