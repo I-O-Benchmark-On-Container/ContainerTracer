@@ -2,11 +2,13 @@ import scons_compiledb
 import platform
 import subprocess
 import os
+import distro
 
 SConscript('setting/SConscript')
 
 Import('env')
 scons_compiledb.enable(env)
+
 
 if env["BUILD_UNIT_TEST"] == True:
 	if os.getuid() != 0:
@@ -15,6 +17,10 @@ if env["BUILD_UNIT_TEST"] == True:
 
 env.Append(CFLAGS=["-O2"])
 env['CC']=["gcc"]
+
+is_redhat = (len(set(['fedora', 'redhat', 'centos']) & set([s.lower() for s in distro.linux_distribution()])) > 0)
+if is_redhat:
+        env.Append(CFLAGS=["-DREDHAT_LINUX"])
 
 if env["DEBUG"] == True:
 	env.Append(CFLAGS=["-g", "-pg"])

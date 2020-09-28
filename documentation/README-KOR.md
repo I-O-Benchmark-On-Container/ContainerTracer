@@ -77,18 +77,34 @@ sudo python web/run.py
 
 소스 코드를 다운 받은 후에 빌드에 필요한 프로그램을 설치하도록 합니다.
 
+### Debian
+
 ```bash
 sudo pip3 install scons scons-compiledb
 sudo pip3 install clang-format
 sudo apt install cppcheck libaio-dev libjson-c-dev libjemalloc-dev
 ```
 
+### Redhat
+
+```bash
+sudo yum install cppcheck libaio-devel json-c-devel jemalloc-devel
+```
+
 추가로 본 프로젝트는 clang을 기반으로 하기 때문에 clang도 설치해주셔야 합니다.
 만약에 \[1\]을 수행한 후에 `clang --version` 했을 때, 문제가 발생하지 않으면 \[2\] 과정은 무시해도 됩니다.
+
+### Debian
 
 ```bash
 sudo apt install llvm-6.0 clang-6.0 libclang-6.0-dev # [1]
 sudo ln -s /usr/bin/clang-6.0 /usr/bin/clang # [2]
+```
+
+### Redhat
+
+```bash
+sudo yum install llvm6.0 clang7.0-devel clang7.0-libs
 ```
 
 그리고 아래의 명령을 통해서 빌드 및 테스트를 수행합니다. 결과물은 `./build/debug`에 저장됩니다.
@@ -112,6 +128,13 @@ scons
 sudo scons install
 sudo ldconfig
 ```
+> 레드헷 환경에서는 반드시 아래 2가지를 유념하셔야 합니다.
+>
+> 첫번째, `/etc/ld.so.conf` 파일에 `/usr/local/lib` 줄이 있는지 확인해야 합니다.
+> 만약 해당 줄이 없는 경우에는 해당 라인을 추가해줘야 합니다.
+>
+> 두번째, 만약 `jemalloc`과 관계된 에러가 확인되면 `jemalloc` 라이브러리를
+> [링크](https://stackoverflow.com/questions/50839284/how-to-dlopen-jemalloc-dynamic-library)에 따라서 설치해야 합니다.
 
 추가적으로 드라이버 제작 방법 관련해서는 [링크](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/wiki/4.-How-to-add-the-driver-to-Runner)를
 확인해주시길 바랍니다.

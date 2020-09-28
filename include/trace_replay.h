@@ -241,6 +241,7 @@ struct total_results {
         struct result results;
 };
 
+#ifndef _ASM_GENERIC_INT_LL64_H // This for the Redhat Linux
 #ifndef __s8
 typedef char __s8;
 #endif
@@ -258,7 +259,8 @@ typedef unsigned int __u32;
 #if TEST_OS == LINUX
 typedef unsigned long long __u64;
 #endif
-
+#define _ASM_GENERIC_INT_LL64_H // This for the Redhat Linux
+#endif
 long long get_total_bytes(int nr_trace, int nr_thread);
 void synthetic_mix(struct trace_info_t *trace);
 
