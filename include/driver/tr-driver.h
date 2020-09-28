@@ -54,6 +54,20 @@
 #define tr_json_field_traverse(ptr, begin, end)                                \
         for (ptr = begin; ptr != end; ptr++)
 
+#ifdef REDHAT_LINUX
+#pragma message "Compile redhat version"
+#define TR_CGROUP_PREFIX "/sys/fs/cgroup/"
+#define TR_CGROUP_WEIGHT_PREFIX "io"
+#define TR_CGROUP_SET_PID "cgroup.procs"
+#endif
+
+#ifndef REDHAT_LINUX
+#pragma message "Compile not redhat version"
+#define TR_CGROUP_PREFIX "/sys/fs/cgroup/blkio/"
+#define TR_CGROUP_WEIGHT_PREFIX "blkio"
+#define TR_CGROUP_SET_PID "tasks"
+#endif
+
 #ifdef DEBUG
 #define tr_print_info(info)                                                    \
         pr_info(INFO,                                                          \

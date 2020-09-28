@@ -267,7 +267,7 @@ static int tr_set_cgroup_state(struct tr_info *current)
         char cmd[PATH_MAX];
 
         /* Generate cgroup seqeunce. */
-        snprintf(cmd, PATH_MAX, "mkdir /sys/fs/cgroup/blkio/%s%d",
+        snprintf(cmd, PATH_MAX, "mkdir " TR_CGROUP_PREFIX "%s%d",
                  current->prefix_cgroup_name, current->pid);
         pr_info(INFO, "Do command: \"%s\"\n", cmd);
         ret = system(cmd);
@@ -290,7 +290,8 @@ static int tr_set_cgroup_state(struct tr_info *current)
                         return -EINVAL;
                 }
                 snprintf(cmd, PATH_MAX,
-                         "echo %d > /sys/fs/cgroup/blkio/%s%d/blkio.%s.weight",
+                         "echo %d > " TR_CGROUP_PREFIX
+                         "%s%d/" TR_CGROUP_WEIGHT_PREFIX ".%s.weight",
                          current->weight, current->prefix_cgroup_name,
                          current->pid, current->scheduler);
                 pr_info(INFO, "Do command: \"%s\"\n", cmd);
@@ -301,7 +302,8 @@ static int tr_set_cgroup_state(struct tr_info *current)
                 }
         }
 
-        snprintf(cmd, PATH_MAX, "echo %d > /sys/fs/cgroup/blkio/%s%d/tasks",
+        snprintf(cmd, PATH_MAX,
+                 "echo %d > " TR_CGROUP_PREFIX "%s%d/" TR_CGROUP_SET_PID,
                  current->pid, current->prefix_cgroup_name, current->pid);
         pr_info(INFO, "Do command: \"%s\"\n", cmd);
         ret = system(cmd);
@@ -381,7 +383,7 @@ int tr_runner(void)
         char cmd[PATH_MAX];
         pid_t pid;
 
-        snprintf(cmd, PATH_MAX, "rmdir /sys/fs/cgroup/blkio/%s*",
+        snprintf(cmd, PATH_MAX, "rmdir " TR_CGROUP_PREFIX "%s*",
                  current->prefix_cgroup_name);
         pr_info(INFO, "Do command: \"%s\"\n", cmd);
         ret = system(cmd); /* You can ignore this return value. */

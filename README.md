@@ -86,18 +86,34 @@ You can get more information from this [link](https://github.com/I-O-Benchmark-O
 You download the source code and install necessary programs
 and libraries following.
 
+### Debian
+
 ```bash
 sudo pip3 install scons scons-compiledb
 sudo pip3 install clang-format
 sudo apt install cppcheck libaio-dev libjson-c-dev libjemalloc-dev
 ```
 
+### Redhat
+
+```bash
+sudo yum install cppcheck libaio-devel json-c-devel jemalloc-devel
+```
+
 If you want to build by `clang` compiler then you must change the
 `SConstruct` file's `CC` section' `gcc` to `clang` and follow like below.
+
+### Debian
 
 ```bash
 sudo apt install llvm-6.0 clang-6.0 libclang-6.0-dev
 sudo ln -s /usr/bin/clang-6.0 /usr/bin/clang
+```
+
+### Redhat
+
+```bash
+sudo yum install llvm6.0 clang7.0-devel clang7.0-libs
 ```
 
 Based on the following commands you do the build and unit testing.
@@ -124,6 +140,14 @@ If you want to install the debug mode then just change the
 sudo scons install
 sudo ldconfig
 ```
+
+> Under the redhat distribution, you must care about two things.
+>
+> First, you have to check `/etc/ld.so.conf` file has the line `/usr/local/lib`.
+> If not you add that line.
+>
+> Second, if you encounter an error that related to the `jemalloc`
+> you must build the `jemalloc` library based on this [link](https://stackoverflow.com/questions/50839284/how-to-dlopen-jemalloc-dynamic-library).
 
 Additionally, you can get information about
 how to make the driver program of the runner from [this link](https://github.com/I-O-Benchmark-On-Container/ContainerTracer/wiki/4.-How-to-add-the-driver-to-Runner)

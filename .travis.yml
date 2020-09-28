@@ -39,6 +39,7 @@ matrix:
       - pip3 install scons
       - pip3 install clang-format 
       - pip3 install lizard
+      - pip3 install distro
       - lizard runner && lizard include
       script:
       - scons
