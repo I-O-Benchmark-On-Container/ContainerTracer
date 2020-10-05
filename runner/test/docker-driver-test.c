@@ -44,8 +44,6 @@
 #else
 #define TRACE_REPLAY_PATH "./build/debug/trace-replay"
 #endif
-#define TEST_DISK_PATH                                                         \
-        "sdb" /**< Target device name. Do not contain the `/dev/` */
 #define SCHEDULER "none" /**< "none, bfq" in SCSI; "none, kyber, bfq" in NVMe */
 
 #define TIME (5) /**< seconds */

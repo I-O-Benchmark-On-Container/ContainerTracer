@@ -111,7 +111,7 @@ sudo yum install llvm6.0 clang7.0-devel clang7.0-libs
 
 ```bash
 sudo scons -c
-sudo scons test DEBUG=True
+sudo scons test DEBUG=True TARGET_DEVICE=<당신의 장치>
 ```
 
 배포판을 만드는 경우에는 아래와 같은 방법으로 진행해주시길 바랍니다. 결과물은 `./build/release`에 저장됩니다.

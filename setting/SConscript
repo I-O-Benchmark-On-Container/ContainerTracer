@@ -11,9 +11,16 @@ variables.AddVariables(
     BoolVariable("TRACE_REPLAY", "Build the trace-replay", default=True),
     BoolVariable("WEB", "Build the web", default=True),
     BoolVariable("DEBUG", "Enable the debugging mode", default=False),
+    (
+        "TARGET_DEVICE",
+        "Test target device (NOTICE: You must specify without `/dev/`)",
+        "",
+    ),
 )
 
-env = Environment(variables=variables,)
+env = Environment(
+    variables=variables,
+)
 
 env["PROGRAM_LOCATION"] = "#build/release"
 env["TEST_LOCATION"] = "#build/test"

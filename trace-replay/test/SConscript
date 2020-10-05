@@ -35,4 +35,4 @@ tester = current_env.Program(
     source=Glob("*.o") + Glob(env["UNITY_LOCATION"] + "/*.o") + except_main,
 )
 
-Return ('tester')
+Return("tester")

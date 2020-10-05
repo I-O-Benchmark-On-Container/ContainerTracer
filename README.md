@@ -121,7 +121,7 @@ This execution results are stored in `./build/debug`.
 
 ```bash
 sudo scons -c
-sudo scons test DEBUG=True
+sudo scons test DEBUG=True TARGET_DEVICE=<your device>
 ```
 
 If you want to build the release mode then you do the following.
