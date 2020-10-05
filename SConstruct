@@ -15,6 +15,13 @@ if env["BUILD_UNIT_TEST"] == True:
 		print("[ERROR] `test` mode requires the sudo privileges.", file=sys.stderr)
 		sys.exit()
 
+	if env["TARGET_DEVICE"] == "":
+		print("[ERROR] you must specify the TARGET_DEVICE (e.g. nvme0n1)", file=sys.stderr)
+		sys.exit()
+        else:
+		env.Append(CFLAGS=["-DTEST_DISK_PATH={}".format(env["TARGET_DEVICE"])]
+
+
 env.Append(CFLAGS=["-O2"])
 env['CC']=["gcc"]
 
@@ -22,13 +29,12 @@ is_redhat = (len(set(['fedora', 'redhat', 'centos']) & set([s.lower() for s in d
 if is_redhat:
         env.Append(CFLAGS=["-DREDHAT_LINUX"])
 
+
 if env["DEBUG"] == True:
 	env.Append(CFLAGS=["-g", "-pg"])
 	env.Append(CFLAGS=["-DLOG_INFO", "-DDEBUG"])
 	env.Append(LINKFLAGS=["-g", "-pg"])
 	env["PROGRAM_LOCATION"] = "#build/debug"
-else:
-	pass
 
 
 if env["BUILD_UNIT_TEST"]:

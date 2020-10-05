@@ -11,6 +11,7 @@ variables.AddVariables(
     BoolVariable("TRACE_REPLAY", "Build the trace-replay", default=True),
     BoolVariable("WEB", "Build the web", default=True),
     BoolVariable("DEBUG", "Enable the debugging mode", default=False),
+    PathVariable("TARGET_DEVICE", "Test target device (NOTICE: You must specify without `/dev/`)", default=""),
 )
 
 env = Environment(variables=variables,)
