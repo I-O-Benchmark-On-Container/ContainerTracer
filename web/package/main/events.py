@@ -78,14 +78,12 @@ if os.environ.get("PYTHON_UNIT_TEST") is None:
 
     @socketio.on("app_driver_record")
     def app_driver_record():
-        global app_finish
         emit("app_driver_record_start")
         app_recorder.start_record()
         emit("app_driver_record_stop")
-        app_finish = True
 
 
-    def app_driver_perf_get(docker_name):
+    def app_driver_perf_get():
         global app_docker_name
         if app_docker_name == None:
             return None
@@ -115,27 +113,47 @@ if os.environ.get("PYTHON_UNIT_TEST") is None:
         except:
             return None
         return values
+    
+    def app_driver_background_thread():
+        global app_finish
+        app_recorder.play_record()
+        app_finish = True
 
+    def app_driver_translate_values(values):
+        for i in range(2, 4):
+            values[i] = values[i].strip().lower()
+            if 'kb' in values[i]:
+                values[i] = float(values[i].strip('kb')) * 0.001
+            elif 'mb' in values[i]:
+                values[i] = float(values[i].strip('mb'))
+            elif 'gb' in values[i]:
+                values[i] = float(values[i].strip('gb')) * 1000.0
+            elif 'b' in values[i]:
+                values[i] = float(values[i].strip('b')) * 0.001 * 0.001
+
+        return [float(values[0].strip().strip('%')), float(values[1].strip().strip('%')), values[2], values[3]]
 
     @socketio.on("app_driver_replay")
-    def app_driver_replay(docker_name):
+    def app_driver_replay():
+        global app_finish
         emit("app_driver_replay_start")
-        replayer = threading.Thread(target=app_recorder.play_record)
+        replayer = threading.Thread(target=app_driver_background_thread)
         replayer.start()
         while True:
-            values = app_driver_perf_get(docker_name)
+            if app_finish == True:
+                app_finish = False
+                break
+            values = app_driver_perf_get()
             if values == None:
                 time.sleep(APP_EPSILON)
                 continue
+            values = app_driver_translate_values(values)
             keys = {
                 "cpu-chart": values[0],
                 "io-read-chart": values[1],
                 "io-write-chart": values[2],
                 "memory-chart": values[3],
             }
-            if app_finish == True:
-                app_finish = False
-                break
             emit("app_driver_perf_put", keys)
             time.sleep(APP_EPSILON)
         replayer.join()
