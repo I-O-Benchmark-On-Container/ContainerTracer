@@ -12,6 +12,7 @@ matrix:
       - pip3 install flask_restful
       - pip3 install flask_socketio
       - pip3 install lizard
+      - pip3 install pynput
       - lizard web
       - cd web/test
       script:
