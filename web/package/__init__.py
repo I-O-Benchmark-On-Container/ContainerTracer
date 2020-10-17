@@ -1,9 +1,12 @@
 from flask import Flask
 from flask_socketio import SocketIO
 from . import container_tracer_factory
+from . import app_driver
 import os
 
 socketio = SocketIO()
+app_recorder = app_driver.AppRecorder()
+app_runner = app_driver.AppRunner()
 
 
 class Config:
