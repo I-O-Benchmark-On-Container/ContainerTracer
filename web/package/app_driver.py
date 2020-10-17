@@ -8,6 +8,7 @@ import sys
 import time
 import os
 import subprocess
+import threading
 
 
 class AppRunner:
@@ -45,6 +46,9 @@ class AppRecorder:
         keyboard_listener.start()
         mouse_listener.start()
         keyboard_listener.join()
+        mouse_listener.stop()
+        keyboard_listener.stop()
+        self.log.flush()
         self.log.close()
 
     def __key_press(self, cmd):
