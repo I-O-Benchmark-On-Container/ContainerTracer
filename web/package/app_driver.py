@@ -125,6 +125,9 @@ class AppRecorder:
     def __on_press(self, key):
         if key == Key.esc:
             return False
+        if '<' in str(key):
+            return True
+
         if len(str(key)) < 4:
             cmd = str(key)[1:-1]
         else:
@@ -134,6 +137,9 @@ class AppRecorder:
     def __on_release(self, key):
         if key == Key.esc:
             return False
+        if '<' in str(key):
+            return True
+
         if len(str(key)) < 4:
             cmd = str(key)[1:-1]
         else:
