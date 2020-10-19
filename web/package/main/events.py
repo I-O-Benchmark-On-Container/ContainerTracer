@@ -16,7 +16,7 @@ set_config = Config()
 app_finish = False
 app_docker_name = None
 
-APP_EPSILON = 0.5
+APP_EPSILON = 1
 
 
 @socketio.on("connect")
@@ -71,8 +71,9 @@ if os.environ.get("PYTHON_UNIT_TEST") is None:
     def app_driver_run(data):
         global app_docker_name
         app_docker_name = data["docker-name"]
-        app_runner.set_path(data["app-path"])
-        app_runner.start()
+        if len(data["app-path"]) != 0:
+            app_runner.set_path(data["app-path"])
+            app_runner.start()
         emit("app_driver_program_run")
 
 
@@ -139,6 +140,8 @@ if os.environ.get("PYTHON_UNIT_TEST") is None:
         emit("app_driver_replay_start")
         replayer = threading.Thread(target=app_driver_background_thread)
         replayer.start()
+        result = open("result.csv", "w")
+        result.write("cpu(%),IO-R(MB),IO-W(MB),mem(%)\n")
         while True:
             if app_finish == True:
                 app_finish = False
@@ -155,6 +158,8 @@ if os.environ.get("PYTHON_UNIT_TEST") is None:
                 "memory-chart": values[3],
             }
             emit("app_driver_perf_put", keys)
+            result.write("{},{},{},{}\n".format(values[0], values[1], values[2], values[3]))
             time.sleep(APP_EPSILON)
         replayer.join()
+        result.close()
         emit("app_driver_replay_stop")

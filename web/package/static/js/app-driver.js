@@ -1,9 +1,6 @@
 function doRun() {
     let app_path = $('#app-path').val()
     let docker_name = $('#docker-name').val()
-    if (app_path == '' || docker_name == '') {
-        assert(`Invalid value detected.... ${app_path} ${docker_name}`)
-    }
     socket.emit('app_driver_run', { 'app-path': app_path, 'docker-name': docker_name });
 }
 
@@ -75,4 +72,5 @@ function activateAppDriverListener(socket) {
     activateRecordListener(socket);
     activateReplayListener(socket);
     activatePerformanceListener(socket);
+    activateProgramRunListener(socket);
 }
