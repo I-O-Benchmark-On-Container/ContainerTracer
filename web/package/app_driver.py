@@ -8,7 +8,6 @@ import sys
 import time
 import os
 import subprocess
-import threading
 
 ##
 # @brief User application runner with any GUI programs.

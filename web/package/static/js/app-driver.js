@@ -1,6 +1,6 @@
 function doRun() {
-    let app_path = $('#app-path').val()
-    let docker_name = $('#docker-name').val()
+    let app_path = $('#app-path').val();
+    let docker_name = $('#docker-name').val();
     socket.emit('app_driver_run', { 'app-path': app_path, 'docker-name': docker_name });
 }
 

@@ -111,10 +111,11 @@ if os.environ.get("PYTHON_UNIT_TEST") is None:
                 blockio[1],
             ]  # 0 : read, 1: write
 
-        except:
+        except subprocess.SubprocessError as e:
+            print(e, file=sys.stderr)
             return None
         return values
-    
+
     def app_driver_background_thread():
         global app_finish
         app_recorder.play_record()
