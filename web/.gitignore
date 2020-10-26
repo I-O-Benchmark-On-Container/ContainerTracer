@@ -163,3 +163,8 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Userdefined Removal
+node_modules/
+.eslintrc.js
+*.rpl

@@ -29,10 +29,10 @@ which is described in the following table.
 
 So, when you build and run this program you have to care about this information.
 
-| item            | content      |
-|:---------------:|:------------:|
+|      item       |   content    |
+| :-------------: | :----------: |
 | Operting System | Ubuntu 18.04 |
-| Kernel          | linux 4.19   |
+|     Kernel      |  linux 4.19  |
 
 # Project Components
 
@@ -69,7 +69,7 @@ Since we are using Flask, you must install Flask and
 install the related package first.
 
 ```bash
-sudo pip3 install flask flask_restful flask_socketio
+sudo pip3 install flask flask_restful flask_socketio pynput
 ```
 
 And you can run this program with the following command

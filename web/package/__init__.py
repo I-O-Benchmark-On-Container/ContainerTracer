@@ -2,8 +2,13 @@ from flask import Flask
 from flask_socketio import SocketIO
 from . import container_tracer_factory
 import os
+if os.environ.get("PYTHON_UNIT_TEST") is None:
+    from . import app_driver
 
 socketio = SocketIO()
+if os.environ.get("PYTHON_UNIT_TEST") is None:
+    app_recorder = app_driver.AppRecorder()
+    app_runner = app_driver.AppRunner()
 
 
 class Config:

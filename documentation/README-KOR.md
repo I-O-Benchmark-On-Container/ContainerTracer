@@ -23,10 +23,10 @@ Container Tracer는 장치의 컨테이너 별 I/O 성능을 측정하기 위해
 
 그러므로 반드시 빌드 또는 프로그램을 수행할 때에는 이 정보에 주의해야 합니다.
 
-| 항목 | 내용 |
-|:---------------:|:------------:|
+|   항목    |     내용     |
+| :-------: | :----------: |
 | 운영 체제 | Ubuntu 18.04 |
-| 커널 | linux 4.19   |
+|   커널    |  linux 4.19  |
 
 # 프로젝트의 구성
 
@@ -60,7 +60,7 @@ sudo apt install doxygen
 Flask를 사용하기 때문에 반드시 아래를 수행해주셔야 합니다.
 
 ```bash
-sudo pip3 install flask flask_restful flask_socketio
+sudo pip3 install flask flask_restful flask_socketio pynput
 ```
 
 그리고 프로젝트 루트 디렉터리에서 아래의 명령을 통해서
