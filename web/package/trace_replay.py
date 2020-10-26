@@ -62,8 +62,8 @@ class TraceReplay(ContainerTracer):
             if not os.path.isfile(elem["trace_data_path"]):
                 raise Exception("trace_data_path")
 
-        if config["setting"]["trace_replay_path"] != "trace-replay":
-            raise Exception("tracer_replay_path")
+        #if config["setting"]["trace_replay_path"] != "trace-replay":
+        #    raise Exception("tracer_replay_path")
         try:
             device_path = "/dev/" + config["setting"]["device"]
             st_mode = os.stat(device_path).st_mode
